@@ -1,13 +1,21 @@
-/* Stili di base per la pagina */
+/* Stili moderni e accattivanti */
 body {
-    font-family: sans-serif;
+    font-family: 'Roboto', sans-serif; /* Font moderno */
     margin: 0;
 }
 
 header {
-    background-color: #000; /* Colore di sfondo nero */
-    color: #fff; /* Testo bianco */
+    background-color: #212121; /* Sfondo scuro */
+    color: #fff;
     padding: 1em 0;
+}
+
+#hero {
+    background-image: url('assets/vr-background.jpg'); /* Immagine di sfondo VR */
+    background-size: cover;
+    color: #fff;
+    padding: 5em 0;
     text-align: center;
 }
-/* Altri stili personalizzati */
+
+/* Altri stili per sezioni, galleria, form, ecc. */
