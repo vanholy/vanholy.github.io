@@ -1,0 +1,13 @@
+/* Stili di base per la pagina */
+body {
+    font-family: sans-serif;
+    margin: 0;
+}
+
+header {
+    background-color: #000; /* Colore di sfondo nero */
+    color: #fff; /* Testo bianco */
+    padding: 1em 0;
+    text-align: center;
+}
+/* Altri stili personalizzati */
