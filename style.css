@@ -11,7 +11,7 @@ header {
 }
 
 #hero {
-    background-image: url('assets/vr-background.jpg'); /* Immagine di sfondo VR */
+    background-image: url('assets/vaporwave_vr_background.png'); /* Immagine di sfondo VR */
     background-size: cover;
     color: #fff;
     padding: 5em 0;
