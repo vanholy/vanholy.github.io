@@ -25,11 +25,11 @@ header {
     height: auto;
     margin: 10px;
 }
- .center-container {
+/* .center-container {
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             height: 100vh;
             text-align: center;
-        }
+        }*/
