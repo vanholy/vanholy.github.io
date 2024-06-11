@@ -21,7 +21,7 @@ header {
 /* Altri stili per sezioni, galleria, form, ecc. */
 
 .gallery img {
-    width: 100px; /* Regola questa misura in base alle tue necessità */
+    width: 250px; /* Regola questa misura in base alle tue necessità */
     height: auto;
     margin: 10px;
 }
