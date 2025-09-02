@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profili Completi 12 Acque Bergamasche</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        
+        .water-profiles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .water-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-top: 5px solid;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .water-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .solto { border-top-color: #f39c12; }
+        .bergamo { border-top-color: #27ae60; }
+        .trescore { border-top-color: #16a085; }
+        .costa { border-top-color: #3498db; }
+        .endine { border-top-color: #9b59b6; }
+        .casazza { border-top-color: #e67e22; }
+        .carobbio-brita { 
+            border-top-color: #9b59b6; 
+            border: 2px solid #9b59b6;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(155,89,182,0.05));
+        }
+        .sanpellegrino { border-top-color: #34495e; }
+        .gaverina { border-top-color: #7f8c8d; }
+        .goriago { border-top-color: #e74c3c; }
+        .grone { border-top-color: #8e44ad; }
+        .carobbio { border-top-color: #95a5a6; }
+        
+        .water-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .water-icon {
+            font-size: 2.2em;
+            margin-right: 12px;
+        }
+        
+        .water-title {
+            flex: 1;
+        }
+        
+        .water-title h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.4em;
+        }
+        
+        .water-title p {
+            margin: 2px 0 0 0;
+            font-size: 0.85em;
+            color: #7f8c8d;
+        }
+        
+        .water-rating {
+            display: flex;
+            align-items: center;
+            font-size: 1em;
+            font-weight: bold;
+        }
+        
+        .stars {
+            color: #f1c40f;
+            margin-left: 8px;
+        }
+        
+        .brita-badge {
+            background: #9b59b6;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            margin-left: 8px;
+        }
+        
+        .improvement-badge {
+            background: linear-gradient(135deg, #e74c3c, #9b59b6);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin: 15px 0;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .param-item {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .param-label {
+            font-size: 0.75em;
+            color: #7f8c8d;
+            margin-bottom: 3px;
+        }
+        
+        .param-value {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1em;
+        }
+        
+        .improved-param {
+            background: rgba(155, 89, 182, 0.1);
+            border: 1px solid #9b59b6;
+        }
+        
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        
+        .pros, .cons {
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .pros {
+            background: linear-gradient(135deg, #d5f4e6, #c8e6c9);
+            border-left: 3px solid #27ae60;
+        }
+        
+        .cons {
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            border-left: 3px solid #e17055;
+        }
+        
+        .pros h4, .cons h4 {
+            margin-top: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            font-size: 1em;
+        }
+        
+        .pros h4::before { content: "✅ "; }
+        .cons h4::before { content: "⚠️ "; }
+        
+        .pros ul, .cons ul {
+            margin: 8px 0;
+            padding-left: 16px;
+        }
+        
+        .pros li, .cons li {
+            margin: 3px 0;
+            line-height: 1.3;
+            font-size: 0.85em;
+        }
+        
+        .beer-styles, .treatments, .brewfather-profile {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        
+        .beer-styles {
+            background: linear-gradient(135deg, #dda0dd, #98fb98);
+            border-left: 3px solid #8e44ad;
+        }
+        
+        .treatments {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+        
+        .brewfather-profile {
+            background: #2c3e50;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .beer-styles h4, .treatments h4, .brewfather-profile h4 {
+            margin-top: 0;
+            font-size: 1em;
+        }
+        
+        .beer-styles h4::before { content: "🍺 "; }
+        .treatments h4::before { content: "⚗️ "; }
+        .brewfather-profile h4::before { content: "💻 "; }
+        
+        .beer-styles p, .treatments p, .brewfather-profile p {
+            margin: 8px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        @media (max-width: 768px) {
+            .water-profiles {
+                grid-template-columns: 1fr;
+            }
+            
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+            
+            .parameters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍺 Profili Completi 12 Acque Bergamasche</h1>
+        <p class="subtitle">Analisi dettagliata per la scelta ottimale nel birrificio artigianale + NOVITÀ: Carobbio Filtrata Brita</p>
+        
+        <div class="water-profiles">
+            <!-- SOLTO COLLINA -->
+            <div class="water-card solto">
+                <div class="water-header">
+                    <div class="water-icon">🏆</div>
+                    <div class="water-title">
+                        <h2>SOLTO COLLINA</h2>
+                        <p>Frazione Esmate: Piazza Ferrari</p>
+                    </div>
+                    <div class="water-rating">
+                        Suprema
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">7,9</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">20</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">42</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">23</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">225</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">229</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Rapporto Ca/Mg quasi perfetto (1.8:1)</li>
+                            <li>Magnesio ideale per lieviti (23 mg/l)</li>
+                            <li>Durezza ottimale (20°F)</li>
+                            <li>Versatilità assoluta per tutti gli stili</li>
+                            <li>Minerali ultra-bilanciati</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Bicarbonati da gestire con acidificazione</li>
+                            <li>pH leggermente basso per alcuni stili</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Perfetta per:</strong> Tutti gli stili - è l'acqua universale!</p>
+                    <p><strong>Eccellente:</strong> Pale Ale, IPA moderate, Porter, Stout, Belgian, Weizen</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Suggeriti</h4>
+                    <p>• Acidificazione leggera per stili chiari<br>
+                    • Aggiunta solfato per IPA hop-forward<br>
+                    • Base ideale per personalizzazioni</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 42 | Mg: 23 | Na: 1.0 | Cl: 2 | SO4: 4 | HCO3: 229</p>
+                </div>
+            </div>
+
+            <!-- BERGAMO -->
+            <div class="water-card bergamo">
+                <div class="water-header">
+                    <div class="water-icon">🥇</div>
+                    <div class="water-title">
+                        <h2>BERGAMO</h2>
+                        <p>Mercato Ortofrutticolo - Via Borgo Palazzo</p>
+                    </div>
+                    <div class="water-rating">
+                        Eccellente Plus
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">7,8</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">14</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">43</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">9</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">173</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">145</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Durezza eccellente (14°F - dolce)</li>
+                            <li>Residuo fisso bassissimo (173 mg/l)</li>
+                            <li>Bicarbonati molto bassi (145 mg/l)</li>
+                            <li>Calcio ideale per enzimi</li>
+                            <li>Base pulitissima per personalizzazioni</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Magnesio basso (9 mg/l) - serve integrazione</li>
+                            <li>Rapporto Ca/Mg non ottimale (4.8:1)</li>
+                            <li>pH leggermente basso</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Perfetta per:</strong> Lager premium, Pilsner delicate</p>
+                    <p><strong>Ottima per:</strong> Weissbier, Session Beer, American Wheat (con Mg)</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Necessari</h4>
+                    <p>• SEMPRE integrazione magnesio (solfato Mg)<br>
+                    • Acidificazione per alcuni stili<br>
+                    • Base eccellente per ricette precise</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 43 | Mg: 9 | Na: 0.8 | Cl: 2 | SO4: 10 | HCO3: 145</p>
+                </div>
+            </div>
+
+            <!-- TRESCORE BALNEARIO -->
+            <div class="water-card trescore">
+                <div class="water-header">
+                    <div class="water-icon">🥈</div>
+                    <div class="water-title">
+                        <h2>TRESCORE BALNEARIO</h2>
+                        <p>Parco: Via Laghetto</p>
+                    </div>
+                    <div class="water-rating">
+                        Ottima Plus
+                        <span class="stars">★★★★☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">8,0</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">19</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">55</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">14</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">226</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">224</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Durezza quasi ideale (19°F)</li>
+                            <li>Magnesio sufficiente (14 mg/l)</li>
+                            <li>pH stabile e ottimo</li>
+                            <li>Eccellente per Lager tradizionali</li>
+                            <li>Bicarbonati moderati</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Rapporto Ca/Mg non perfetto (3.9:1)</li>
+                            <li>Magnesio al limite basso</li>
+                            <li>Meno versatile di Solto Collina</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Perfetta per:</strong> Lager tedesche, Pilsner Czech, Märzen</p>
+                    <p><strong>Ottima per:</strong> IPA delicate, Session Beer</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Suggeriti</h4>
+                    <p>• Integrazione leggera magnesio per fermentazioni lunghe<br>
+                    • Acidificazione minima per Pilsner<br>
+                    • Perfetta per Lager senza correzioni</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 55 | Mg: 14 | Na: 1.0 | Cl: 2 | SO4: 7 | HCO3: 224</p>
+                </div>
+            </div>
+
+            <!-- COSTA VALLE IMAGNA -->
+            <div class="water-card costa">
+                <div class="water-header">
+                    <div class="water-icon">🥉</div>
+                    <div class="water-title">
+                        <h2>COSTA VALLE IMAGNA</h2>
+                        <p>Fontanella Municipio - Via Miravalle, 13</p>
+                    </div>
+                    <div class="water-rating">
+                        Ottima
+                        <span class="stars">★★★★☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">7,9</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">17</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">47</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">13</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">206</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">216</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Durezza dolce ideale (17°F)</li>
+                            <li>Equilibrio generale molto buono</li>
+                            <li>Magnesio sufficiente (13 mg/l)</li>
+                            <li>Residuo fisso contenuto</li>
+                            <li>Rapporto Ca/Mg accettabile (3.6:1)</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Cloruri leggermente elevati (5 mg/l)</li>
+                            <li>Bicarbonati moderatamente alti</li>
+                            <li>Sodio medio (2.4 mg/l)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Perfetta per:</strong> Session Beer, Pale Ale moderate</p>
+                    <p><strong>Ottima per:</strong> American Wheat, Bitter, Brown Ale</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Suggeriti</h4>
+                    <p>• Acidificazione leggera per stili chiari<br>
+                    • Aggiunta solfato per IPA<br>
+                    • Buona base per molti stili</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 47 | Mg: 13 | Na: 2.4 | Cl: 5 | SO4: 5 | HCO3: 216</p>
+                </div>
+            </div>
+
+            <!-- ENDINE GAIANO -->
+            <div class="water-card endine">
+                <div class="water-header">
+                    <div class="water-icon">🏅</div>
+                    <div class="water-title">
+                        <h2>ENDINE GAIANO</h2>
+                        <p>Frazione San Felice al Lago</p>
+                    </div>
+                    <div class="water-rating">
+                        Buona Plus
+                        <span class="stars">★★★★☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">8,1</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">21</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">45</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">23</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">229</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">230</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Rapporto Ca/Mg perfetto (2:1)</li>
+                            <li>Magnesio eccellente per lieviti</li>
+                            <li>Ottima per chiarifica naturale</li>
+                            <li>pH stabile</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Durezza medio-alta</li>
+                            <li>Bicarbonati moderatamente alti</li>
+                            <li>Serve acidificazione per Lager</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Eccellente per:</strong> IPA, Pale Ale, Belgian styles, Saison</p>
+                    <p><strong>Buona per:</strong> Porter, Brown Ale</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Suggeriti</h4>
+                    <p>• Acidificazione leggera con acido lattico<br>
+                    • Aggiunta solfato per IPA hoppy<br>
+                    • Perfetta per Belgian styles</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 45 | Mg: 23 | Na: 0.8 | Cl: 2 | SO4: 5 | HCO3: 230</p>
+                </div>
+            </div>
+
+            <!-- CASAZZA -->
+            <div class="water-card casazza">
+                <div class="water-header">
+                    <div class="water-icon">📊</div>
+                    <div class="water-title">
+                        <h2>CASAZZA</h2>
+                        <p>Via Madonna del Monte Carmelo</p>
+                    </div>
+                    <div class="water-rating">
+                        Buona
+                        <span class="stars">★★★★☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">8,2</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">13</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">50</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">2</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">160</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">158</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Durezza ideale (dolce)</li>
+                            <li>Residuo fisso bassissimo</li>
+                            <li>Base perfetta per personalizzazioni</li>
+                            <li>Bicarbonati contenuti</li>
+                            <li>pH alcalino stabile</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Magnesio troppo basso (2 mg/l)</li>
+                            <li>Rapporto Ca/Mg pessimo (25:1)</li>
+                            <li>Serve SEMPRE integrazione magnesio</li>
+                            <li>Troppo "neutra" senza correzioni</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Ottima per:</strong> Base universale con integrazioni</p>
+                    <p><strong>Buona per:</strong> Pilsner, Weissbier (con Mg)</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Necessari</h4>
+                    <p>• SEMPRE integrazione magnesio (solfato Mg)<br>
+                    • Monitoring lieviti per carenza Mg<br>
+                    • Base per personalizzazioni precise</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 50 | Mg: 2 | Na: 0.9 | Cl: 2 | SO4: 3 | HCO3: 158</p>
+                </div>
+            </div>
+
+            <!-- CAROBBIO FILTRATA BRITA -->
+            <div class="water-card carobbio-brita">
+                <div class="water-header">
+                    <div class="water-icon">🔄</div>
+                    <div class="water-title">
+                        <h2>CAROBBIO FILTRATA BRITA</h2>
+                        <p>Piazza Locatelli + Filtro Brita</p>
+                        <div class="brita-badge">NOVITÀ 2024</div>
+                    </div>
+                    <div class="water-rating">
+                        Buona Trasformata
+                        <span class="stars">★★★★☆</span>
+                    </div>
+                </div>
+                
+                <div class="improvement-badge">
+                    ⬆️ MIGLIORAMENTO INCREDIBILE: Da ★★☆☆☆ a ★★★★☆
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item improved-param">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">8,0 <small style="color:#9b59b6;">(↑da 7.8)</small></div>
+                    </div>
+                    <div class="param-item improved-param">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">19 <small style="color:#9b59b6;">(↓da 27)</small></div>
+                    </div>
+                    <div class="param-item improved-param">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">58 <small style="color:#9b59b6;">(↓da 82)</small></div>
+                    </div>
+                    <div class="param-item improved-param">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">13 <small style="color:#9b59b6;">(↓da 16)</small></div>
+                    </div>
+                    <div class="param-item improved-param">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">270 <small style="color:#9b59b6;">(↓da 339)</small></div>
+                    </div>
+                    <div class="param-item improved-param">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">220 <small style="color:#9b59b6;">(↓da 319)</small></div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi Post-Filtrazione</h4>
+                        <ul>
+                            <li>Durezza MIGLIORATA: da 27°F a 19°F (-30%)</li>
+                            <li>Bicarbonati RIDOTTI: da 319 a 220 mg/l (-31%)</li>
+                            <li>pH MIGLIORATO: da 7.8 a 8.0</li>
+                            <li>Residuo fisso ridotto (-20%)</li>
+                            <li>Rapporto Ca/Mg migliorato (4.5:1)</li>
+                            <li>Ora utilizzabile per brewing!</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi Residui</h4>
+                        <ul>
+                            <li>Sodio ancora alto (6.9 mg/l - invariato)</li>
+                            <li>Costi filtro (~€5/mese)</li>
+                            <li>Durezza ancora medio-alta</li>
+                            <li>Meno versatile delle acque top-tier</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati Post-Brita</h4>
+                    <p><strong>Ora buona per:</strong> Porter, Stout, Brown Ale</p>
+                    <p><strong>Accettabile per:</strong> English Bitter, Mild, birre scure maltate</p>
+                    <p><strong>Evitare:</strong> Lager, Pilsner, birre chiare delicate</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Processo di Filtrazione</h4>
+                    <p>• Usare filtro Brita standard<br>
+                    • Sostituire ogni 150L (circa 1 mese)<br>
+                    • Acidificazione leggera ancora necessaria<br>
+                    • Costo: ~€60/anno per homebrewing<br>
+                    • Monitorare parametri ogni 6 mesi</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather Post-Brita</h4>
+                    <p>Ca: 58 | Mg: 13 | Na: 6.9 | Cl: 10 | SO4: 14 | HCO3: 220</p>
+                    <p style="color: #9b59b6; font-weight: bold;">⚠️ Valori stimati - Testare dopo filtrazione</p>
+                </div>
+            </div>
+
+            <!-- SAN PELLEGRINO TERME -->
+            <div class="water-card sanpellegrino">
+                <div class="water-header">
+                    <div class="water-icon">⚡</div>
+                    <div class="water-title">
+                        <h2>SAN PELLEGRINO TERME</h2>
+                        <p>Fontanella Parco Giochi - Via F.lli Milesi</p>
+                    </div>
+                    <div class="water-rating">
+                        Media Plus
+                        <span class="stars">★★★☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">7,8</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">22</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">54</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">20</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">239</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">259</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Magnesio buono per lieviti (20 mg/l)</li>
+                            <li>Rapporto Ca/Mg accettabile (2.7:1)</li>
+                            <li>Calcio adeguato per enzimi</li>
+                            <li>Cloruri e solfati bassi</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Durezza medio-alta (22°F)</li>
+                            <li>Bicarbonati elevati (259 mg/l)</li>
+                            <li>Residuo fisso moderatamente alto</li>
+                            <li>Limitata versatilità</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Buona per:</strong> Porter, Stout, Belgian Dark</p>
+                    <p><strong>Accettabile per:</strong> Brown Ale, birre maltate</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Suggeriti</h4>
+                    <p>• Acidificazione per ridurre bicarbonati<br>
+                    • Diluizione con RO per stili chiari<br>
+                    • Limitare a stili scuri e maltati</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 54 | Mg: 20 | Na: 2.6 | Cl: 2 | SO4: 5 | HCO3: 259</p>
+                </div>
+            </div>
+
+            <!-- GAVERINA TERME -->
+            <div class="water-card gaverina">
+                <div class="water-header">
+                    <div class="water-icon">🔧</div>
+                    <div class="water-title">
+                        <h2>GAVERINA TERME</h2>
+                        <p>Cimitero, Via San Vittore</p>
+                    </div>
+                    <div class="water-rating">
+                        Media
+                        <span class="stars">★★★☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">8,2</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">20</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">61</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">11</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">236</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">222</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>pH stabile e alto</li>
+                            <li>Magnesio sufficiente</li>
+                            <li>Adatta per stili maltati</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Durezza medio-alta</li>
+                            <li>Calcio elevato (61 mg/l)</li>
+                            <li>Bicarbonati elevati</li>
+                            <li>Residuo fisso alto</li>
+                            <li>Limitata versatilità</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Buona per:</strong> English Bitter, Brown Ale</p>
+                    <p><strong>Accettabile per:</strong> Porter, birre maltate</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Suggeriti</h4>
+                    <p>• Diluizione con RO per stili chiari<br>
+                    • Acidificazione per bilanciare<br>
+                    • Limitare a stili specifici</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 61 | Mg: 11 | Na: 1.2 | Cl: 2 | SO4: 10 | HCO3: 222</p>
+                </div>
+            </div>
+
+            <!-- GORIAGO -->
+            <div class="water-card goriago">
+                <div class="water-header">
+                    <div class="water-icon">⚙️</div>
+                    <div class="water-title">
+                        <h2>GORIAGO</h2>
+                        <p>Fontanella - Località Montechi</p>
+                    </div>
+                    <div class="water-rating">
+                        Difficile
+                        <span class="stars">★★★☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">7,8</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">24</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">72</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">14</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">282</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">242</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Calcio e magnesio bilanciati</li>
+                            <li>Buona per birre scure</li>
+                            <li>Sodio contenuto</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Durezza alta (24°F)</li>
+                            <li>Bicarbonati alti</li>
+                            <li>Residuo fisso elevato</li>
+                            <li>Serve sempre diluizione</li>
+                            <li>Cloruri moderati (13 mg/l)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Buona per:</strong> Porter, Stout, Brown Ale</p>
+                    <p><strong>Accettabile per:</strong> English IPA</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Necessari</h4>
+                    <p>• Diluizione 1:1 con RO per Lager<br>
+                    • Acidificazione con acido lattico<br>
+                    • Decalcificazione per stili chiari</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 72 | Mg: 14 | Na: 2.0 | Cl: 13 | SO4: 10 | HCO3: 242</p>
+                </div>
+            </div>
+
+            <!-- GRONE -->
+            <div class="water-card grone">
+                <div class="water-header">
+                    <div class="water-icon">🔨</div>
+                    <div class="water-title">
+                        <h2>GRONE</h2>
+                        <p>Parco - Via Acquasparsa</p>
+                    </div>
+                    <div class="water-rating">
+                        Problematica
+                        <span class="stars">★★☆☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">7,8</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">24</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">56</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">23</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">268</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">264</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Magnesio alto (buono per lieviti)</li>
+                            <li>Cloruri e solfati bassi</li>
+                            <li>Sodio contenuto</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Bicarbonati molto alti (264 mg/l)</li>
+                            <li>Durezza medio-alta</li>
+                            <li>Sapore minerale pronunciato</li>
+                            <li>Difficoltà nel mash</li>
+                            <li>pH basso per alcuni stili</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Accettabile per:</strong> Belgian Dark Strong, Quadrupel</p>
+                    <p><strong>Limitata per:</strong> Brown Ale, Porter</p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Necessari</h4>
+                    <p>• Diluizione pesante con RO<br>
+                    • Acidificazione forte per bicarbonati<br>
+                    • Sconsigliata per uso frequente</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 56 | Mg: 23 | Na: 1.4 | Cl: 2 | SO4: 8 | HCO3: 264</p>
+                </div>
+            </div>
+
+            <!-- CAROBBIO DEGLI ANGELI -->
+            <div class="water-card carobbio">
+                <div class="water-header">
+                    <div class="water-icon">⚠️</div>
+                    <div class="water-title">
+                        <h2>CAROBBIO DEGLI ANGELI</h2>
+                        <p>Piazza Locatelli - ACQUA GREZZA</p>
+                    </div>
+                    <div class="water-rating">
+                        Sconsigliata
+                        <span class="stars">★★☆☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="parameters-grid">
+                    <div class="param-item">
+                        <div class="param-label">pH</div>
+                        <div class="param-value">7,8</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Durezza °F</div>
+                        <div class="param-value">27</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Ca mg/l</div>
+                        <div class="param-value">82</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Mg mg/l</div>
+                        <div class="param-value">16</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Residuo mg/l</div>
+                        <div class="param-value">339</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">HCO₃ mg/l</div>
+                        <div class="param-value">319</div>
+                    </div>
+                </div>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Vantaggi</h4>
+                        <ul>
+                            <li>Calcio elevato (buono per enzimi)</li>
+                            <li>Magnesio adeguato</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Svantaggi</h4>
+                        <ul>
+                            <li>Durezza eccessiva (27°F)</li>
+                            <li>Bicarbonati altissimi (319 mg/l)</li>
+                            <li>Residuo fisso molto alto</li>
+                            <li>Sodio elevato (6.9 mg/l)</li>
+                            <li>Difficilissima da gestire</li>
+                            <li>Costi di trattamento elevati</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="beer-styles">
+                    <h4>Stili Consigliati</h4>
+                    <p><strong>Solo per:</strong> Imperial Stout (con diluizione)</p>
+                    <p><strong>Da evitare:</strong> Tutti gli altri stili</p>
+                    <p><strong style="color: #9b59b6;">💡 PROVA INVECE: Carobbio Filtrata Brita!</strong></p>
+                </div>
+                
+                <div class="treatments">
+                    <h4>Trattamenti Necessari</h4>
+                    <p>• Decalcificazione pesante<br>
+                    • Diluizione 1:3 con RO<br>
+                    • Acidificazione massiva<br>
+                    • <strong style="color: #9b59b6;">ALTERNATIVA: Usa filtro Brita!</strong><br>
+                    • SCONSIGLIATA per uso regolare</p>
+                </div>
+                
+                <div class="brewfather-profile">
+                    <h4>Profilo Brewfather</h4>
+                    <p>Ca: 82 | Mg: 16 | Na: 6.9 | Cl: 10 | SO4: 14 | HCO3: 319</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 30px; border-radius: 15px; margin-top: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+            <h3>🎯 STRATEGIA DEFINITIVA AGGIORNATA per il Tuo Birrificio</h3>
+            
+            <div style="background: rgba(243,156,18,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #f39c12; margin: 20px 0;">
+                <h4>🏆 TOP 4 SETUP AGGIORNATO</h4>
+                <p><strong>1° SOLTO COLLINA</strong> - Universale suprema (50% produzioni)<br>
+                <strong>2° BERGAMO</strong> - Lager premium con integrazione Mg (25% produzioni)<br>
+                <strong>3° TRESCORE</strong> - Lager tradizionali tedesche (15% produzioni)<br>
+                <strong>4° COSTA VALLE IMAGNA</strong> - Session Beer e Pale Ale (10% produzioni)</p>
+            </div>
+            
+            <div style="background: rgba(155,89,182,0.2); padding: 20px; border-radius: 10px; border-left: 5px solid #9b59b6; margin: 20px 0;">
+                <h4>🔄 NOVITÀ: CAROBBIO BRITA EXPERIMENT</h4>
+                <p><strong>✅ La filtrazione Brita trasforma completamente Carobbio:</strong></p>
+                <p>• Durezza: -30% (da 27°F a 19°F)<br>
+                • Bicarbonati: -31% (da 319 a 220 mg/l)<br>
+                • pH migliorato: +0.2 punti<br>
+                • Da ★★☆☆☆ a ★★★★☆</p>
+                
+                <p><strong>💡 QUANDO USARLA:</strong></p>
+                <p>• Porter e Stout con carattere minerale<br>
+                • Esperimenti con birre maltate<br>
+                • Quando vuoi sperimentare il "salvataggio" di acque difficili</p>
+                
+                <p><strong>⚠️ COSTO-BENEFICIO:</strong></p>
+                <p>Costo: ~€60/anno | Beneficio: Acqua utilizzabile | Verdetto: Interessante ma non essenziale</p>
+            </div>
+            
+            <h4>💡 SETUP PRATICO FINALE</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0;">
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                    <strong>🏗️ SISTEMA PRINCIPALE:</strong><br>
+                    • Tubatura: Solto Collina<br>
+                    • Tanica 25L: Bergamo + Mg<br>
+                    • Tanica 10L: Trescore<br>
+                    • Tanica 5L: Costa Valle Imagna
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                    <strong>🧪 KIT CORREZIONI:</strong><br>
+                    • Solfato Magnesio (MgSO4·7H2O)<br>
+                    • Acido lattico al 80%<br>
+                    • Gypsum (CaSO4·2H2O)<br>
+                    • Opzionale: Filtro Brita
+                </div>
+            </div>
+            
+            <h4>🍺 GUIDA RAPIDA STILI</h4>
+            <p><strong>SOLTO COLLINA:</strong> Tutto (Pale Ale, IPA, Porter, Stout, Belgian, Weizen)<br>
+            <strong>BERGAMO + Mg:</strong> Lager premium (Pilsner, Helles, Märzen)<br>
+            <strong>TRESCORE:</strong> Lager tradizionali (Czech Pilsner, German Lager)<br>
+            <strong>COSTA VALLE:</strong> Session Beer, Pale Ale moderate<br>
+            <strong>CAROBBIO BRITA:</strong> Porter, Stout (esperimenti)</p>
+            
+            <h4>🔬 ESPERIMENTO CONSIGLIATO</h4>
+            <p>Prova a fare la stessa ricetta Porter con:</p>
+            <p>• Batch A: Solto Collina<br>
+            • Batch B: Carobbio Filtrata Brita<br>
+            • Confronta il profilo maltato e minerale!</p>
+            
+            <p><strong style="color: #f39c12; font-size: 1.2em;">🚀 RISULTATO: 4-5 acque top-tier, copertura 100% stili, massima qualità!</strong></p>
+        </div>
+    </div>
+</body>
+</html>
