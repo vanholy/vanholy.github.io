@@ -12,29 +12,67 @@
         }
         
         .artifact-section {
-            margin: 40px 0;
+            margin: 20px 0;
             border: 1px solid #ddd;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .artifact-section:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
         
         .artifact-header {
             background: #f8f9fa;
             padding: 15px 20px;
-            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .artifact-header:hover {
+            background: #e9ecef;
+        }
+        
+        .artifact-header-content {
+            flex: 1;
         }
         
         .artifact-title {
             margin: 0;
             color: #333;
-            font-size: 1.5em;
+            font-size: 1.3em;
         }
         
         .artifact-description {
             margin: 5px 0 0 0;
             color: #666;
             font-size: 0.9em;
+        }
+        
+        .artifact-toggle {
+            font-size: 1.5em;
+            color: #666;
+            transition: transform 0.3s ease;
+            user-select: none;
+        }
+        
+        .artifact-toggle.expanded {
+            transform: rotate(180deg);
+        }
+        
+        .artifact-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        
+        .artifact-content.expanded {
+            max-height: 1000px; /* Valore abbastanza grande per contenere l'iframe */
         }
         
         .artifact-iframe {
@@ -80,6 +118,21 @@
             font-size: 1.1em;
             opacity: 0.9;
         }
+        
+        .artifact-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+            font-size: 0.8em;
+        }
+        
+        .artifact-tag {
+            background: #e7f3ff;
+            color: #0066cc;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+        }
     </style>
 </head>
 <body>
@@ -91,28 +144,48 @@
         
         <!-- Artefatto 1: Profili Aromatici Luppoli -->
         <section class="artifact-section">
-            <div class="artifact-header">
-                <h2 class="artifact-title">Profili Aromatici dei Luppoli</h2>
-                <p class="artifact-description">Grafico interattivo che visualizza i profili aromatici dei diversi tipi di luppolo utilizzati nella produzione della birra</p>
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">📊 Profili Aromatici dei Luppoli</h2>
+                    <p class="artifact-description">Grafico interattivo che visualizza i profili aromatici dei diversi tipi di luppolo utilizzati nella produzione della birra</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Chart.js</span>
+                        <span class="artifact-tag">Interattivo</span>
+                        <span class="artifact-tag">Birra</span>
+                    </div>
+                </div>
+                <div class="artifact-toggle">▼</div>
             </div>
-            <iframe src="./hop-aroma-profiles-chart.html" class="artifact-iframe" height="600"></iframe>
-            <div class="artifact-links">
-                <a href="./hop-aroma-profiles-chart.html" target="_blank">Apri in nuova finestra</a>
-                <a href="https://github.com/vanholye/vanholye.github.io/blob/main/hop-aroma-profiles-chart.html" target="_blank">Codice sorgente</a>
+            <div class="artifact-content">
+                <iframe src="./hop-aroma-profiles-chart.html" class="artifact-iframe" height="600"></iframe>
+                <div class="artifact-links">
+                    <a href="./hop-aroma-profiles-chart.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/hop-aroma-profiles-chart.html" target="_blank">Codice sorgente</a>
+                </div>
             </div>
         </section>
         
         <!-- Template per futuri artefatti -->
         <!-- 
         <section class="artifact-section">
-            <div class="artifact-header">
-                <h2 class="artifact-title">Nome del Prossimo Artefatto</h2>
-                <p class="artifact-description">Descrizione del prossimo artefatto che aggiungerai</p>
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🚀 Nome del Prossimo Artefatto</h2>
+                    <p class="artifact-description">Descrizione del prossimo artefatto che aggiungerai</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">React</span>
+                        <span class="artifact-tag">3D</span>
+                        <span class="artifact-tag">Altro-tag</span>
+                    </div>
+                </div>
+                <div class="artifact-toggle">▼</div>
             </div>
-            <iframe src="./path-to-artifact.html" class="artifact-iframe" height="500"></iframe>
-            <div class="artifact-links">
-                <a href="./path-to-artifact.html" target="_blank">Apri in nuova finestra</a>
-                <a href="#" target="_blank">Codice sorgente</a>
+            <div class="artifact-content">
+                <iframe src="./path-to-artifact.html" class="artifact-iframe" height="500"></iframe>
+                <div class="artifact-links">
+                    <a href="./path-to-artifact.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="#" target="_blank">Codice sorgente</a>
+                </div>
             </div>
         </section>
         -->
@@ -125,5 +198,30 @@
             </p>
         </footer>
     </div>
+
+    <script>
+        function toggleArtifact(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.artifact-toggle');
+            
+            // Toggle classes
+            content.classList.toggle('expanded');
+            toggle.classList.toggle('expanded');
+            
+            // Optional: Close other open artifacts (accordion behavior)
+            // Uncomment the lines below if you want only one artifact open at a time
+            /*
+            const allContents = document.querySelectorAll('.artifact-content');
+            const allToggles = document.querySelectorAll('.artifact-toggle');
+            
+            allContents.forEach((otherContent, index) => {
+                if (otherContent !== content && otherContent.classList.contains('expanded')) {
+                    otherContent.classList.remove('expanded');
+                    allToggles[index].classList.remove('expanded');
+                }
+            });
+            */
+        }
+    </script>
 </body>
 </html>
