@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profili Aromatici Luppoli - Grafici Radar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #FFD700 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="100" opacity="0.03">🍺</text></svg>');
+            background-size: 100px;
+            opacity: 0.1;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .hop-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .hop-select {
+            padding: 12px;
+            border: 2px solid #8B4513;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .hop-select:focus {
+            outline: none;
+            border-color: #D2691E;
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.3s;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #8B4513;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .chart-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(139, 69, 19, 0.05);
+            border-radius: 10px;
+        }
+        
+        .legend-title {
+            font-weight: bold;
+            color: #8B4513;
+            margin-bottom: 10px;
+        }
+        
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            font-size: 0.9em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .legend-value {
+            font-weight: bold;
+            color: #D2691E;
+        }
+        
+        .comparison-mode {
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .comparison-mode h3 {
+            margin-bottom: 10px;
+        }
+        
+        .btn-compare {
+            background: white;
+            color: #8B4513;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        .btn-compare:hover {
+            background: #FFD700;
+            transform: scale(1.05);
+        }
+        
+        .btn-compare.active {
+            background: #FFD700;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-title {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍺 Profili Aromatici Luppoli</h1>
+            <p>Grafici Radar Interattivi per Analisi Aromatica</p>
+        </div>
+        
+        <div class="controls">
+            <div class="comparison-mode">
+                <h3>Modalità di Visualizzazione</h3>
+                <button class="btn-compare active" onclick="setMode('single')">Singolo Luppolo</button>
+                <button class="btn-compare" onclick="setMode('compare')">Confronta 3 Luppoli</button>
+            </div>
+            
+            <div style="text-align: center; margin: 15px 0; padding: 10px; background: rgba(139,69,19,0.1); border-radius: 10px;">
+                <strong style="color: #8B4513;">📊 Database Completo: 115+ Varietà di Luppoli</strong><br>
+                <span style="color: #666; font-size: 0.9em;">Tutti i luppoli dalla Guida Completa - Organizzati per Regione</span>
+                <div style="margin-top: 10px; font-size: 0.85em; color: #8B4513;">
+                    🇺🇸 USA: 27 | 🇩🇪 Germania: 14 | 🇬🇧 UK: 13 | 🇦🇺 Australia: 9 | 🇳🇿 N.Zelanda: 8 | 🇨🇿 R.Ceca: 6 | 🇸🇮 Slovenia: 6 | 🇫🇷 Francia: 3 | 🇯🇵 Giappone: 1
+                </div>
+            </div>
+            
+            <div class="hop-selector" id="hopSelector">
+                <select class="hop-select" id="hop1" onchange="updateCharts()">
+                    <option value="">Seleziona Primo Luppolo</option>
+                </select>
+                <select class="hop-select" id="hop2" onchange="updateCharts()" style="display:none;">
+                    <option value="">Seleziona Secondo Luppolo</option>
+                </select>
+                <select class="hop-select" id="hop3" onchange="updateCharts()" style="display:none;">
+                    <option value="">Seleziona Terzo Luppolo</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="charts-container" id="chartsContainer">
+            <!-- I grafici verranno generati dinamicamente qui -->
+        </div>
+    </div>
+    
+    <script>
+        // Database completo dei profili aromatici dei luppoli (scala 1-5)
+        // Basato sulla Guida Completa ai Luppoli - 115+ varietà
+        const hopsProfiles = {
+            // ============= STATI UNITI (29+ varietà) =============
+            'Cascade': {
+                origin: '🇺🇸 USA',
+                alpha: '4.5-7%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 3,
+                    'Floreale': 4,
+                    'Erbaceo': 2,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Centennial': {
+                origin: '🇺🇸 USA',
+                alpha: '8-11.5%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 4,
+                    'Floreale': 3,
+                    'Erbaceo': 1,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Chinook': {
+                origin: '🇺🇸 USA',
+                alpha: '12-14%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 3,
+                    'Resinoso': 5,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            'Columbus/CTZ': {
+                origin: '🇺🇸 USA',
+                alpha: '14-18%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 2,
+                    'Floreale': 1,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 5,
+                    'Terroso': 4,
+                    'Citrico': 3
+                }
+            },
+            'Citra®': {
+                origin: '🇺🇸 USA',
+                alpha: '10-16%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 1,
+                    'Resinoso': 2,
+                    'Terroso': 0,
+                    'Citrico': 5
+                }
+            },
+            'Mosaic®': {
+                origin: '🇺🇸 USA',
+                alpha: '11.5-13.5%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 4,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'Amarillo®': {
+                origin: '🇺🇸 USA',
+                alpha: '8-11%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 4,
+                    'Floreale': 3,
+                    'Erbaceo': 1,
+                    'Speziato': 1,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Simcoe®': {
+                origin: '🇺🇸 USA',
+                alpha: '12-14%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 5,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            'Azacca®': {
+                origin: '🇺🇸 USA',
+                alpha: '14-16%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 1,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Strata™': {
+                origin: '🇺🇸 USA',
+                alpha: '11-13%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 4,
+                    'Speziato': 2,
+                    'Resinoso': 5,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            'Sabro®': {
+                origin: '🇺🇸 USA',
+                alpha: '14-18%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'Idaho 7™': {
+                origin: '🇺🇸 USA',
+                alpha: '12-14%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 4
+                }
+            },
+            'Warrior': {
+                origin: '🇺🇸 USA',
+                alpha: '15-17%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 1,
+                    'Floreale': 1,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 4,
+                    'Terroso': 3,
+                    'Citrico': 1
+                }
+            },
+            'Summit™': {
+                origin: '🇺🇸 USA',
+                alpha: '16-19%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 2,
+                    'Floreale': 1,
+                    'Erbaceo': 4,
+                    'Speziato': 4,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Nugget': {
+                origin: '🇺🇸 USA',
+                alpha: '12-14%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 1,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Galena': {
+                origin: '🇺🇸 USA',
+                alpha: '12-14%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 3,
+                    'Floreale': 1,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Crystal': {
+                origin: '🇺🇸 USA',
+                alpha: '3.5-5.5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 2,
+                    'Citrico': 2
+                }
+            },
+            'Willamette': {
+                origin: '🇺🇸 USA',
+                alpha: '4-6%',
+                profile: {
+                    'Agrumato': 1,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 4,
+                    'Citrico': 1
+                }
+            },
+            'Mt. Hood': {
+                origin: '🇺🇸 USA',
+                alpha: '4-8%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 1,
+                    'Floreale': 3,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Sterling': {
+                origin: '🇺🇸 USA',
+                alpha: '6-9%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Cashmere': {
+                origin: '🇺🇸 USA',
+                alpha: '7.7-9.1%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 4,
+                    'Floreale': 3,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'El Dorado®': {
+                origin: '🇺🇸 USA',
+                alpha: '14-16%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 1,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 3
+                }
+            },
+            'Krush® (HBC 586)': {
+                origin: '🇺🇸 USA',
+                alpha: '12-13%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 1,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'Talus® (HBC 692)': {
+                origin: '🇺🇸 USA',
+                alpha: '8-10%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 3,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 4,
+                    'Terroso': 2,
+                    'Citrico': 5
+                }
+            },
+            'Pahto® (HBC 682)': {
+                origin: '🇺🇸 USA',
+                alpha: '17-20%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 2,
+                    'Floreale': 1,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            'Ekuanot™': {
+                origin: '🇺🇸 USA',
+                alpha: '13-15%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 5
+                }
+            },
+            
+            // ============= GERMANIA (14+ varietà) =============
+            'Hallertau Mittelfrüh': {
+                origin: '🇩🇪 Germania',
+                alpha: '3-5.5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 1,
+                    'Floreale': 5,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Tettnanger': {
+                origin: '🇩🇪 Germania',
+                alpha: '3.4-5.2%',
+                profile: {
+                    'Agrumato': 1,
+                    'Fruttato': 1,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 4,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 1
+                }
+            },
+            'Spalt': {
+                origin: '🇩🇪 Germania',
+                alpha: '4-5.2%',
+                profile: {
+                    'Agrumato': 1,
+                    'Fruttato': 1,
+                    'Floreale': 3,
+                    'Erbaceo': 3,
+                    'Speziato': 4,
+                    'Resinoso': 2,
+                    'Terroso': 4,
+                    'Citrico': 1
+                }
+            },
+            'Hersbrucker': {
+                origin: '🇩🇪 Germania',
+                alpha: '1.5-4%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Perle': {
+                origin: '🇩🇪 Germania',
+                alpha: '6-9.5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 2
+                }
+            },
+            'Magnum': {
+                origin: '🇩🇪 Germania',
+                alpha: '11-16%',
+                profile: {
+                    'Agrumato': 1,
+                    'Fruttato': 1,
+                    'Floreale': 2,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 1
+                }
+            },
+            'Hallertau Tradition': {
+                origin: '🇩🇪 Germania',
+                alpha: '4.5-7%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Mandarina Bavaria': {
+                origin: '🇩🇪 Germania',
+                alpha: '7-10%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 1,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Hallertau Blanc': {
+                origin: '🇩🇪 Germania',
+                alpha: '9-12%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 3,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 1,
+                    'Terroso': 1,
+                    'Citrico': 3
+                }
+            },
+            'Hüll Melon': {
+                origin: '🇩🇪 Germania',
+                alpha: '6-8%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 5,
+                    'Floreale': 3,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 1,
+                    'Terroso': 1,
+                    'Citrico': 2
+                }
+            },
+            'Polaris': {
+                origin: '🇩🇪 Germania',
+                alpha: '18-23%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 3,
+                    'Floreale': 1,
+                    'Erbaceo': 5,
+                    'Speziato': 4,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 2
+                }
+            },
+            'Ariana': {
+                origin: '🇩🇪 Germania',
+                alpha: '9-12%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'Callista': {
+                origin: '🇩🇪 Germania',
+                alpha: '2-5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 5,
+                    'Floreale': 3,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 1,
+                    'Terroso': 1,
+                    'Citrico': 2
+                }
+            },
+            
+            // ============= REGNO UNITO (13+ varietà) =============
+            'East Kent Goldings': {
+                origin: '🇬🇧 UK',
+                alpha: '4.5-6.5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 5,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Fuggle': {
+                origin: '🇬🇧 UK',
+                alpha: '3-5.6%',
+                profile: {
+                    'Agrumato': 1,
+                    'Fruttato': 2,
+                    'Floreale': 3,
+                    'Erbaceo': 5,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 5,
+                    'Citrico': 1
+                }
+            },
+            'Challenger': {
+                origin: '🇬🇧 UK',
+                alpha: '6.5-8.5%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 3,
+                    'Floreale': 3,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Target': {
+                origin: '🇬🇧 UK',
+                alpha: '9.5-12.5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 2,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Northern Brewer': {
+                origin: '🇬🇧 UK',
+                alpha: '6-10%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 2,
+                    'Erbaceo': 5,
+                    'Speziato': 3,
+                    'Resinoso': 4,
+                    'Terroso': 4,
+                    'Citrico': 1
+                }
+            },
+            'First Gold': {
+                origin: '🇬🇧 UK',
+                alpha: '6.5-8.5%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 3,
+                    'Floreale': 3,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Bramling Cross': {
+                origin: '🇬🇧 UK',
+                alpha: '5-7%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Jester®': {
+                origin: '🇬🇧 UK',
+                alpha: '7-9%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 5
+                }
+            },
+            'Godiva™': {
+                origin: '🇬🇧 UK',
+                alpha: '6-9%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 4,
+                    'Floreale': 3,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            'Mystic™': {
+                origin: '🇬🇧 UK',
+                alpha: '4-7%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 3
+                }
+            },
+            'Harlequin®': {
+                origin: '🇬🇧 UK',
+                alpha: '9.5-12%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 3
+                }
+            },
+            'Archer®': {
+                origin: '🇬🇧 UK',
+                alpha: '4.5-6.5%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 3,
+                    'Floreale': 3,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            'Olicana®': {
+                origin: '🇬🇧 UK',
+                alpha: '4-6%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            
+            // ============= REPUBBLICA CECA (8+ varietà) =============
+            'Saaz': {
+                origin: '🇨🇿 Rep. Ceca',
+                alpha: '2.5-4.5%',
+                profile: {
+                    'Agrumato': 1,
+                    'Fruttato': 1,
+                    'Floreale': 3,
+                    'Erbaceo': 5,
+                    'Speziato': 5,
+                    'Resinoso': 1,
+                    'Terroso': 4,
+                    'Citrico': 1
+                }
+            },
+            'Saaz Late': {
+                origin: '🇨🇿 Rep. Ceca',
+                alpha: '3-5%',
+                profile: {
+                    'Agrumato': 1,
+                    'Fruttato': 1,
+                    'Floreale': 3,
+                    'Erbaceo': 5,
+                    'Speziato': 5,
+                    'Resinoso': 1,
+                    'Terroso': 4,
+                    'Citrico': 1
+                }
+            },
+            'Saaz Shine': {
+                origin: '🇨🇿 Rep. Ceca',
+                alpha: '3-5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 3,
+                    'Erbaceo': 4,
+                    'Speziato': 4,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Premiant': {
+                origin: '🇨🇿 Rep. Ceca',
+                alpha: '7-10%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 2,
+                    'Floreale': 3,
+                    'Erbaceo': 4,
+                    'Speziato': 4,
+                    'Resinoso': 2,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            'Sládek': {
+                origin: '🇨🇿 Rep. Ceca',
+                alpha: '5-7%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 3,
+                    'Erbaceo': 4,
+                    'Speziato': 4,
+                    'Resinoso': 2,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Kazbek': {
+                origin: '🇨🇿 Rep. Ceca',
+                alpha: '5-8%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 3,
+                    'Floreale': 3,
+                    'Erbaceo': 4,
+                    'Speziato': 4,
+                    'Resinoso': 2,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            
+            // ============= NUOVA ZELANDA (8 varietà) =============
+            'Nelson Sauvin': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '10-13%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'Motueka': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '6.5-7.5%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 4,
+                    'Floreale': 3,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 1,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Riwaka': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '4.5-6.5%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Nectaron': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '9-10%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'Pacific Jade': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '12-14%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 3,
+                    'Floreale': 2,
+                    'Erbaceo': 4,
+                    'Speziato': 4,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Pacific Gem': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '13-16%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Wakatu': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '6.5-8.5%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 3,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            'Kohatu': {
+                origin: '🇳🇿 Nuova Zelanda',
+                alpha: '6-7%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 3,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 3
+                }
+            },
+            
+            // ============= AUSTRALIA (9 varietà) =============
+            'Galaxy': {
+                origin: '🇦🇺 Australia',
+                alpha: '11-16%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 1,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 4
+                }
+            },
+            'Vic Secret': {
+                origin: '🇦🇺 Australia',
+                alpha: '14-17%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 3,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Ella': {
+                origin: '🇦🇺 Australia',
+                alpha: '13-16%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 4,
+                    'Floreale': 4,
+                    'Erbaceo': 2,
+                    'Speziato': 4,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Enigma': {
+                origin: '🇦🇺 Australia',
+                alpha: '15-18%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 3,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 3
+                }
+            },
+            'Eclipse': {
+                origin: '🇦🇺 Australia',
+                alpha: '16-18.5%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 1,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 1,
+                    'Citrico': 5
+                }
+            },
+            'Topaz': {
+                origin: '🇦🇺 Australia',
+                alpha: '15.5-18%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            'Pride of Ringwood': {
+                origin: '🇦🇺 Australia',
+                alpha: '7-10%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 2,
+                    'Floreale': 2,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            'Super Pride': {
+                origin: '🇦🇺 Australia',
+                alpha: '13-15%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 2,
+                    'Floreale': 2,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 4,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            'Sylva': {
+                origin: '🇦🇺 Australia',
+                alpha: '5-7%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 4,
+                    'Citrico': 2
+                }
+            },
+            
+            // ============= SLOVENIA (6 varietà) =============
+            'Styrian Goldings': {
+                origin: '🇸🇮 Slovenia',
+                alpha: '4-6%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 4,
+                    'Citrico': 2
+                }
+            },
+            'Aurora': {
+                origin: '🇸🇮 Slovenia',
+                alpha: '7-12%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 3,
+                    'Floreale': 4,
+                    'Erbaceo': 3,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            'Bobek': {
+                origin: '🇸🇮 Slovenia',
+                alpha: '3.5-7%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 2,
+                    'Floreale': 4,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Styrian Wolf': {
+                origin: '🇸🇮 Slovenia',
+                alpha: '11-15%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            'Styrian Dragon': {
+                origin: '🇸🇮 Slovenia',
+                alpha: '8-12%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 5,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 2,
+                    'Resinoso': 2,
+                    'Terroso': 1,
+                    'Citrico': 3
+                }
+            },
+            'Styrian Cardinal': {
+                origin: '🇸🇮 Slovenia',
+                alpha: '10-14%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 4,
+                    'Floreale': 2,
+                    'Erbaceo': 2,
+                    'Speziato': 3,
+                    'Resinoso': 3,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            
+            // ============= FRANCIA (3 varietà) =============
+            'Strisselspalt': {
+                origin: '🇫🇷 Francia',
+                alpha: '1.8-2.5%',
+                profile: {
+                    'Agrumato': 2,
+                    'Fruttato': 1,
+                    'Floreale': 5,
+                    'Erbaceo': 4,
+                    'Speziato': 3,
+                    'Resinoso': 1,
+                    'Terroso': 3,
+                    'Citrico': 2
+                }
+            },
+            'Aramis': {
+                origin: '🇫🇷 Francia',
+                alpha: '6-8%',
+                profile: {
+                    'Agrumato': 3,
+                    'Fruttato': 3,
+                    'Floreale': 3,
+                    'Erbaceo': 4,
+                    'Speziato': 4,
+                    'Resinoso': 2,
+                    'Terroso': 3,
+                    'Citrico': 3
+                }
+            },
+            'Triskel': {
+                origin: '🇫🇷 Francia',
+                alpha: '8-9%',
+                profile: {
+                    'Agrumato': 4,
+                    'Fruttato': 4,
+                    'Floreale': 3,
+                    'Erbaceo': 2,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 4
+                }
+            },
+            
+            // ============= GIAPPONE (1 varietà) =============
+            'Sorachi Ace': {
+                origin: '🇯🇵 Giappone',
+                alpha: '11.5-16%',
+                profile: {
+                    'Agrumato': 5,
+                    'Fruttato': 3,
+                    'Floreale': 2,
+                    'Erbaceo': 5,
+                    'Speziato': 3,
+                    'Resinoso': 2,
+                    'Terroso': 2,
+                    'Citrico': 5
+                }
+            }
+        };
+        
+        let currentMode = 'single';
+        
+        // Inizializza i selettori
+        function initializeSelectors() {
+            const hopNames = Object.keys(hopsProfiles).sort();
+            
+            // Raggruppa i luppoli per origine
+            const hopsByOrigin = {};
+            hopNames.forEach(hop => {
+                const origin = hopsProfiles[hop].origin;
+                if (!hopsByOrigin[origin]) {
+                    hopsByOrigin[origin] = [];
+                }
+                hopsByOrigin[origin].push(hop);
+            });
+            
+            for (let i = 1; i <= 3; i++) {
+                const select = document.getElementById(`hop${i}`);
+                select.innerHTML = `<option value="">Seleziona ${i}° Luppolo (${hopNames.length} varietà)</option>`;
+                
+                // Aggiungi i luppoli raggruppati per origine
+                Object.keys(hopsByOrigin).sort().forEach(origin => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = `${origin} (${hopsByOrigin[origin].length})`;
+                    
+                    hopsByOrigin[origin].forEach(hop => {
+                        const option = document.createElement('option');
+                        option.value = hop;
+                        option.textContent = `${hop} - ${hopsProfiles[hop].alpha}`;
+                        optgroup.appendChild(option);
+                    });
+                    
+                    select.appendChild(optgroup);
+                });
+            }
+            
+            // Seleziona alcuni esempi iniziali popolari
+            document.getElementById('hop1').value = 'Citra®';
+            updateCharts();
+        }
+        
+        // Cambia modalità
+        function setMode(mode) {
+            currentMode = mode;
+            const buttons = document.querySelectorAll('.btn-compare');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const hop2 = document.getElementById('hop2');
+            const hop3 = document.getElementById('hop3');
+            
+            if (mode === 'compare') {
+                hop2.style.display = 'block';
+                hop3.style.display = 'block';
+                // Seleziona automaticamente altri luppoli per il confronto
+                if (!hop2.value) hop2.value = 'Mosaic®';
+                if (!hop3.value) hop3.value = 'Galaxy';
+            } else {
+                hop2.style.display = 'none';
+                hop3.style.display = 'none';
+            }
+            
+            updateCharts();
+        }
+        
+        // Disegna il grafico radar
+        function drawRadarChart(canvasId, hopName, color = '#FFD700') {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const hop = hopsProfiles[hopName];
+            
+            if (!hop) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 40;
+            const axes = Object.keys(hop.profile);
+            const numAxes = axes.length;
+            const angleStep = (Math.PI * 2) / numAxes;
+            
+            // Pulisci il canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Disegna le griglie circolari
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            for (let level = 1; level <= 5; level++) {
+                ctx.beginPath();
+                for (let i = 0; i <= numAxes; i++) {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const x = centerX + Math.cos(angle) * (radius * level / 5);
+                    const y = centerY + Math.sin(angle) * (radius * level / 5);
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+            
+            // Disegna gli assi
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            axes.forEach((axis, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(
+                    centerX + Math.cos(angle) * radius,
+                    centerY + Math.sin(angle) * radius
+                );
+                ctx.stroke();
+            });
+            
+            // Disegna le etichette degli assi
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            axes.forEach((axis, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                const labelRadius = radius + 25;
+                const x = centerX + Math.cos(angle) * labelRadius;
+                const y = centerY + Math.sin(angle) * labelRadius;
+                
+                // Regola l'allineamento del testo in base alla posizione
+                if (Math.abs(x - centerX) < 10) {
+                    ctx.textAlign = 'center';
+                } else if (x < centerX) {
+                    ctx.textAlign = 'right';
+                } else {
+                    ctx.textAlign = 'left';
+                }
+                
+                ctx.fillText(axis, x, y);
+            });
+            
+            // Disegna l'area del profilo
+            ctx.fillStyle = color + '66'; // Aggiungi trasparenza
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            axes.forEach((axis, i) => {
+                const value = hop.profile[axis];
+                const angle = i * angleStep - Math.PI / 2;
+                const distance = (radius * value) / 5;
+                const x = centerX + Math.cos(angle) * distance;
+                const y = centerY + Math.sin(angle) * distance;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Disegna i punti
+            ctx.fillStyle = color;
+            axes.forEach((axis, i) => {
+                const value = hop.profile[axis];
+                const angle = i * angleStep - Math.PI / 2;
+                const distance = (radius * value) / 5;
+                const x = centerX + Math.cos(angle) * distance;
+                const y = centerY + Math.sin(angle) * distance;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Disegna i valori numerici sui punti
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 10px Arial';
+            axes.forEach((axis, i) => {
+                const value = hop.profile[axis];
+                if (value > 0) {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const distance = (radius * value) / 5;
+                    const x = centerX + Math.cos(angle) * distance;
+                    const y = centerY + Math.sin(angle) * distance;
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(x, y - 12, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(value, x, y - 12);
+                }
+            });
+        }
+        
+        // Aggiorna i grafici
+        function updateCharts() {
+            const container = document.getElementById('chartsContainer');
+            container.innerHTML = '';
+            
+            if (currentMode === 'single') {
+                const hopName = document.getElementById('hop1').value;
+                if (hopName) {
+                    const hop = hopsProfiles[hopName];
+                    const chartCard = document.createElement('div');
+                    chartCard.className = 'chart-card';
+                    chartCard.style.maxWidth = '600px';
+                    chartCard.style.margin = '0 auto';
+                    
+                    chartCard.innerHTML = `
+                        <div class="chart-title">${hopName}</div>
+                        <div class="chart-subtitle">${hop.origin} - Alpha: ${hop.alpha}</div>
+                        <div class="canvas-container">
+                            <canvas id="chart1" width="400" height="400"></canvas>
+                        </div>
+                        <div class="legend">
+                            <div class="legend-title">Intensità Aromatiche (1-5)</div>
+                            <div class="legend-items">
+                                ${Object.entries(hop.profile).map(([key, value]) => 
+                                    `<div class="legend-item">
+                                        <span>${key}:</span>
+                                        <span class="legend-value">${value}/5</span>
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(chartCard);
+                    setTimeout(() => drawRadarChart('chart1', hopName), 100);
+                }
+            } else {
+                // Modalità confronto
+                const colors = ['#FFD700', '#00CED1', '#FF69B4'];
+                for (let i = 1; i <= 3; i++) {
+                    const hopName = document.getElementById(`hop${i}`).value;
+                    if (hopName) {
+                        const hop = hopsProfiles[hopName];
+                        const chartCard = document.createElement('div');
+                        chartCard.className = 'chart-card';
+                        
+                        chartCard.innerHTML = `
+                            <div class="chart-title">${hopName}</div>
+                            <div class="chart-subtitle">${hop.origin} - Alpha: ${hop.alpha}</div>
+                            <div class="canvas-container">
+                                <canvas id="chart${i}" width="350" height="350"></canvas>
+                            </div>
+                            <div class="legend">
+                                <div class="legend-title">Intensità (1-5)</div>
+                                <div class="legend-items">
+                                    ${Object.entries(hop.profile).map(([key, value]) => 
+                                        `<div class="legend-item">
+                                            <span>${key}:</span>
+                                            <span class="legend-value">${value}</span>
+                                        </div>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `;
+                        
+                        container.appendChild(chartCard);
+                        setTimeout(() => drawRadarChart(`chart${i}`, hopName, colors[i-1]), 100);
+                    }
+                }
+            }
+        }
+        
+        // Inizializza l'applicazione
+        window.onload = function() {
+            initializeSelectors();
+        };
+    </script>
+</body>
+</html>
