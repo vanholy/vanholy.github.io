@@ -1,72 +1,129 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VURGANO VR - Esplora Mondi Virtuali</title>
+    <title>Galleria Artefatti Claude</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Stili specifici per la galleria artefatti */
+        .artifacts-gallery {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .artifact-section {
+            margin: 40px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .artifact-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .artifact-title {
+            margin: 0;
+            color: #333;
+            font-size: 1.5em;
+        }
+        
+        .artifact-description {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .artifact-iframe {
+            width: 100%;
+            border: none;
+            display: block;
+        }
+        
+        .artifact-links {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+            text-align: right;
+        }
+        
+        .artifact-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 15px;
+            font-size: 0.9em;
+        }
+        
+        .artifact-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin: 40px 0;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .page-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        
+        .page-header p {
+            margin: 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
-
-    <header class="center-container">
-        <div class="container">
-            <h1>VURGANO VR</h1>
+    <div class="artifacts-gallery">
+        <div class="page-header">
+            <h1>🎨 Galleria Artefatti Claude</h1>
+            <p>Una collezione di progetti interattivi e visualizzazioni create con Claude AI</p>
         </div>
-    </header>
-    
-   <h1>Galleria Artefatti</h1>
-    
-    <!-- Artefatto 1 -->
-    <section>
-        <h2>Nome Artefatto</h2>
-        <iframe src="./hop-aroma-profiles-chart.html" width="100%" height="600"></iframe>
-    </section>
-    
-    <!-- Artefatto 2 -->
-    <section>
-        <h2>Altro Artefatto</h2>
-        <iframe src="./artifacts/artifact2.html" width="100%" height="400"></iframe>
-    </section>
-    <section id="hero" class="center-container">
-        <div class="container">
-            <h2>Immergiti nell'Esperienza VR</h2>
-            <p>Creiamo applicazioni VR innovative per aziende e privati.</p>
-            <a href="#contact" class="btn">Contattaci</a>
-        </div>
-    </section>
-
-    <section id="about" class="center-container">
-        <div class="container">
-            <h2>Chi Siamo</h2>
-            <p>Siamo un team appassionato di realtà virtuale, specializzato nella creazione di esperienze immersive e coinvolgenti.</p>
-            <img src="assets/0.jpg" alt="Team VURGANO VR">
-        </div>
-    </section>
-
-    <section id="portfolio" class="center-container">
-        <div class="container">
-            <h2>Portfolio</h2>
-            <div class="gallery">
-                <img src="assets/1.jpg" alt="Progetto 1">
-                <img src="assets/2.jpg" alt="Progetto 2">
-                <img src="assets/3.jpg" alt="Progetto 3">
+        
+        <!-- Artefatto 1: Profili Aromatici Luppoli -->
+        <section class="artifact-section">
+            <div class="artifact-header">
+                <h2 class="artifact-title">Profili Aromatici dei Luppoli</h2>
+                <p class="artifact-description">Grafico interattivo che visualizza i profili aromatici dei diversi tipi di luppolo utilizzati nella produzione della birra</p>
             </div>
-        </div>
-    </section>
-
-    <section id="contact" class="center-container">
-        <div class="container">
-            <h2>Contatti</h2>
-            <form>
-            <!-- Add your form elements here -->
-            </form>
-        </div>
-    </section>
-
-    <footer class="center-container">
-        <div class="container">
-           <p><a href="mailto:higgorjjanimal@yahoo.it">Contattaci via email</a></p>
-            <p>&copy; 2024 VURGANO VR</p> 
-        </div>
-    </footer>
-
+            <iframe src="./hop-aroma-profiles-chart.html" class="artifact-iframe" height="600"></iframe>
+            <div class="artifact-links">
+                <a href="./hop-aroma-profiles-chart.html" target="_blank">Apri in nuova finestra</a>
+                <a href="https://github.com/vanholye/vanholye.github.io/blob/main/hop-aroma-profiles-chart.html" target="_blank">Codice sorgente</a>
+            </div>
+        </section>
+        
+        <!-- Template per futuri artefatti -->
+        <!-- 
+        <section class="artifact-section">
+            <div class="artifact-header">
+                <h2 class="artifact-title">Nome del Prossimo Artefatto</h2>
+                <p class="artifact-description">Descrizione del prossimo artefatto che aggiungerai</p>
+            </div>
+            <iframe src="./path-to-artifact.html" class="artifact-iframe" height="500"></iframe>
+            <div class="artifact-links">
+                <a href="./path-to-artifact.html" target="_blank">Apri in nuova finestra</a>
+                <a href="#" target="_blank">Codice sorgente</a>
+            </div>
+        </section>
+        -->
+        
+        <footer style="text-align: center; margin-top: 60px; padding: 40px 20px; border-top: 1px solid #eee;">
+            <p style="color: #666; margin: 0;">
+                💡 Artefatti creati con <a href="https://claude.ai" target="_blank" style="color: #007bff;">Claude AI</a> • 
+                <a href="https://github.com/vanholye" target="_blank" style="color: #007bff;">GitHub</a> • 
+                <a href="mailto:higgorjjanimal@yahoo.it" style="color: #007bff;">Contatti</a>
+            </p>
+        </footer>
+    </div>
 </body>
 </html>
