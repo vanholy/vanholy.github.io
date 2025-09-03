@@ -456,10 +456,11 @@
             position: relative;
             width: 60px;
             height: 30px;
-            background: rgba(255, 255, 255, 0.3);
+            background: #8B4513;
             border-radius: 15px;
             cursor: pointer;
             transition: all 0.3s;
+            border: 2px solid #D2691E;
         }
         
         .toggle-switch.overlay {
@@ -3280,6 +3281,7 @@
         
         // Inizializza l'applicazione
         window.onload = function() {
+            initializeLanguage();
             initializeSelectors();
             
             // Inizializza le frecce di navigazione
