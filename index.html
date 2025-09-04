@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Galleria Artefatti Claude</title>
+    <title>🍺 Homebrewing Hub - Guide & Strumenti per Birrai</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* Stili specifici per la galleria artefatti */
@@ -9,6 +9,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            background: linear-gradient(135deg, #fdf5e6 0%, #fff8dc 100%);
+            min-height: 100vh;
         }
         
         .artifact-section {
@@ -103,9 +105,10 @@
             text-align: center;
             margin: 40px 0;
             padding: 40px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #d4b062 0%, #8b4513 50%, #654321 100%);
             color: white;
             border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.3);
         }
         
         .page-header h1 {
@@ -127,20 +130,194 @@
         }
         
         .artifact-tag {
-            background: #e7f3ff;
-            color: #0066cc;
+            background: #fff3cd;
+            color: #856404;
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 0.75em;
+            border: 1px solid #ffeaa7;
+        }
+        
+        /* Stili per la sezione guide */
+        .guides-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f4e6 0%, #f5e6d3 100%);
+            border-radius: 15px;
+            border: 2px solid #d4b062;
+            box-shadow: 0 6px 20px rgba(212, 176, 98, 0.2);
+        }
+        
+        .guides-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .guides-header h2 {
+            color: #8b4513;
+            font-size: 2.2em;
+            margin: 0 0 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .guides-header p {
+            color: #654321;
+            font-size: 1.1em;
+            margin: 0;
+        }
+        
+        .guides-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .guide-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid #f0e6d6;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .guide-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #d4b062, #8b4513);
+        }
+        
+        .guide-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #d4b062;
+        }
+        
+        .guide-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .guide-title {
+            color: #8b4513;
+            font-size: 1.3em;
+            margin: 0 0 12px 0;
+            font-weight: bold;
+        }
+        
+        .guide-description {
+            color: #666;
+            margin: 0 0 20px 0;
+            line-height: 1.6;
+        }
+        
+        .guide-stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .guide-stat {
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .guide-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #d4b062, #8b4513);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(139, 69, 19, 0.3);
+        }
+        
+        .guide-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.4);
+            text-decoration: none;
+        }
+        
+        .section-divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #d4b062, transparent);
+            margin: 50px 0;
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
     <div class="artifacts-gallery">
         <div class="page-header">
-            <h1>🎨 Galleria Artefatti Claude</h1>
-            <p>Una collezione di progetti interattivi e visualizzazioni create con Claude AI</p>
+            <h1>🍺 Homebrewing Hub</h1>
+            <p>Guide tecniche complete e strumenti interattivi per l'homebrewing professionale</p>
         </div>
+        
+        <!-- Sezione Guide -->
+        <section class="guides-section">
+            <div class="guides-header">
+                <h2>📚 Guide Tecniche</h2>
+                <p>Documentazione completa per malti, luppoli e tecniche avanzate di birrificazione</p>
+            </div>
+            <div class="guides-grid">
+                <div class="guide-card">
+                    <span class="guide-icon">🌾</span>
+                    <h3 class="guide-title">Guida Completa ai Malti</h3>
+                    <p class="guide-description">Guida tecnica completa per oltre 200 malti dai principali maltatori mondiali, con specifiche per Brewfather e ottimizzazione per attrezzatura casalinga.</p>
+                    <div class="guide-stats">
+                        <span class="guide-stat">200+ Malti</span>
+                        <span class="guide-stat">Brewfather</span>
+                        <span class="guide-stat">Parametri Tecnici</span>
+                        <span class="guide-stat">Homebrewing</span>
+                    </div>
+                    <a href="./guida di tutti i malti.md" class="guide-link" target="_blank">
+                        <span>📖</span> Leggi la Guida
+                    </a>
+                </div>
+                
+                <div class="guide-card">
+                    <span class="guide-icon">🌿</span>
+                    <h3 class="guide-title">Guida Completa ai Luppoli</h3>
+                    <p class="guide-description">115+ varietà di luppoli da tutto il mondo organizzate per categorie e stili birrari, con informazioni complete per homebrewer esperti.</p>
+                    <div class="guide-stats">
+                        <span class="guide-stat">115+ Varietà</span>
+                        <span class="guide-stat">Brewfather</span>
+                        <span class="guide-stat">IBU & Dosaggi</span>
+                        <span class="guide-stat">Cryo Hops</span>
+                    </div>
+                    <a href="./Guida Completa ai Luppoli per Homebrewing 115+ Varietà Tecniche per Brewfather.md" class="guide-link" target="_blank">
+                        <span>🔗</span> Leggi la Guida
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <div class="section-divider"></div>
+        
+        <!-- Sezione Strumenti Interattivi -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">⚡ Strumenti Interattivi</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Visualizzazioni e calcolatori per l'analisi avanzata degli ingredienti</p>
+            </div>
+        </section>
         
         <!-- Artefatto 1: Profili Aromatici Luppoli -->
         <section class="artifact-section">
@@ -264,11 +441,14 @@
         </section>
         -->
         
-        <footer style="text-align: center; margin-top: 60px; padding: 40px 20px; border-top: 1px solid #eee;">
-            <p style="color: #666; margin: 0;">
-                💡 Artefatti creati con <a href="https://claude.ai" target="_blank" style="color: #007bff;">Claude AI</a> • 
-                <a href="https://github.com/vanholye" target="_blank" style="color: #007bff;">GitHub</a> • 
-                <a href="mailto:higgorjjanimal@yahoo.it" style="color: #007bff;">Contatti</a>
+        <footer style="text-align: center; margin-top: 60px; padding: 40px 20px; border-top: 3px solid #d4b062; background: linear-gradient(135deg, #f8f4e6 0%, #f5e6d3 100%); border-radius: 12px;">
+            <p style="color: #8b4513; margin: 0; font-weight: 500;">
+                🍺 Guide & Strumenti creati con <a href="https://claude.ai" target="_blank" style="color: #8b4513; font-weight: bold;">Claude AI</a> • 
+                <a href="https://github.com/vanholye" target="_blank" style="color: #8b4513; font-weight: bold;">GitHub</a> • 
+                <a href="mailto:higgorjjanimal@yahoo.it" style="color: #8b4513; font-weight: bold;">Contatti</a>
+            </p>
+            <p style="color: #654321; margin: 10px 0 0 0; font-size: 0.9em;">
+                Per homebrewer appassionati - Dalla teoria alla pratica
             </p>
         </footer>
     </div>
