@@ -167,10 +167,11 @@
         }
         
         .guides-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            display: flex;
+            justify-content: center;
             gap: 25px;
             margin-top: 25px;
+            flex-wrap: wrap;
         }
         
         .guide-card {
@@ -182,6 +183,8 @@
             border: 2px solid #f0e6d6;
             position: relative;
             overflow: hidden;
+            width: 280px;
+            flex-shrink: 0;
         }
         
         .guide-card:before {
@@ -287,7 +290,7 @@
                         <span class="guide-stat">Parametri Tecnici</span>
                         <span class="guide-stat">Homebrewing</span>
                     </div>
-                    <a href="./guida di tutti i malti.md" class="guide-link" target="_blank">
+                    <a href="./guida-malti.html" class="guide-link" target="_blank">
                         <span>📖</span> Leggi la Guida
                     </a>
                 </div>
@@ -302,7 +305,7 @@
                         <span class="guide-stat">IBU & Dosaggi</span>
                         <span class="guide-stat">Cryo Hops</span>
                     </div>
-                    <a href="./Guida Completa ai Luppoli per Homebrewing 115+ Varietà Tecniche per Brewfather.md" class="guide-link" target="_blank">
+                    <a href="./guida-luppoli.html" class="guide-link" target="_blank">
                         <span>🔗</span> Leggi la Guida
                     </a>
                 </div>

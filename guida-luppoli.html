@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌿 Guida Completa ai Luppoli - Homebrewing Hub</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #fdf5e6 0%, #fff8dc 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #228b22 0%, #32cd32 50%, #90ee90 100%);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(34, 139, 34, 0.3);
+        }
+
+        .header h1 {
+            margin: 0 0 15px 0;
+            font-size: 2.8em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .toc {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #90ee90;
+        }
+
+        .toc h2 {
+            color: #228b22;
+            margin: 0 0 20px 0;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .toc ul {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc li {
+            padding: 8px 12px;
+            background: #f0fff0;
+            border-radius: 8px;
+            border-left: 4px solid #32cd32;
+        }
+
+        .toc a {
+            color: #228b22;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .toc a:hover {
+            color: #006400;
+        }
+
+        .content-section {
+            background: white;
+            border-radius: 12px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #90ee90;
+        }
+
+        h1 {
+            color: #228b22;
+            font-size: 2.2em;
+            margin: 0 0 25px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            border-bottom: 3px solid #32cd32;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #228b22;
+            font-size: 1.8em;
+            margin: 30px 0 20px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        h2:before {
+            content: '🌿';
+            position: absolute;
+            left: -10px;
+            top: 0;
+        }
+
+        h3 {
+            color: #006400;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+            font-weight: 600;
+        }
+
+        p {
+            margin: 15px 0;
+            text-align: justify;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: linear-gradient(135deg, #32cd32, #228b22);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #90ee90;
+        }
+
+        tr:hover {
+            background: #f0fff0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #f0fff0 0%, #e6ffe6 100%);
+            border: 2px solid #32cd32;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .highlight-box:before {
+            content: '⭐';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 1.2em;
+        }
+
+        .formula-box {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .formula-box:before {
+            content: '🧮';
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin-right: 10px;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box:before {
+            content: '⚠️ ';
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+            border: 2px solid #03a9f4;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-box:before {
+            content: 'ℹ️ ';
+            font-weight: bold;
+        }
+
+        strong {
+            color: #228b22;
+            font-weight: 600;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        .hop-variety {
+            background: linear-gradient(135deg, #f0fff0 0%, #e6ffe6 100%);
+            border: 1px solid #90ee90;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .hop-variety h4 {
+            margin: 0 0 10px 0;
+            color: #228b22;
+            font-size: 1.1em;
+        }
+
+        .hop-stats {
+            display: flex;
+            gap: 15px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+
+        .hop-stat {
+            background: #ffffff;
+            color: #228b22;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            border: 1px solid #90ee90;
+            font-weight: 500;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #32cd32, #228b22);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(34, 139, 34, 0.4);
+        }
+
+        .region-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #32cd32, #228b22);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin: 5px 5px 5px 0;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .content-section {
+                padding: 20px;
+            }
+            
+            .toc ul {
+                grid-template-columns: 1fr;
+            }
+            
+            .hop-stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="./index.html" class="back-link">
+                <span>←</span> Torna alla Homepage
+            </a>
+            <h1>🌿 Guida Completa ai Luppoli</h1>
+            <p>115+ varietà tecniche per homebrewing professionale - Da Noble a Cryo Hops</p>
+        </div>
+
+        <div class="toc">
+            <h2>📋 Indice dei Contenuti</h2>
+            <ul>
+                <li><a href="#panoramica">Panoramica</a></li>
+                <li><a href="#lager-pilsner">Lager & Pilsner</a></li>
+                <li><a href="#ipa-pale">IPA & Pale Ale</a></li>
+                <li><a href="#neipa">NEIPA & Hazy IPA</a></li>
+                <li><a href="#west-coast">West Coast IPA</a></li>
+                <li><a href="#belghe-saison">Birre Belghe & Saison</a></li>
+                <li><a href="#stout-porter">Stout & Porter</a></li>
+                <li><a href="#tedesche">Birre Tedesche</a></li>
+                <li><a href="#parametri-tecnici">Parametri Tecnici</a></li>
+                <li><a href="#regioni">Varietà per Regione</a></li>
+                <li><a href="#tecnologie">Tecnologie Moderne</a></li>
+                <li><a href="#combinazioni">Combinazioni & Blend</a></li>
+                <li><a href="#storage">Storage & Handling</a></li>
+            </ul>
+        </div>
+
+        <div class="content-section" id="panoramica">
+            <h1>Panoramica</h1>
+            <p>Questa guida tecnica presenta <strong>115+ varietà di luppoli</strong> da tutto il mondo, organizzate per categorie e stili birrari, con informazioni complete per homebrewer esperti che utilizzano Brewfather. Include luppoli classici Noble, varietà americane moderne, innovazioni europee, varietà dell'emisfero australe e le ultime tendenze tecnologiche.</p>
+
+            <div class="info-box">
+                <h3>Come Utilizzare Questa Guida</h3>
+                <ul>
+                    <li><strong>Navigazione per Stile:</strong> Trova luppoli specifici per il tuo stile preferito</li>
+                    <li><strong>Parametri Tecnici:</strong> Dati precisi per Brewfather e recipe design</li>
+                    <li><strong>Dosaggi:</strong> Raccomandazioni in g/L per ogni utilizzo</li>
+                    <li><strong>Combinazioni:</strong> Blend testati e comprovati</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section" id="lager-pilsner">
+            <h1>Lager e Pilsner</h1>
+            
+            <h2>Luppoli Noble Classici</h2>
+            <p>I luppoli Noble rappresentano l'eccellenza tradizionale per lager e pilsner, caratterizzati da profili delicati, equilibrati e complessi.</p>
+
+            <div class="hop-variety">
+                <h4>🇨🇿 Saaz (Repubblica Ceca)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">2,5-4,5% AA</span>
+                    <span class="hop-stat">Speziato-Terroso-Erbaceo</span>
+                    <span class="hop-stat">1-2,5 g/L aroma</span>
+                </div>
+                <p>Il re indiscusso dei luppoli per Pilsner. Profilo speziato distintivo con note terrose e erbacee. Fondamentale per Czech Pilsner autentiche.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇩🇪 Hallertau Mittelfrüh (Germania)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">3,0-5,5% AA</span>
+                    <span class="hop-stat">Floreale-Erbaceo-Citrico</span>
+                    <span class="hop-stat">1-3 g/L</span>
+                </div>
+                <p>Luppolo noble tedesco per eccellenza. Equilibrio perfetto tra floreale e citrico, ideale per German Pilsner e Helles.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇩🇪 Tettnanger (Germania)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">3,4-5,2% AA</span>
+                    <span class="hop-stat">Speziato-Floreale</span>
+                    <span class="hop-stat">Dual-purpose</span>
+                </div>
+                <p>Versatile luppolo tedesco con carattere noble speziato-floreale equilibrato. Perfetto per Wheat beers e Lagers.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇩🇪 Spalt/Spalter (Germania)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">4,0-5,2% AA</span>
+                    <span class="hop-stat">Noble-Legnoso-Pepato</span>
+                </div>
+                <p>Carattere noble legnoso-pepato distintivo. Tradizionalmente usato in Altbier e lagers tedesche.</p>
+            </div>
+
+            <h2>Varietà Moderne per Lager</h2>
+
+            <div class="hop-variety">
+                <h4>🇨🇿 Premiant (Repubblica Ceca)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">7-10% AA</span>
+                    <span class="hop-stat">Più citrico del Saaz</span>
+                    <span class="hop-stat">Buono per bittering</span>
+                </div>
+                <p>Evoluzione moderna del Saaz con alpha acids più elevati. Mantiene carattere ceco con maggiore potenza.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇳🇿 Wakatu (Nuova Zelanda)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">6,5-8,5% AA</span>
+                    <span class="hop-stat">Citrico fresco</span>
+                    <span class="hop-stat">Eredità noble</span>
+                </div>
+                <p>Luppolo neozelandese con eredità noble ma carattere più citrico. Ottimo per modern lagers.</p>
+            </div>
+
+            <div class="highlight-box">
+                <h3>Dosaggio Raccomandato per Pilsner</h3>
+                <ul>
+                    <li><strong>First Wort Hopping:</strong> 0,5-1,5 g/L con Saaz</li>
+                    <li><strong>Bittering (60 min):</strong> per 25-35 IBU totali</li>
+                    <li><strong>Aroma (5-0 min):</strong> 1-2,5 g/L per carattere delicato</li>
+                    <li><strong>Dry Hop (opzionale):</strong> 1-2 g/L per 24-48 ore</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section" id="ipa-pale">
+            <h1>IPA e Pale Ale Americane</h1>
+
+            <h2>Classici Americani</h2>
+            
+            <div class="hop-variety">
+                <h4>🇺🇸 Cascade</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">4,5-7% AA</span>
+                    <span class="hop-stat">Floreale-Speziato-Pompelmo</span>
+                    <span class="hop-stat">0,5-1,5 oz/5gal dry hop</span>
+                </div>
+                <p>Il luppolo che ha definito l'American Craft Beer. Profilo floreale-speziato con distintive note di pompelmo. Fondamentale per Pale Ales classiche.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Centennial</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">8-11,5% AA</span>
+                    <span class="hop-stat">"Super Cascade"</span>
+                    <span class="hop-stat">Limone-Arancio-Tropicale</span>
+                </div>
+                <p>Soprannominato "Super Cascade" per l'intensità maggiore. Agrumi brillanti con note tropicali emergenti. Eccellente dual-purpose hop.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Chinook</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">12-14% AA</span>
+                    <span class="hop-stat">Resinoso-Albicocca-Pompelmo-Pino</span>
+                </div>
+                <p>Carattere resinoso intenso con note di albicocca e pino. Ottimo per bittering e late additions in West Coast IPAs.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Columbus/CTZ</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">14-18% AA</span>
+                    <span class="hop-stat">Citrico-Legnoso-Resinoso-Dank</span>
+                    <span class="hop-stat">Ottimo per bittering</span>
+                </div>
+                <p>High-alpha workhorse per bittering pulito. Carattere dank e resinoso per late additions. Backbone di molte IPAs americane.</p>
+            </div>
+
+            <h2>Moderne Varietà Americane Ad Alto Impatto</h2>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Citra® (HBC 394)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">10-16% AA</span>
+                    <span class="hop-stat">Agrumi-Mango-Passion fruit</span>
+                    <span class="hop-stat">Frutta tropicale</span>
+                </div>
+                <p>Il luppolo che ha definito la moderna craft beer americana. Esplosione di agrumi e frutti tropicali. Essenziale per NEIPAs e modern IPAs.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Mosaic® (HBC 369)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">11,5-13,5% AA</span>
+                    <span class="hop-stat">Mirtillo-Tropicale-Guava-Floreale</span>
+                </div>
+                <p>Complessità unica con frutti di bosco, tropicali e note floreali. Partner perfetto per Citra nelle combinazioni moderne.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Simcoe®</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">12-14% AA</span>
+                    <span class="hop-stat">Passion fruit-Albicocca-Pino-Terroso</span>
+                </div>
+                <p>Profilo complesso che unisce frutti tropicali a note resinose. Versatile per tutti gli stili IPA.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Strata™</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">11-13% AA</span>
+                    <span class="hop-stat">Dank-Cannabis-Tropicale</span>
+                    <span class="hop-stat">Passion fruit</span>
+                </div>
+                <p>Luppolo controverso e distintivo con carattere dank e tropicale. Note di cannabis e passion fruit uniche nel panorama.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Dosaggio Standard per American IPA</h3>
+                <ul>
+                    <li><strong>Bittering (60 min):</strong> 1-2 g/L per 40-60 IBU</li>
+                    <li><strong>Flavor (15-30 min):</strong> 2-4 g/L</li>
+                    <li><strong>Aroma (0-10 min):</strong> 3-6 g/L</li>
+                    <li><strong>Dry Hop:</strong> 4-8 g/L per 3-5 giorni</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section" id="neipa">
+            <h1>NEIPA e Hazy IPA</h1>
+            <p>Le New England IPAs richiedono luppoli ad altissimo contenuto di oli essenziali per massimizzare aroma e sapore tropicale senza eccessiva amarezza.</p>
+
+            <h2>Varietà Ottimali per NEIPA</h2>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Citra® + Mosaic® Combo</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">Combo classica</span>
+                    <span class="hop-stat">2-4 oz/5gal dry hop</span>
+                    <span class="hop-stat">Sinergia tropicale</span>
+                </div>
+                <p>La combinazione gold standard per NEIPA. Sinergia perfetta tra agrumi di Citra e complessità fruttata di Mosaic.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇦🇺 Galaxy (Australia)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">11-16% AA</span>
+                    <span class="hop-stat">Passion fruit intenso</span>
+                    <span class="hop-stat">Pesca-Agrumi</span>
+                </div>
+                <p>Intensità tropicale estrema con passion fruit dominante. Uno dei luppoli più aromatici al mondo.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇳🇿 Nelson Sauvin (Nuova Zelanda)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">10-13% AA</span>
+                    <span class="hop-stat">Sauvignon Blanc character</span>
+                    <span class="hop-stat">Uva spina</span>
+                </div>
+                <p>Carattere unico di vino bianco con note di uva spina. Aggiunge complessità vinosa alle NEIPAs.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇳🇿 Nectaron (Nuova Zelanda)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">9-10% AA</span>
+                    <span class="hop-stat">Ananas-Passion fruit-Pesca</span>
+                    <span class="hop-stat">Mix intenso</span>
+                </div>
+                <p>Una delle più recenti innovazioni neozelandesi. Cocktail intenso di frutti tropicali per NEIPAs moderne.</p>
+            </div>
+
+            <h2>Prodotti Cryo per NEIPA</h2>
+
+            <div class="info-box">
+                <h3>Vantaggi Cryo Hops per NEIPA</h3>
+                <ul>
+                    <li><strong>Doppia potenza aromatica</strong> - usare 40-50% del peso normale</li>
+                    <li><strong>Riduce trub loss</strong> fino al 20%</li>
+                    <li><strong>Estrazione più veloce</strong> - 30 minuti vs giorni</li>
+                    <li><strong>Profilo più pulito</strong> - meno astringenza vegetale</li>
+                </ul>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Cryo Mosaic</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">Doppia potenza</span>
+                    <span class="hop-stat">40-50% peso normale</span>
+                    <span class="hop-stat">Meno trub</span>
+                </div>
+                <p>Versione concentrata del Mosaic con ridotta materia vegetale. Estrazione più efficiente per NEIPAs.</p>
+            </div>
+
+            <div class="warning-box">
+                <strong>Hop Creep Alert:</strong> Le NEIPAs con dry hopping pesante (>8 g/L) possono subire fermentazione secondaria. Monitorare gravità post-dry hop e considerare crash cooling rapido.
+            </div>
+        </div>
+
+        <div class="content-section" id="west-coast">
+            <h1>IPA West Coast</h1>
+            <p>Le West Coast IPAs enfatizzano amarezza pulita, carattere resinoso-piney e finish secco. Richiedono luppoli con profili resinosi e capacità di bittering elevate.</p>
+
+            <h2>Luppoli per Carattere Resinoso-Piney</h2>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Columbus</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">Bittering pulito</span>
+                    <span class="hop-stat">Carattere dank</span>
+                    <span class="hop-stat">Late additions</span>
+                </div>
+                <p>Dual-purpose classico per West Coast. Bittering pulito con carattere dank intenso nelle late additions.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Warrior</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">15-17% AA</span>
+                    <span class="hop-stat">Bittering pulito</span>
+                    <span class="hop-stat">Note resinose sottili</span>
+                </div>
+                <p>High-alpha specialist per bittering. Contributo aromatico limitato ma amarezza molto pulita.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Summit™</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">16-19% AA</span>
+                    <span class="hop-stat">Pepe-Incenso-Anice-Arancio</span>
+                </div>
+                <p>Profilo unico con note speziate intense. Varietà nana ad alta produttività con carattere distintivo.</p>
+            </div>
+
+            <h2>Nuove Varietà West Coast</h2>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Pahto® (HBC 682)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">17-20% AA</span>
+                    <span class="hop-stat">Primo high-alpha HBC</span>
+                    <span class="hop-stat">Bittering pulito</span>
+                </div>
+                <p>Innovazione recente per bittering ultra-pulito. Progettato specificamente per high-gravity brewing.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>🇺🇸 Talus® (HBC 692)</h4>
+                <div class="hop-stats">
+                    <span class="hop-stat">8-10% AA</span>
+                    <span class="hop-stat">Pompelmo rosa-Agrumi</span>
+                    <span class="hop-stat">Rose-Pino-Salvia</span>
+                </div>
+                <p>Profilo complesso che unisce agrumi a note erbacee e resinose. Perfetto per West Coast moderne.</p>
+            </div>
+
+            <div class="formula-box">
+                <h3>Profilo IBU West Coast IPA</h3>
+                <ul>
+                    <li><strong>Target IBU:</strong> 50-70</li>
+                    <li><strong>Bittering (60 min):</strong> 70% delle IBU totali</li>
+                    <li><strong>Flavor (20-30 min):</strong> 20% delle IBU</li>
+                    <li><strong>Aroma (5-0 min):</strong> 10% delle IBU</li>
+                    <li><strong>Dry Hop:</strong> 4-8 g/L per carattere senza amarezza</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section" id="parametri-tecnici">
+            <h1>Parametri Tecnici per Brewfather</h1>
+
+            <h2>Dosaggi Standard (g/L)</h2>
+
+            <div class="highlight-box">
+                <h3>Bittering (60-90 min)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoria Alpha</th>
+                            <th>Range AA</th>
+                            <th>Dosaggio g/L</th>
+                            <th>Esempi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>High Alpha</strong></td>
+                            <td>&gt;15%</td>
+                            <td>0,5-2 g/L</td>
+                            <td>Columbus, Warrior, Magnum</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Medium Alpha</strong></td>
+                            <td>8-15%</td>
+                            <td>1,5-4 g/L</td>
+                            <td>Centennial, Simcoe, Chinook</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Low Alpha</strong></td>
+                            <td>&lt;8%</td>
+                            <td>3-8 g/L</td>
+                            <td>Saaz, Fuggle, Cascade</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2>Temperature Ottimali</h2>
+
+            <div class="formula-box">
+                <h3>Whirlpool/Hopstand</h3>
+                <ul>
+                    <li><strong>Alto (185-210°F):</strong> ~50% utilizzo vs boil</li>
+                    <li><strong>Medio (160-170°F):</strong> ~25% utilizzo, ottimale flavor senza amaro</li>
+                    <li><strong>Basso (150-160°F):</strong> ~10% utilizzo, preserva oli volatili</li>
+                </ul>
+            </div>
+
+            <div class="formula-box">
+                <h3>Dry Hop</h3>
+                <ul>
+                    <li><strong>Fermentazione attiva:</strong> 64-68°F per biotrasformazione</li>
+                    <li><strong>Post-fermentazione:</strong> 34-39°F, riduce astringenza</li>
+                    <li><strong>Durata:</strong> 24-72 ore per estrazione ottimale</li>
+                </ul>
+            </div>
+
+            <h2>Calcoli IBU per Brewfather</h2>
+
+            <div class="formula-box">
+                <h3>Formula Tinseth</h3>
+                <code>IBU = (Peso_oz × Alpha_% × Utilizzo_% × 74,89) / Volume_gal</code>
+
+                <h3>Utilizzo per Tempo di Bollitura</h3>
+                <ul>
+                    <li><strong>60 min:</strong> 21,1%</li>
+                    <li><strong>30 min:</strong> 16,2%</li>
+                    <li><strong>15 min:</strong> 10,8%</li>
+                    <li><strong>5 min:</strong> 4,2%</li>
+                    <li><strong>Flameout:</strong> 0-2%</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section" id="regioni">
+            <h1>Varietà per Regione Geografica</h1>
+
+            <h2>Stati Uniti (29+ varietà)</h2>
+            <div class="region-badge">🇺🇸 Washington/Yakima Valley</div>
+            <p>Cascade, Centennial, Chinook, Columbus, Simcoe®, Warrior, Citra®, Mosaic®, Amarillo®, Azacca®, Strata™, Sabro®</p>
+
+            <div class="region-badge">🇺🇸 Oregon</div>
+            <p>Willamette, Crystal, Mt. Hood, Sterling, Idaho 7™, Cashmere</p>
+
+            <div class="region-badge">🇺🇸 Varietà Sperimentali HBC</div>
+            <p>Krush® (HBC 586), Talus® (HBC 692), Pahto® (HBC 682), Dolcita™ (HBC 1019), Ekuanot™ (HBC 366)</p>
+
+            <h2>Germania (12+ varietà)</h2>
+            <div class="region-badge">🇩🇪 Hallertau Region</div>
+            <p>Hallertau Mittelfrüh, Hersbrucker, Perle, Magnum, Tettnanger, Spalt Select</p>
+
+            <div class="region-badge">🇩🇪 Hüll Research Varieties</div>
+            <p>Mandarina Bavaria, Hallertau Blanc, Hüll Melon, Polaris, Ariana, Callista</p>
+
+            <h2>Regno Unito (11+ varietà)</h2>
+            <div class="region-badge">🇬🇧 Tradizionali</div>
+            <p>East Kent Goldings, Fuggle, Challenger, First Gold, Bramling Cross, Target</p>
+
+            <div class="region-badge">🇬🇧 Charles Faram Moderni</div>
+            <p>Jester®, Godiva™, Mystic™, Harlequin®, Archer®, Olicana®</p>
+
+            <h2>Repubblica Ceca (8+ varietà)</h2>
+            <div class="region-badge">🇨🇿 Tradizionali e Moderni</div>
+            <p>Saaz, Saaz Late, Saaz Shine, Saaz Comfort, Premiant, Sládek, Kazbek</p>
+
+            <h2>Nuova Zelanda (8 varietà)</h2>
+            <div class="region-badge">🇳🇿 Emisfero Australe</div>
+            <p>Nelson Sauvin, Motueka, Riwaka, Nectaron, Pacific Jade, Pacific Gem, Wakatu, Kohatu</p>
+
+            <h2>Australia (9 varietà)</h2>
+            <div class="region-badge">🇦🇺 Southern Hemisphere</div>
+            <p>Galaxy, Vic Secret, Ella, Enigma, Eclipse, Topaz, Pride of Ringwood, Super Pride</p>
+        </div>
+
+        <div class="content-section" id="tecnologie">
+            <h1>Tecnologie Moderne e Prodotti Avanzati</h1>
+
+            <h2>Cryo Hops (LupuLN2®)</h2>
+
+            <div class="info-box">
+                <h3>Processo Cryo</h3>
+                <ul>
+                    <li><strong>Separazione criogenica</strong> a 63°F in atmosfera di azoto</li>
+                    <li><strong>Concentrazione:</strong> ~2x potenza dei pellet T90</li>
+                    <li><strong>Dosaggio:</strong> Usare 40-50% del peso normale</li>
+                </ul>
+            </div>
+
+            <p><strong>Varietà Disponibili:</strong> Mosaic, Citra, Centennial, Columbus, Cascade, Simcoe, Amarillo, Sabro, Idaho 7</p>
+
+            <h2>LUPOMAX® (John I. Haas)</h2>
+            <ul>
+                <li><strong>Tecnologia:</strong> Pellet di lupulina concentrati, 30% meno materia vegetale</li>
+                <li><strong>Dosaggio:</strong> 50-70% del peso T90</li>
+                <li><strong>Varietà:</strong> Citra, Mosaic, Amarillo, Cascade, Centennial, Krush, Sabro, Talus</li>
+            </ul>
+
+            <h2>Biotrasformazione</h2>
+
+            <div class="formula-box">
+                <h3>Meccanismo Biotrasformazione</h3>
+                <ul>
+                    <li><strong>Processo:</strong> Conversione enzimatica da parte del lievito</li>
+                    <li><strong>Timing:</strong> Dry hop durante ultimi giorni fermentazione attiva</li>
+                    <li><strong>Temperatura:</strong> 66-70°F ottimale per attività enzimatica</li>
+                    <li><strong>Varietà Ottimali:</strong> Cascade, Saaz, Simcoe (varietà tradizionali)</li>
+                </ul>
+            </div>
+
+            <h2>Hop Creep e Gestione</h2>
+
+            <div class="warning-box">
+                <h3>Fattori di Rischio Hop Creep</h3>
+                <ul>
+                    <li>Dry hop pesanti (&gt;8 g/L)</li>
+                    <li>Lievito attivo durante dry hop</li>
+                    <li>Temperature calde</li>
+                    <li>Contatto prolungato</li>
+                </ul>
+
+                <h3>Prevenzione</h3>
+                <ul>
+                    <li>Prodotti Cryo riducono rischio</li>
+                    <li>Dry hop a freddo post-crash</li>
+                    <li>Monitorare gravità post-dry hop</li>
+                    <li>ALDC per prevenire diacetile</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section" id="combinazioni">
+            <h1>Combinazioni e Blend Raccomandati</h1>
+
+            <h2>Classici Americani</h2>
+
+            <div class="hop-variety">
+                <h4>Base IPA</h4>
+                <p><strong>Cascade + Centennial + Chinook</strong></p>
+                <p>La holy trinity dell'American IPA. Equilibrio perfetto tra floreale, citrico e resinoso.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>Citrus Bomb</h4>
+                <p><strong>Amarillo + Citra + El Dorado</strong></p>
+                <p>Esplosione di agrumi brillanti con complessità tropicale.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>Tropical Modern</h4>
+                <p><strong>Citra + Mosaic + Galaxy</strong></p>
+                <p>Il pinnacle dei frutti tropicali per NEIPAs moderne.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>Pine/Dank</h4>
+                <p><strong>Simcoe + Columbus + Strata</strong></p>
+                <p>Carattere resinoso-dank intenso per West Coast tradizionali.</p>
+            </div>
+
+            <h2>Europei Tradizionali</h2>
+
+            <div class="hop-variety">
+                <h4>Pilsner Classica</h4>
+                <p><strong>Saaz + Saaz (late) + Saaz (dry hop)</strong></p>
+                <p>Purezza monovarietale per Czech Pilsner autentiche.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>German Lager</h4>
+                <p><strong>Hallertau + Tettnanger + Spalt</strong></p>
+                <p>Trinità noble tedesca per lagers tradizionali.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>English Bitter</h4>
+                <p><strong>EKG + Fuggle + Challenger</strong></p>
+                <p>Carattere britannico classico con complessità equilibrata.</p>
+            </div>
+
+            <h2>Moderni Ibridi</h2>
+
+            <div class="hop-variety">
+                <h4>Euro-American</h4>
+                <p><strong>Mandarina Bavaria + Cascade + Amarillo</strong></p>
+                <p>Ponte tra tradizione europea e innovazione americana.</p>
+            </div>
+
+            <div class="hop-variety">
+                <h4>Southern Hemisphere</h4>
+                <p><strong>Nelson Sauvin + Galaxy + Riwaka</strong></p>
+                <p>Intensità tropicale dell'emisfero australe.</p>
+            </div>
+        </div>
+
+        <div class="content-section" id="storage">
+            <h1>Storage e Handling</h1>
+
+            <h2>Parametri Ottimali Storage</h2>
+
+            <div class="formula-box">
+                <h3>Condizioni Ideali</h3>
+                <ul>
+                    <li><strong>Temperatura:</strong> 31-40°F (-1 a 5°C), congelamento accettabile</li>
+                    <li><strong>Confezionamento:</strong> Sottovuoto, barriere ossigeno essenziali</li>
+                    <li><strong>HSI (Hop Storage Index):</strong> &lt;0,25 per luppoli freschi</li>
+                    <li><strong>Durata:</strong> Storage corretto mantiene qualità 3+ anni</li>
+                </ul>
+            </div>
+
+            <h2>Best Practices Homebrewing</h2>
+            <ul>
+                <li>Bilancia di precisione (grammi)</li>
+                <li>Controllo temperatura fermentazione</li>
+                <li>Transfer senza ossigeno</li>
+                <li>Spazio congelatore adeguato</li>
+                <li>Sacchetti o spider per contenimento</li>
+            </ul>
+
+            <div class="info-box">
+                <h3>Action Items Homebrewer</h3>
+                <ol>
+                    <li><strong>Sperimenta con approcci blended</strong> tradizionali e cryo</li>
+                    <li><strong>Incorpora tecniche biotrasformazione</strong> per sviluppo sapore</li>
+                    <li><strong>Monitora hop creep</strong> nelle ricette high-hop</li>
+                    <li><strong>Approfitta oversupply attuale</strong> per sperimentare varietà premium</li>
+                    <li><strong>Costruisci relazioni</strong> con fornitori affidabili</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h1>Conclusioni</h1>
+            <p>Questa guida completa fornisce la base scientifica e i parametri pratici necessari per l'utilizzo avanzato dei luppoli nell'homebrewing, coprendo oltre 115 varietà con specifiche tecniche complete per l'utilizzo con Brewfather e altre piattaforme di recipe design.</p>
+
+            <div class="highlight-box">
+                <h3>Prossimi Passi</h3>
+                <ol>
+                    <li>Inizia con combinazioni comprovate per il tuo stile preferito</li>
+                    <li>Sperimenta gradualmente con varietà moderne</li>
+                    <li>Documenta ogni utilizzo con note dettagliate</li>
+                    <li>Ottimizza storage per massimizzare freshness</li>
+                    <li>Rimani aggiornato sulle nuove release</li>
+                </ol>
+            </div>
+
+            <p><strong>Aggiornamento continuo consigliato</strong> data la rapida evoluzione del settore luppoli e le continue innovazioni nelle tecniche di brewing.</p>
+        </div>
+    </div>
+
+    <button class="back-to-top" onclick="scrollToTop()" title="Torna in cima">↑</button>
+
+    <script>
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Show/hide back-to-top button
+        window.addEventListener('scroll', function() {
+            const button = document.querySelector('.back-to-top');
+            if (window.pageYOffset > 300) {
+                button.style.display = 'block';
+            } else {
+                button.style.display = 'none';
+            }
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add visual feedback for hop varieties on hover
+        document.querySelectorAll('.hop-variety').forEach(variety => {
+            variety.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 6px 20px rgba(34, 139, 34, 0.15)';
+            });
+            
+            variety.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>
