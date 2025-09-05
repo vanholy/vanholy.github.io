@@ -9,7 +9,8 @@
       "Bash(head:*)",
       "Bash(powershell:*)",
       "Bash(cp:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Read(/C:\\Localgit\\vanholy.github.io/**)"
     ],
     "deny": [],
     "ask": []
