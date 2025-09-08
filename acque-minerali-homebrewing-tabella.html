@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acque Minerali Italiane per Homebrewing - Analisi Completa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid #333;
+        }
+        
+        .filters {
+            padding: 20px;
+            background: #f0f2f5;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .table-wrapper {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th {
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            border-right: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        
+        th:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        th.sortable::after {
+            content: '⇅';
+            position: absolute;
+            right: 5px;
+            opacity: 0.5;
+        }
+        
+        th.sorted-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        
+        th.sorted-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+        
+        tbody tr {
+            transition: all 0.3s;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .water-name {
+            font-weight: 600;
+            text-align: left;
+            color: #333;
+        }
+        
+        .score {
+            font-weight: 700;
+            font-size: 16px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .score-excellent {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+        }
+        
+        .score-good {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+        
+        .score-acceptable {
+            background: linear-gradient(135deg, #fdcb6e, #f39c12);
+            color: white;
+        }
+        
+        .score-poor {
+            background: linear-gradient(135deg, #fab1a0, #e17055);
+            color: white;
+        }
+        
+        .value-excellent {
+            background: #d4edda;
+            color: #155724;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+        
+        .value-good {
+            background: #cce5ff;
+            color: #004085;
+            border-radius: 6px;
+        }
+        
+        .value-acceptable {
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 6px;
+        }
+        
+        .value-poor {
+            background: #f8d7da;
+            color: #721c24;
+            border-radius: 6px;
+        }
+        
+        .price {
+            font-weight: 600;
+            color: #27ae60;
+        }
+        
+        .stats {
+            padding: 20px;
+            background: #f8f9fa;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tooltip.show {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .table-wrapper {
+                padding: 10px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍺 Acque Minerali Italiane per Homebrewing</h1>
+            <p>Analisi completa 2024-2025 con valutazione per stili birrari</p>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00b894;"></div>
+                <span><strong>Eccellente (90-100)</strong> - Ideale per brewing</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #0984e3;"></div>
+                <span><strong>Buono (70-89)</strong> - Piccole correzioni</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span><strong>Accettabile (50-69)</strong> - Trattamenti necessari</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e17055;"></div>
+                <span><strong>Sconsigliato (<50)</strong> - Evitare</span>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label>Filtra per Categoria</label>
+                <select id="categoryFilter">
+                    <option value="">Tutte le acque</option>
+                    <option value="excellent">Solo Eccellenti (90+)</option>
+                    <option value="good">Solo Buone (70-89)</option>
+                    <option value="acceptable">Solo Accettabili (50-69)</option>
+                    <option value="poor">Solo Sconsigliate (<50)</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Stile Birrario</label>
+                <select id="styleFilter">
+                    <option value="">Tutti gli stili</option>
+                    <option value="lager">Lager/Pilsner</option>
+                    <option value="ipa">IPA/Pale Ale</option>
+                    <option value="stout">Stout/Porter</option>
+                    <option value="amber">Amber/Red Ale</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Prezzo Max (€/L)</label>
+                <input type="number" id="priceFilter" placeholder="es. 0.30" step="0.05" min="0" max="1">
+            </div>
+            
+            <div class="filter-group">
+                <label>Cerca Acqua</label>
+                <input type="text" id="searchFilter" placeholder="Nome acqua...">
+            </div>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>Acque Visualizzate</h3>
+                <div class="value" id="countStat">21</div>
+            </div>
+            <div class="stat-card">
+                <h3>Prezzo Medio</h3>
+                <div class="value" id="avgPriceStat">€0.24/L</div>
+            </div>
+            <div class="stat-card">
+                <h3>Score Medio</h3>
+                <div class="value" id="avgScoreStat">71</div>
+            </div>
+            <div class="stat-card">
+                <h3>Migliore Rapporto Q/P</h3>
+                <div class="value" id="bestValueStat">Eurospin Blues</div>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="waterTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="name">Acqua Minerale</th>
+                        <th class="sortable" data-sort="score">Score</th>
+                        <th class="sortable" data-sort="price">€/L</th>
+                        <th class="sortable" data-sort="residue">Residuo (mg/L)</th>
+                        <th class="sortable" data-sort="ph">pH</th>
+                        <th class="sortable" data-sort="calcium">Ca (mg/L)</th>
+                        <th class="sortable" data-sort="magnesium">Mg (mg/L)</th>
+                        <th class="sortable" data-sort="sodium">Na (mg/L)</th>
+                        <th class="sortable" data-sort="bicarbonate">HCO₃ (mg/L)</th>
+                        <th class="sortable" data-sort="sulfate">SO₄ (mg/L)</th>
+                        <th class="sortable" data-sort="chloride">Cl (mg/L)</th>
+                        <th>Idoneità Stili</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Table content will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+    
+    <script>
+        // Database delle acque minerali
+        const waters = [
+            {
+                name: "Sant'Anna",
+                score: 95,
+                price: 0.20,
+                residue: 22,
+                ph: 6.8,
+                calcium: 10,
+                magnesium: 2,
+                sodium: 1.5,
+                bicarbonate: 15,
+                sulfate: 3,
+                chloride: 2,
+                styles: ["lager", "ipa", "stout", "amber"],
+                notes: "Base perfetta per tutti gli stili"
+            },
+            {
+                name: "Lauretana",
+                score: 93,
+                price: 0.35,
+                residue: 14,
+                ph: 6.8,
+                calcium: 2,
+                magnesium: 0.1,
+                sodium: 1,
+                bicarbonate: 5,
+                sulfate: 1,
+                chloride: 1,
+                styles: ["lager", "ipa"],
+                notes: "La più pura d'Europa"
+            },
+            {
+                name: "Mangiatorella",
+                score: 92,
+                price: 0.21,
+                residue: 69,
+                ph: 6.0,
+                calcium: 7,
+                magnesium: 1,
+                sodium: 10,
+                bicarbonate: 31,
+                sulfate: 5,
+                chloride: 10,
+                styles: ["lager", "ipa"],
+                notes: "Ultra-pura da filtrazione quarzifera"
+            },
+            {
+                name: "Eurospin Blues",
+                score: 89,
+                price: 0.17,
+                residue: 22,
+                ph: 6.8,
+                calcium: 10,
+                magnesium: 2,
+                sodium: 1.5,
+                bicarbonate: 15,
+                sulfate: 3,
+                chloride: 2,
+                styles: ["lager", "ipa", "stout", "amber"],
+                notes: "Identica a Sant'Anna, prezzo imbattibile"
+            },
+            {
+                name: "Esselunga Smart",
+                score: 87,
+                price: 0.09,
+                residue: 45,
+                ph: 7.0,
+                calcium: 12,
+                magnesium: 3,
+                sodium: 2,
+                bicarbonate: 35,
+                sulfate: 5,
+                chloride: 3,
+                styles: ["lager", "amber"],
+                notes: "Miglior rapporto qualità/prezzo"
+            },
+            {
+                name: "Levissima",
+                score: 85,
+                price: 0.24,
+                residue: 78,
+                ph: 7.0,
+                calcium: 21,
+                magnesium: 1,
+                sodium: 1,
+                bicarbonate: 57,
+                sulfate: 16,
+                chloride: 0,
+                styles: ["lager"],
+                notes: "Ottima per lager, richiede aggiunte"
+            },
+            {
+                name: "Pian della Mussa",
+                score: 84,
+                price: 0.28,
+                residue: 37,
+                ph: 7.4,
+                calcium: 8,
+                magnesium: 1,
+                sodium: 0.6,
+                bicarbonate: 25,
+                sulfate: 4,
+                chloride: 1,
+                styles: ["lager"],
+                notes: "Purezza alpina d'alta quota"
+            },
+            {
+                name: "Acqua Panna",
+                score: 82,
+                price: 0.25,
+                residue: 188,
+                ph: 8.0,
+                calcium: 30,
+                magnesium: 7,
+                sodium: 7,
+                bicarbonate: 106,
+                sulfate: 22,
+                chloride: 10,
+                styles: ["amber", "stout"],
+                notes: "Buona per ales con correzione pH"
+            },
+            {
+                name: "Monviso",
+                score: 80,
+                price: 0.32,
+                residue: 49,
+                ph: 7.2,
+                calcium: 10,
+                magnesium: 2,
+                sodium: 0.33,
+                bicarbonate: 30,
+                sulfate: 5,
+                chloride: 2,
+                styles: ["lager"],
+                notes: "Sorgente più alta d'Europa"
+            },
+            {
+                name: "Norda",
+                score: 78,
+                price: 0.24,
+                residue: 62,
+                ph: 7.2,
+                calcium: 11,
+                magnesium: 3,
+                sodium: 2,
+                bicarbonate: 52,
+                sulfate: 6,
+                chloride: 1,
+                styles: ["lager", "amber"],
+                notes: "Oligominerale alpina equilibrata"
+            },
+            {
+                name: "Fiuggi",
+                score: 68,
+                price: 0.27,
+                residue: 122,
+                ph: 6.8,
+                calcium: 15,
+                magnesium: 6,
+                sodium: 6,
+                bicarbonate: 81,
+                sulfate: 8,
+                chloride: 8,
+                styles: ["amber"],
+                notes: "Richiede diluizione 25%"
+            },
+            {
+                name: "San Benedetto",
+                score: 65,
+                price: 0.22,
+                residue: 235,
+                ph: 7.5,
+                calcium: 28,
+                magnesium: 5,
+                sodium: 3,
+                bicarbonate: 100,
+                sulfate: 10,
+                chloride: 5,
+                styles: ["lager", "amber"],
+                notes: "Profilo variabile per sorgente"
+            },
+            {
+                name: "Smeraldina",
+                score: 64,
+                price: 0.23,
+                residue: 157,
+                ph: 6.5,
+                calcium: 14,
+                magnesium: 8,
+                sodium: 29,
+                bicarbonate: 73,
+                sulfate: 9,
+                chloride: 15,
+                styles: ["amber"],
+                notes: "Filtrata attraverso granito"
+            },
+            {
+                name: "Vitasnella",
+                score: 62,
+                price: 0.25,
+                residue: 382,
+                ph: 7.2,
+                calcium: 120,
+                magnesium: 25,
+                sodium: 20,
+                bicarbonate: 300,
+                sulfate: 20,
+                chloride: 15,
+                styles: ["stout"],
+                notes: "Alta alcalinità, solo birre scure"
+            },
+            {
+                name: "Coop Alpi Cozie",
+                score: 60,
+                price: 0.19,
+                residue: 45,
+                ph: 7.0,
+                calcium: 9,
+                magnesium: 2,
+                sodium: 2,
+                bicarbonate: 28,
+                sulfate: 4,
+                chloride: 2,
+                styles: ["lager"],
+                notes: "Buon prezzo, profilo base"
+            },
+            {
+                name: "MD Fonte Itala",
+                score: 58,
+                price: 0.18,
+                residue: 478,
+                ph: 6.0,
+                calcium: 85,
+                magnesium: 15,
+                sodium: 25,
+                bicarbonate: 250,
+                sulfate: 35,
+                chloride: 20,
+                styles: ["stout"],
+                notes: "Origine vulcanica, per birre scure"
+            },
+            {
+                name: "Conad Naturale",
+                score: 56,
+                price: 0.16,
+                residue: 180,
+                ph: 7.1,
+                calcium: 35,
+                magnesium: 8,
+                sodium: 5,
+                bicarbonate: 95,
+                sulfate: 12,
+                chloride: 7,
+                styles: ["amber"],
+                notes: "Profilo standard, economica"
+            },
+            {
+                name: "San Pellegrino",
+                score: 45,
+                price: 0.28,
+                residue: 900,
+                ph: 5.7,
+                calcium: 150,
+                magnesium: 41,
+                sodium: 27,
+                bicarbonate: 170,
+                sulfate: 430,
+                chloride: 55,
+                styles: ["ipa"],
+                notes: "Solo per IPA dopo diluizione 50-75%"
+            },
+            {
+                name: "Ferrarelle",
+                score: 42,
+                price: 0.26,
+                residue: 1280,
+                ph: 6.0,
+                calcium: 401,
+                magnesium: 25,
+                sodium: 19,
+                bicarbonate: 1000,
+                sulfate: 14,
+                chloride: 18,
+                styles: ["stout"],
+                notes: "Bicarbonati estremi, solo stout"
+            },
+            {
+                name: "Sangemini",
+                score: 38,
+                price: 0.27,
+                residue: 910,
+                ph: 6.3,
+                calcium: 310,
+                magnesium: 15,
+                sodium: 20,
+                bicarbonate: 976,
+                sulfate: 56,
+                chloride: 19,
+                styles: ["stout"],
+                notes: "Calcio eccessivo, alta alcalinità"
+            },
+            {
+                name: "Uliveto",
+                score: 35,
+                price: 0.26,
+                residue: 741,
+                ph: 7.4,
+                calcium: 175,
+                magnesium: 30,
+                sodium: 27,
+                bicarbonate: 578,
+                sulfate: 95,
+                chloride: 67,
+                styles: ["stout"],
+                notes: "Termale, naturalmente gassata"
+            }
+        ];
+        
+        // Funzioni di valutazione per i colori
+        function getScoreClass(score) {
+            if (score >= 90) return 'score-excellent';
+            if (score >= 70) return 'score-good';
+            if (score >= 50) return 'score-acceptable';
+            return 'score-poor';
+        }
+        
+        function getValueClass(param, value) {
+            const ranges = {
+                calcium: { excellent: [40, 80], good: [20, 40], acceptable: [10, 20] },
+                magnesium: { excellent: [10, 25], good: [5, 10], acceptable: [2, 5] },
+                sodium: { excellent: [0, 10], good: [10, 30], acceptable: [30, 50] },
+                bicarbonate: { excellent: [0, 50], good: [50, 150], acceptable: [150, 250] },
+                sulfate: { excellent: [50, 150], good: [20, 50], acceptable: [10, 20] },
+                chloride: { excellent: [30, 70], good: [10, 30], acceptable: [5, 10] },
+                ph: { excellent: [5.2, 5.6], good: [5.6, 6.5], acceptable: [6.5, 7.5] }
+            };
+            
+            if (!ranges[param]) return '';
+            
+            const range = ranges[param];
+            if (value >= range.excellent[0] && value <= range.excellent[1]) return 'value-excellent';
+            if (value >= range.good[0] && value <= range.good[1]) return 'value-good';
+            if (value >= range.acceptable[0] && value <= range.acceptable[1]) return 'value-acceptable';
+            return 'value-poor';
+        }
+        
+        // Funzione per popolare la tabella
+        function populateTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(water => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="water-name">${water.name}</td>
+                    <td><span class="score ${getScoreClass(water.score)}">${water.score}</span></td>
+                    <td class="price">€${water.price.toFixed(2)}</td>
+                    <td>${water.residue}</td>
+                    <td class="${getValueClass('ph', water.ph)}">${water.ph}</td>
+                    <td class="${getValueClass('calcium', water.calcium)}">${water.calcium}</td>
+                    <td class="${getValueClass('magnesium', water.magnesium)}">${water.magnesium}</td>
+                    <td class="${getValueClass('sodium', water.sodium)}">${water.sodium}</td>
+                    <td class="${getValueClass('bicarbonate', water.bicarbonate)}">${water.bicarbonate}</td>
+                    <td class="${getValueClass('sulfate', water.sulfate)}">${water.sulfate}</td>
+                    <td class="${getValueClass('chloride', water.chloride)}">${water.chloride}</td>
+                    <td>${getStyleIcons(water.styles)}</td>
+                `;
+                
+                // Add hover tooltip
+                row.addEventListener('mouseenter', (e) => {
+                    showTooltip(e, water.notes);
+                });
+                row.addEventListener('mouseleave', hideTooltip);
+                
+                tbody.appendChild(row);
+            });
+            
+            updateStats(data);
+        }
+        
+        // Funzione per ottenere icone degli stili
+        function getStyleIcons(styles) {
+            const icons = {
+                lager: '🍺',
+                ipa: '🌿',
+                stout: '☕',
+                amber: '🥃'
+            };
+            return styles.map(style => icons[style] || '').join(' ');
+        }
+        
+        // Funzioni per tooltip
+        function showTooltip(e, text) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.textContent = text;
+            tooltip.classList.add('show');
+            tooltip.style.left = e.pageX + 10 + 'px';
+            tooltip.style.top = e.pageY - 30 + 'px';
+        }
+        
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.classList.remove('show');
+        }
+        
+        // Funzione per aggiornare le statistiche
+        function updateStats(data) {
+            document.getElementById('countStat').textContent = data.length;
+            
+            const avgPrice = data.reduce((sum, w) => sum + w.price, 0) / data.length;
+            document.getElementById('avgPriceStat').textContent = `€${avgPrice.toFixed(2)}/L`;
+            
+            const avgScore = Math.round(data.reduce((sum, w) => sum + w.score, 0) / data.length);
+            document.getElementById('avgScoreStat').textContent = avgScore;
+            
+            const bestValue = data.reduce((best, w) => {
+                const value = w.score / w.price;
+                return value > (best.score / best.price) ? w : best;
+            });
+            document.getElementById('bestValueStat').textContent = bestValue.name;
+        }
+        
+        // Funzione di ordinamento
+        let sortOrder = {};
+        function sortTable(column) {
+            const currentOrder = sortOrder[column] || 'asc';
+            const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+            sortOrder[column] = newOrder;
+            
+            // Remove all sort classes
+            document.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+            });
+            
+            // Add sort class to current column
+            const th = document.querySelector(`th[data-sort="${column}"]`);
+            th.classList.add(`sorted-${newOrder}`);
+            
+            const sortedData = [...getCurrentData()].sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (typeof aVal === 'string') {
+                    return newOrder === 'asc' 
+                        ? aVal.localeCompare(bVal)
+                        : bVal.localeCompare(aVal);
+                }
+                
+                return newOrder === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+            
+            populateTable(sortedData);
+        }
+        
+        // Funzione per ottenere i dati correnti (con filtri applicati)
+        function getCurrentData() {
+            let filtered = [...waters];
+            
+            // Category filter
+            const category = document.getElementById('categoryFilter').value;
+            if (category) {
+                filtered = filtered.filter(w => {
+                    if (category === 'excellent') return w.score >= 90;
+                    if (category === 'good') return w.score >= 70 && w.score < 90;
+                    if (category === 'acceptable') return w.score >= 50 && w.score < 70;
+                    if (category === 'poor') return w.score < 50;
+                    return true;
+                });
+            }
+            
+            // Style filter
+            const style = document.getElementById('styleFilter').value;
+            if (style) {
+                filtered = filtered.filter(w => w.styles.includes(style));
+            }
+            
+            // Price filter
+            const maxPrice = parseFloat(document.getElementById('priceFilter').value);
+            if (!isNaN(maxPrice) && maxPrice > 0) {
+                filtered = filtered.filter(w => w.price <= maxPrice);
+            }
+            
+            // Search filter
+            const search = document.getElementById('searchFilter').value.toLowerCase();
+            if (search) {
+                filtered = filtered.filter(w => 
+                    w.name.toLowerCase().includes(search) ||
+                    w.notes.toLowerCase().includes(search)
+                );
+            }
+            
+            return filtered;
+        }
+        
+        // Funzione per applicare i filtri
+        function applyFilters() {
+            const filtered = getCurrentData();
+            populateTable(filtered);
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Popola la tabella iniziale
+            populateTable(waters);
+            
+            // Aggiungi event listeners per l'ordinamento
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.addEventListener('click', () => {
+                    sortTable(th.dataset.sort);
+                });
+            });
+            
+            // Aggiungi event listeners per i filtri
+            document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+            document.getElementById('styleFilter').addEventListener('change', applyFilters);
+            document.getElementById('priceFilter').addEventListener('input', applyFilters);
+            document.getElementById('searchFilter').addEventListener('input', applyFilters);
+        });
+        
+        // Aggiungi animazione al caricamento
+        window.addEventListener('load', () => {
+            document.querySelector('.container').style.animation = 'fadeIn 0.5s ease-in';
+        });
+    </script>
+    
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+</html>

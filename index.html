@@ -314,11 +314,11 @@
         
         <div class="section-divider"></div>
         
-        <!-- Sezione Strumenti Interattivi -->
+        <!-- Sezione Luppoli -->
         <section>
             <div style="text-align: center; margin: 40px 0 30px 0;">
-                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">⚡ Strumenti Interattivi</h2>
-                <p style="color: #654321; font-size: 1.1em; margin: 0;">Visualizzazioni e calcolatori per l'analisi avanzata degli ingredienti</p>
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">🌿 Analisi Luppoli</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Strumenti avanzati per l'analisi e la comparazione dei profili aromatici</p>
             </div>
         </section>
         
@@ -371,17 +371,76 @@
             </div>
         </section>
 
-        <!-- Artefatto 2: Profili Completi delle Acque -->
+        <div class="section-divider"></div>
+        
+        <!-- Sezione Analisi Acque -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">💧 Analisi Acque</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Strumenti completi per l'analisi delle acque birrarie e comparazione con acque commerciali</p>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 1: Tabella Completa Acque Minerali Italiane -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🍺 Acque Minerali Italiane per Homebrewing</h2>
+                    <p class="artifact-description">Analisi completa 2024-2025 di 21 acque minerali italiane con valutazione per stili birrari, filtri avanzati e sistema di scoring</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">21 Acque</span>
+                        <span class="artifact-tag">Tabella Interattiva</span>
+                        <span class="artifact-tag">Filtri Avanzati</span>
+                        <span class="artifact-tag">Scoring</span>
+                        <span class="artifact-tag">Stili Birrari</span>
+                    </div>
+                </div>
+                <div class="artifact-toggle">▼</div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./acque-minerali-homebrewing-tabella.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./acque-minerali-homebrewing-tabella.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/acque-minerali-homebrewing-tabella.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 2: Confronto Acque Bergamasche vs Supermercato -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🛒 Confronto Acque Bergamasche vs Supermercato</h2>
+                    <p class="artifact-description">Analisi comparativa dettagliata tra le acque locali bergamasche e quelle disponibili nei supermercati italiani, con valutazioni economiche e qualitative</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Confronto Dettagliato</span>
+                        <span class="artifact-tag">Analisi Economica</span>
+                        <span class="artifact-tag">Bergamo vs Italia</span>
+                        <span class="artifact-tag">Brewing Quality</span>
+                    </div>
+                </div>
+                <div class="artifact-toggle">▼</div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./water_comparison_italian_supermarket.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./water_comparison_italian_supermarket.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/water_comparison_italian_supermarket.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 3: Profili delle Acque Bergamasche -->
         <section class="artifact-section">
             <div class="artifact-header" onclick="toggleArtifact(this)">
                 <div class="artifact-header-content">
                     <h2 class="artifact-title">💧 Profili delle Acque Bergamasche</h2>
-                    <p class="artifact-description">Analisi dettagliata dei profili minerali di 12 diverse tipologie di acque per la produzione birraria</p>
+                    <p class="artifact-description">Analisi dettagliata dei profili minerali di 12 diverse tipologie di acque locali per la produzione birraria</p>
                     <div class="artifact-meta">
                         <span class="artifact-tag">Radar Chart</span>
                         <span class="artifact-tag">Minerali</span>
-                        <span class="artifact-tag">Birra</span>
-                        <span class="artifact-tag">Analisi</span>
+                        <span class="artifact-tag">Acque Locali</span>
+                        <span class="artifact-tag">12 Tipologie</span>
                     </div>
                 </div>
                 <div class="artifact-toggle">▼</div>
@@ -395,17 +454,17 @@
             </div>
         </section>
 
-        <!-- Artefatto 3: Confronto Completo delle Acque -->
+        <!-- Artefatto Acque 4: Confronto Interattivo Acque Bergamasche -->
         <section class="artifact-section">
             <div class="artifact-header" onclick="toggleArtifact(this)">
                 <div class="artifact-header-content">
-                    <h2 class="artifact-title">⚖️ Confronto delle Acque Bergamasche</h2>
-                    <p class="artifact-description">Tool interattivo per confrontare side-by-side i profili minerali delle diverse acque birrarie con visualizzazioni comparative</p>
+                    <h2 class="artifact-title">⚖️ Confronto Interattivo delle Acque Bergamasche</h2>
+                    <p class="artifact-description">Tool interattivo per confrontare side-by-side i profili minerali delle diverse acque birrarie locali con visualizzazioni comparative</p>
                     <div class="artifact-meta">
                         <span class="artifact-tag">Comparativo</span>
                         <span class="artifact-tag">Dashboard</span>
                         <span class="artifact-tag">Interattivo</span>
-                        <span class="artifact-tag">Tool</span>
+                        <span class="artifact-tag">Side-by-side</span>
                     </div>
                 </div>
                 <div class="artifact-toggle">▼</div>
@@ -416,6 +475,16 @@
                     <a href="./confronto_completo_12_acque.html" target="_blank">Apri in nuova finestra</a>
                     <a href="https://github.com/vanholye/vanholye.github.io/blob/main/confronto_completo_12_acque.html" target="_blank">Codice sorgente</a>
                 </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+        
+        <!-- Sezione Malti -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">🌾 Analisi Malti</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Database completo e strumenti avanzati per la selezione e analisi dei malti</p>
             </div>
         </section>
 
