@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulizia e Sanificazione Homebrewing - Guida Completa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #ff6b35;
+            padding-bottom: 10px;
+        }
+
+        .product-group {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-group::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.1) 10px,
+                rgba(255,255,255,0.1) 20px
+            );
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%); }
+            100% { transform: translateX(100%) translateY(100%); }
+        }
+
+        .economic {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .professional {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .product-group h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .product-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .product-info {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .sequence-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .sequence-card h4 {
+            color: #d63384;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+
+        .sequence-steps {
+            list-style: none;
+        }
+
+        .sequence-steps li {
+            background: rgba(255, 255, 255, 0.8);
+            margin: 10px 0;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border-left: 4px solid #d63384;
+            transition: transform 0.2s ease;
+        }
+
+        .sequence-steps li:hover {
+            transform: translateX(5px);
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border: 2px solid #ff6b6b;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+
+        .warning-box h4 {
+            color: #c92a2a;
+            margin-bottom: 10px;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-left: 5px solid #20c997;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .tip-box h4 {
+            color: #0f5132;
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-risk-low { background: #d4edda; color: #155724; }
+        .badge-risk-medium { background: #fff3cd; color: #856404; }
+        .badge-risk-high { background: #f8d7da; color: #721c24; }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .cost-calculator {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .calculator-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparison-table {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🍺 PULIZIA E SANIFICAZIONE HOMEBREWING</h1>
+            <p>Guida completa per pulizia professionale delle attrezzature birrarie</p>
+        </header>
+
+        <!-- Introduzione -->
+        <section class="section">
+            <h2>🎯 Panoramica</h2>
+            <p>La pulizia accurata è il fondamento di ogni birra di qualità. Una cotta rovinata da contaminazioni costa 25-40€, molto più del tempo investito in una pulizia professionale. Questa guida presenta due approcci: <span class="highlight">economico</span> e <span class="highlight">professionale</span>.</p>
+            
+            <div class="tip-box">
+                <h4>💡 Principio Fondamentale</h4>
+                <p><strong>Pulizia → Sanificazione → Utilizzo</strong><br>
+                Lo sporco inattiva i sanificanti. Mai saltare la fase di pulizia!</p>
+            </div>
+        </section>
+
+        <!-- Prodotti Economici -->
+        <section class="section">
+            <div class="product-group economic">
+                <h3>💰 PRODOTTI ECONOMICI</h3>
+                <p style="position: relative; z-index: 1;">Soluzione budget-friendly per homebrewer occasionali. Costo per cotta: ~0.60€</p>
+                
+                <div class="products-grid">
+                    <div class="product-card">
+                        <h4>PERCARBONATO DI SODIO</h4>
+                        <div class="product-info">
+                            <strong>Funzione:</strong> Detergente/Sgrassante<br>
+                            <strong>Dose:</strong> 15-20g/L<br>
+                            <strong>Acqua:</strong> Calda 40-50°C<br>
+                            <strong>Tempo:</strong> 20-30 minuti<br>
+                            <strong>Risciacquo:</strong> <span class="highlight">OBBLIGATORIO</span>
+                        </div>
+                    </div>
+                    
+                    <div class="product-card">
+                        <h4>ACIDO CITRICO</h4>
+                        <div class="product-info">
+                            <strong>Funzione:</strong> Anticalcare/Disincrostante<br>
+                            <strong>Dose:</strong> 15g/L<br>
+                            <strong>Acqua:</strong> Tiepida<br>
+                            <strong>Tempo:</strong> 15-20 minuti<br>
+                            <strong>Conservazione:</strong> Mesi (75g/5L)
+                        </div>
+                    </div>
+                    
+                    <div class="product-card">
+                        <h4>CANDEGGINA</h4>
+                        <div class="product-info">
+                            <strong>Funzione:</strong> Sanificante<br>
+                            <strong>Dose:</strong> 2-3ml/L (verificare % cloro)<br>
+                            <strong>Tempo:</strong> 5 minuti<br>
+                            <strong>Durata:</strong> 2-4 settimane<br>
+                            <strong>Note:</strong> Evapora anche se chiusa
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prodotti Professionali -->
+        <section class="section">
+            <div class="product-group professional">
+                <h3>🏆 PRODOTTI PROFESSIONALI</h3>
+                <p style="position: relative; z-index: 1;">Soluzioni specifiche homebrewing. Efficacia superiore, velocità estrema. Costo per cotta: ~5.00€</p>
+                
+                <div class="products-grid">
+                    <div class="product-card">
+                        <h4>CHEMIPRO OXI</h4>
+                        <div class="product-info">
+                            <strong>Funzione:</strong> Detergente professionale<br>
+                            <strong>Dose:</strong> 10-15g/L<br>
+                            <strong>Efficacia:</strong> Superiore al percarbonato<br>
+                            <strong>Formula:</strong> Specifica per birra<br>
+                            <strong>Purezza:</strong> Grado alimentare
+                        </div>
+                    </div>
+                    
+                    <div class="product-card">
+                        <h4>STAR-SAN HB</h4>
+                        <div class="product-info">
+                            <strong>Funzione:</strong> Sanificante acido<br>
+                            <strong>Dose:</strong> 1.5-2ml/L<br>
+                            <strong>Tempo:</strong> <span class="highlight">30 SECONDI!</span><br>
+                            <strong>No-rinse:</strong> Garantito anche su fermentatori<br>
+                            <strong>Indicatore:</strong> Schiuma = attivo
+                        </div>
+                    </div>
+                    
+                    <div class="product-card">
+                        <h4>METABISOLFITO POTASSIO</h4>
+                        <div class="product-info">
+                            <strong>Funzione:</strong> Sanificante + Antossidante<br>
+                            <strong>Dose:</strong> 1-2g/L<br>
+                            <strong>Tempo:</strong> 10-15 minuti<br>
+                            <strong>Bonus:</strong> Protezione ossidazione<br>
+                            <strong>Origine:</strong> Settore vinicolo
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabella Comparativa -->
+        <section class="section">
+            <h2>📊 Confronto Dettagliato</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('detergenti')">Detergenti</button>
+                <button class="tab" onclick="showTab('sanificanti')">Sanificanti</button>
+                <button class="tab" onclick="showTab('conservazione')">Conservazione</button>
+            </div>
+
+            <div id="detergenti" class="tab-content active">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Prodotto</th>
+                            <th>Efficacia</th>
+                            <th>Costo</th>
+                            <th>Facilità</th>
+                            <th>Specifico Birra</th>
+                            <th>Risciacquo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Percarbonato Sodio</strong></td>
+                            <td>7/10</td>
+                            <td>10/10</td>
+                            <td>8/10</td>
+                            <td>6/10</td>
+                            <td><span class="badge badge-risk-high">OBBLIGATORIO</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Chemipro Oxi</strong></td>
+                            <td>9/10</td>
+                            <td>6/10</td>
+                            <td>9/10</td>
+                            <td>10/10</td>
+                            <td><span class="badge badge-risk-medium">Normale</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="sanificanti" class="tab-content">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Prodotto</th>
+                            <th>Efficacia</th>
+                            <th>No-rinse</th>
+                            <th>Costo</th>
+                            <th>Sapori</th>
+                            <th>Velocità</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Candeggina</strong></td>
+                            <td>8/10</td>
+                            <td>6/10</td>
+                            <td>10/10</td>
+                            <td>4/10</td>
+                            <td>7/10</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Metabisolfito</strong></td>
+                            <td>8/10</td>
+                            <td>8/10</td>
+                            <td>7/10</td>
+                            <td>7/10</td>
+                            <td>8/10</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Star-San</strong></td>
+                            <td>9/10</td>
+                            <td>10/10</td>
+                            <td>6/10</td>
+                            <td>10/10</td>
+                            <td>10/10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="conservazione" class="tab-content">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Prodotto</th>
+                            <th>Preparazione Anticipata</th>
+                            <th>Dose 5L</th>
+                            <th>Durata</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Acido Citrico</strong></td>
+                            <td><span class="badge badge-risk-low">✅ Eccellente</span></td>
+                            <td>75g</td>
+                            <td>Mesi</td>
+                            <td>Stabile, nessuna degradazione</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Candeggina</strong></td>
+                            <td><span class="badge badge-risk-medium">⚠️ Limitata</span></td>
+                            <td>10-15ml</td>
+                            <td>2-4 settimane</td>
+                            <td>Evapora anche se chiusa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Star-San</strong></td>
+                            <td><span class="badge badge-risk-low">✅ Buona</span></td>
+                            <td>7.5-10ml</td>
+                            <td>2-3 settimane</td>
+                            <td>Test: schiuma = attivo</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Percarbonato/Chemipro</strong></td>
+                            <td><span class="badge badge-risk-high">❌ Mai</span></td>
+                            <td>75-100g secco</td>
+                            <td>-</td>
+                            <td>Solo pre-dosaggio secco</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Sequenze Operative -->
+        <section class="section">
+            <h2>🔄 Sequenze Operative</h2>
+            
+            <div class="sequence-card">
+                <h4>🔴 FERMENTATORE FERMO DA SETTIMANE</h4>
+                <p><strong>Setup Economico:</strong></p>
+                <ol class="sequence-steps">
+                    <li><strong>PERCARBONATO</strong> 15-20g/L, acqua calda, 20-30min</li>
+                    <li><strong>RISCIACQUO ABBONDANTE</strong> - Elimina residui alcalini</li>
+                    <li><strong>ACIDO CITRICO</strong> 15g/L, 15min - Anticalcare + neutralizza</li>
+                    <li><strong>RISCIACQUO NORMALE</strong> - Prepara sanificazione</li>
+                    <li><strong>CANDEGGINA</strong> 2-3ml/L, 5min - Sanificazione finale</li>
+                </ol>
+                
+                <p><strong>Setup Professionale:</strong></p>
+                <ol class="sequence-steps">
+                    <li><strong>CHEMIPRO OXI</strong> 15g/L, 20min - Pulizia specifica birra</li>
+                    <li><strong>RISCIACQUO</strong> - Rimozione residui</li>
+                    <li><strong>STAR-SAN</strong> 1.5ml/L, 30sec - Sanificazione istantanea</li>
+                    <li><strong>USO DIRETTO</strong> - Nessun risciacquo necessario</li>
+                </ol>
+            </div>
+
+            <div class="sequence-card">
+                <h4>🟢 MANUTENZIONE ORDINARIA</h4>
+                <p><strong>Setup Ibrido (Best Value):</strong></p>
+                <ol class="sequence-steps">
+                    <li><strong>PERCARBONATO</strong> 20g/L, 30min - Pulizia economica</li>
+                    <li><strong>RISCIACQUO</strong> - Preparazione</li>
+                    <li><strong>STAR-SAN</strong> 1.5ml/L, 30sec - Sanificazione professionale</li>
+                    <li><strong>USO DIRETTO</strong> - Zero risciacqui</li>
+                </ol>
+            </div>
+
+            <div class="sequence-card">
+                <h4>🟣 RESIDUI LATTE/GRASSI</h4>
+                <ol class="sequence-steps">
+                    <li><strong>PERCARBONATO MAGGIORATO</strong> 20-25g/L, 50-60°C, 30-40min</li>
+                    <li><strong>ALCOL ETILICO 90%</strong> - Nebulizzazione anti-odori</li>
+                    <li><strong>ACIDO CITRICO</strong> 15g/L se depositi bianchi</li>
+                    <li><strong>SANIFICAZIONE FINALE</strong> con prodotto scelto</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Calcolatore Costi -->
+        <section class="section">
+            <div class="cost-calculator">
+                <h3>💰 Analisi Costi per Cotta</h3>
+                <div class="calculator-grid">
+                    <div class="calculator-item">
+                        <h4>Setup Economico</h4>
+                        <p><strong>~0.60€</strong></p>
+                        <small>Percarbonato + Candeggina</small>
+                    </div>
+                    <div class="calculator-item">
+                        <h4>Setup Ibrido</h4>
+                        <p><strong>~3.50€</strong></p>
+                        <small>Percarbonato + Star-San</small>
+                    </div>
+                    <div class="calculator-item">
+                        <h4>Setup Professionale</h4>
+                        <p><strong>~5.00€</strong></p>
+                        <small>Chemipro + Star-San</small>
+                    </div>
+                    <div class="calculator-item">
+                        <h4>Cotta Rovinata</h4>
+                        <p><strong>25-40€</strong></p>
+                        <small>Contaminazione</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Uso Spruzzino -->
+        <section class="section">
+            <h2>🧴 Uso in Spruzzino</h2>
+            <div class="products-grid">
+                <div class="product-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                    <h4>✅ CANDEGGINA / STAR-SAN</h4>
+                    <div class="product-info">
+                        <strong>Ideale per:</strong> Superfici, rubinetti, tubi<br>
+                        <strong>Vantaggi:</strong> Applicazione mirata, veloce<br>
+                        <strong>Dose:</strong> Stessa della soluzione normale
+                    </div>
+                </div>
+                
+                <div class="product-card" style="background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%); color: white;">
+                    <h4>⚠️ ACIDO CITRICO</h4>
+                    <div class="product-info">
+                        <strong>Solo per:</strong> Calcare localizzato<br>
+                        <strong>Limitazioni:</strong> Incrostazioni serie no<br>
+                        <strong>Attenzione:</strong> Corrosivo su metalli
+                    </div>
+                </div>
+                
+                <div class="product-card" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: white;">
+                    <h4>❌ PERCARBONATO / CHEMIPRO</h4>
+                    <div class="product-info">
+                        <strong>Inefficace:</strong> Serve immersione<br>
+                        <strong>Problema:</strong> Tempo contatto insufficiente<br>
+                        <strong>Soluzione:</strong> Solo immersione totale
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sicurezza -->
+        <section class="section">
+            <h2>🚨 Sicurezza e Precauzioni</h2>
+            
+            <div class="warning-box">
+                <h4>⚠️ RISCHI INGESTIONE</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div>
+                        <strong>🟢 ACIDO CITRICO - Rischio Basso</strong><br>
+                        • Additivo alimentare (E330)<br>
+                        • Primo soccorso: Bere acqua
+                    </div>
+                    <div>
+                        <strong>🟡 PERCARBONATO - Rischio Medio</strong><br>
+                        • Irritante non tossico<br>
+                        • MAI provocare vomito
+                    </div>
+                    <div>
+                        <strong>🔴 CANDEGGINA - Rischio Alto</strong><br>
+                        • Caustica pericolosa<br>
+                        • CHIAMARE 118 subito
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4>🛡️ Protocolli Obbligatori</h4>
+                <ul>
+                    <li><strong>Etichettatura chiara</strong> di tutti i contenitori</li>
+                    <li><strong>Conservazione separata</strong> da alimenti e bambini</li>
+                    <li><strong>Mai riutilizzare</strong> contenitori alimentari</li>
+                    <li><strong>Ventilazione</strong> durante l'uso</li>
+                    <li><strong>Mai miscelare</strong> prodotti diversi</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Dosaggio Pratico -->
+        <section class="section">
+            <h2>⚖️ Dosaggio Pratico</h2>
+            
+            <div class="tip-box">
+                <h4>🥄 Come Dosare 3ml/Litro (Candeggina)</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>Siringa 5-10ml</strong><br>
+                        • Più preciso<br>
+                        • Riutilizzabile<br>
+                        • Costo: 1-2€
+                    </div>
+                    <div>
+                        <strong>Cucchiaino</strong><br>
+                        • ½ cucchiaino ≈ 2.5ml<br>
+                        • Per 5L: 1 cucchiaio (15ml)<br>
+                        • Buona approssimazione
+                    </div>
+                    <div>
+                        <strong>Formula Cloro</strong><br>
+                        • ml/L = 100 ÷ % cloro<br>
+                        • Es: 5% cloro → 2ml/L<br>
+                        • Controlla etichetta!
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>💀 EFFETTI SOVRADOSAGGIO</h4>
+                <p><strong>Candeggina 15ml/L invece di 3ml:</strong> Birra IMBEVIBILE, sapore medicinale persistente, attrezzature danneggiate, COTTA DA BUTTARE!</p>
+                <p><strong>Regola d'oro:</strong> Meglio ripetere con dosi corrette che esagerare e rovinare tutto!</p>
+            </div>
+        </section>
+
+        <!-- Raccomandazioni Finali -->
+        <section class="section">
+            <h2>🏆 Raccomandazioni Finali</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div class="tip-box">
+                    <h4>🏠 HOMEBREWER OCCASIONALE</h4>
+                    <ul>
+                        <li><strong>Pulizia:</strong> Percarbonato di sodio</li>
+                        <li><strong>Sanificazione:</strong> Candeggina o Metabisolfito</li>
+                        <li><strong>Investimento:</strong> Minimo (~15€)</li>
+                        <li><strong>Risultati:</strong> Buoni</li>
+                    </ul>
+                </div>
+                
+                <div class="tip-box" style="background: linear-gradient(135deg, #fff2e1 0%, #e8f5e8 100%);">
+                    <h4>⚡ HOMEBREWER REGOLARE</h4>
+                    <ul>
+                        <li><strong>Pulizia:</strong> Percarbonato di sodio</li>
+                        <li><strong>Sanificazione:</strong> <span class="highlight">STAR-SAN</span></li>
+                        <li><strong>Investimento:</strong> Medio (~40€)</li>
+                        <li><strong>Game Changer:</strong> Velocità e sicurezza</li>
+                    </ul>
+                </div>
+                
+                <div class="tip-box" style="background: linear-gradient(135deg, #f0e6ff 0%, #e6f7ff 100%);">
+                    <h4>🥇 HOMEBREWER SERIO</h4>
+                    <ul>
+                        <li><strong>Pulizia:</strong> <span class="highlight">CHEMIPRO OXI</span></li>
+                        <li><strong>Sanificazione:</strong> <span class="highlight">STAR-SAN</span></li>
+                        <li><strong>Investimento:</strong> Alto (~80€)</li>
+                        <li><strong>Filosofia:</strong> Qualità massima, tempo prezioso</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="cost-calculator" style="margin-top: 30px;">
+                <h3>🎯 INVESTIMENTO PRIORITARIO</h3>
+                <div class="calculator-grid">
+                    <div class="calculator-item">
+                        <h4>Priorità 1</h4>
+                        <p><strong>STAR-SAN</strong></p>
+                        <small>Rivoluziona la sanificazione</small>
+                    </div>
+                    <div class="calculator-item">
+                        <h4>Priorità 2</h4>
+                        <p><strong>CHEMIPRO OXI</strong></p>
+                        <small>Se produzione frequente</small>
+                    </div>
+                    <div class="calculator-item">
+                        <h4>Priorità 3</h4>
+                        <p><strong>METABISOLFITO</strong></p>
+                        <small>Protezione extra</small>
+                    </div>
+                    <div class="calculator-item">
+                        <h4>Backup</h4>
+                        <p><strong>ECONOMICI</strong></p>
+                        <small>Sempre utili da avere</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="section" style="text-align: center; background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white;">
+            <h3>🍻 Birra di Qualità = Pulizia di Qualità</h3>
+            <p>Il tempo speso in pulizia accurata è sempre ripagato da fermentazioni pulite, sapori puri e resa costante.</p>
+            <p style="margin-top: 20px; opacity: 0.8; font-size: 0.9rem;">
+                Guida sviluppata per la comunità Homebrewing italiana<br>
+                Basata su chimica applicata e best practices birrarie
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Add smooth scroll behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add animation delays to sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach((section, index) => {
+                section.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Add hover effects to product cards
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
