@@ -12,7 +12,8 @@
       "Bash(grep:*)",
       "Read(/C:\\Localgit\\vanholy.github.io/**)",
       "Read(/C:\\Localgit\\vanholy.github.io/**)",
-      "Read(/C:\\Localgit\\vanholy.github.io/**)"
+      "Read(/C:\\Localgit\\vanholy.github.io/**)",
+      "Bash(start index.html)"
     ],
     "deny": [],
     "ask": []

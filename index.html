@@ -258,6 +258,22 @@
             text-decoration: none;
         }
         
+        .open-window-btn {
+            background: #28a745;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        .open-window-btn:hover {
+            background: #218838;
+        }
+        
         .section-divider {
             height: 3px;
             background: linear-gradient(90deg, transparent, #d4b062, transparent);
@@ -274,40 +290,63 @@
         </div>
         
         <!-- Sezione Guide -->
-        <section class="guides-section">
-            <div class="guides-header">
-                <h2>📚 Guide Tecniche</h2>
-                <p>Documentazione completa per malti, luppoli e tecniche avanzate di birrificazione</p>
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">📚 Guide Tecniche</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Documentazione completa per malti, luppoli e tecniche avanzate di birrificazione</p>
             </div>
-            <div class="guides-grid">
-                <div class="guide-card">
-                    <span class="guide-icon">🌾</span>
-                    <h3 class="guide-title">Guida Completa ai Malti</h3>
-                    <p class="guide-description">Guida tecnica completa per oltre 200 malti dai principali maltatori mondiali, con specifiche per Brewfather e ottimizzazione per attrezzatura casalinga.</p>
-                    <div class="guide-stats">
-                        <span class="guide-stat">200+ Malti</span>
-                        <span class="guide-stat">Brewfather</span>
-                        <span class="guide-stat">Parametri Tecnici</span>
-                        <span class="guide-stat">Homebrewing</span>
+        </section>
+
+        <!-- Guida ai Malti -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🌾 Guida Completa ai Malti</h2>
+                    <p class="artifact-description">Guida tecnica completa per oltre 200 malti dai principali maltatori mondiali, con specifiche per Brewfather e ottimizzazione per attrezzatura casalinga</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">200+ Malti</span>
+                        <span class="artifact-tag">Brewfather</span>
+                        <span class="artifact-tag">Parametri Tecnici</span>
+                        <span class="artifact-tag">Homebrewing</span>
                     </div>
-                    <a href="./guida-malti.html" class="guide-link" target="_blank">
-                        <span>📖</span> Leggi la Guida
-                    </a>
                 </div>
-                
-                <div class="guide-card">
-                    <span class="guide-icon">🌿</span>
-                    <h3 class="guide-title">Guida Completa ai Luppoli</h3>
-                    <p class="guide-description">115+ varietà di luppoli da tutto il mondo organizzate per categorie e stili birrari, con informazioni complete per homebrewer esperti.</p>
-                    <div class="guide-stats">
-                        <span class="guide-stat">115+ Varietà</span>
-                        <span class="guide-stat">Brewfather</span>
-                        <span class="guide-stat">IBU & Dosaggi</span>
-                        <span class="guide-stat">Cryo Hops</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./guida-malti.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./guida-malti.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./guida-malti.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/guida-malti.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Guida ai Luppoli -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🌿 Guida Completa ai Luppoli</h2>
+                    <p class="artifact-description">115+ varietà di luppoli da tutto il mondo organizzate per categorie e stili birrari, con informazioni complete per homebrewer esperti</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">115+ Varietà</span>
+                        <span class="artifact-tag">Brewfather</span>
+                        <span class="artifact-tag">IBU & Dosaggi</span>
+                        <span class="artifact-tag">Cryo Hops</span>
                     </div>
-                    <a href="./guida-luppoli.html" class="guide-link" target="_blank">
-                        <span>🔗</span> Leggi la Guida
-                    </a>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./guida-luppoli.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./guida-luppoli.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./guida-luppoli.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/guida-luppoli.html" target="_blank">Codice sorgente</a>
                 </div>
             </div>
         </section>
@@ -334,7 +373,10 @@
                         <span class="artifact-tag">Birra</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./hop-aroma-profiles-chart.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./hop-aroma-profiles-chart.html" class="artifact-iframe" height="600"></iframe>
@@ -360,7 +402,10 @@
                         <span class="artifact-tag">Ricerca Avanzata</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./hop-radar-chart.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./hop-radar-chart.html" class="artifact-iframe" height="800"></iframe>
@@ -396,7 +441,10 @@
                         <span class="artifact-tag">200+ Malti</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./malt-explorer.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./malt-explorer.html" class="artifact-iframe" height="800"></iframe>
@@ -431,7 +479,10 @@
                         <span class="artifact-tag">Stili Birrari</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./acque-minerali-homebrewing-tabella.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./acque-minerali-homebrewing-tabella.html" class="artifact-iframe" height="800"></iframe>
@@ -455,7 +506,10 @@
                         <span class="artifact-tag">Brewing Quality</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./water_comparison_italian_supermarket.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./water_comparison_italian_supermarket.html" class="artifact-iframe" height="800"></iframe>
@@ -479,7 +533,10 @@
                         <span class="artifact-tag">12 Tipologie</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./profili_completi_12_acque.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./profili_completi_12_acque.html" class="artifact-iframe" height="650"></iframe>
@@ -503,7 +560,10 @@
                         <span class="artifact-tag">Side-by-side</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./confronto_completo_12_acque.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./confronto_completo_12_acque.html" class="artifact-iframe" height="700"></iframe>
@@ -540,7 +600,10 @@
                         <span class="artifact-tag">Sicurezza</span>
                     </div>
                 </div>
-                <div class="artifact-toggle">▼</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./homebrewing_cleaning_website.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
             </div>
             <div class="artifact-content">
                 <iframe src="./homebrewing_cleaning_website.html" class="artifact-iframe" height="800"></iframe>
