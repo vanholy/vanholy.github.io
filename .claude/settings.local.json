@@ -13,7 +13,10 @@
       "Read(/C:\\Localgit\\vanholy.github.io/**)",
       "Read(/C:\\Localgit\\vanholy.github.io/**)",
       "Read(/C:\\Localgit\\vanholy.github.io/**)",
-      "Bash(start index.html)"
+      "Bash(start index.html)",
+      "Bash(gh repo edit:*)",
+      "Bash(git clone:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le 15 Migliori Ricette Homebrewing 2025 - Ordinate per Gradazione</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #764ba2;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .stat {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+        
+        .abv-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #FF6B6B, #C92A2A);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        .abv-low { background: linear-gradient(135deg, #51CF66, #37B24D); }
+        .abv-medium { background: linear-gradient(135deg, #FFD43B, #FAB005); }
+        .abv-high { background: linear-gradient(135deg, #FF8787, #F03E3E); }
+        .abv-extreme { background: linear-gradient(135deg, #C92A2A, #A61E4D); }
+        
+        .recipes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .recipe-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .recipe-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+        }
+        
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+        
+        .recipe-header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+        
+        .recipe-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .recipe-title {
+            color: #2c3e50;
+            font-size: 1.4em;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+        
+        .bjcp-style {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        
+        .specs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .spec-item {
+            text-align: center;
+        }
+        
+        .spec-label {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .spec-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .ingredients-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            color: #34495e;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            font-weight: 600;
+            border-left: 4px solid #667eea;
+            padding-left: 10px;
+        }
+        
+        .ingredient-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .ingredient-list li {
+            padding: 5px 0;
+            border-bottom: 1px dotted #e0e0e0;
+            font-size: 0.95em;
+        }
+        
+        .ingredient-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .malts { background: #fff3e0; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .hops { background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .yeast { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        
+        .process-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .notes {
+            background: linear-gradient(135deg, #fff9c4, #fff59d);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ffc107;
+            font-size: 0.92em;
+            line-height: 1.7;
+            box-shadow: 0 3px 10px rgba(255, 193, 7, 0.2);
+        }
+        
+        .notes-title {
+            font-weight: bold;
+            color: #f57c00;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .note-item {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .note-item:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #ff9800;
+            font-weight: bold;
+        }
+        
+        .strong-text {
+            font-weight: bold;
+            color: #d84315;
+        }
+        
+        .critical {
+            color: #c62828;
+            font-weight: bold;
+        }
+        
+        .footer {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .range-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .range-title {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .range-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .range-item {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .recipes-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍺 Le 15 Migliori Ricette Homebrewing 2025</h1>
+            <p class="subtitle">Collezione completa ordinata per gradazione crescente - Solo lieviti secchi</p>
+            <div class="stats-bar">
+                <span class="stat">15 Stili BJCP</span>
+                <span class="stat">4.5-10.5% ABV</span>
+                <span class="stat">100% Alta Fermentazione</span>
+                <span class="stat">Lieviti Secchi</span>
+            </div>
+        </header>
+
+        <div class="recipes-grid">
+            <!-- Ricetta 1: Witbier Belga 4.5% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-low">4.5% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">1</span>
+                    <h2 class="recipe-title">Belgian Witbier</h2>
+                    <div class="bjcp-style">BJCP 24A Witbier</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">4.5%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">15</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">4</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pilsner Malt: 2.3 kg</li>
+                        <li>Wheat Malt: 2.3 kg</li>
+                        <li>Flaked Oats: 230 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli e Spezie</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: Hallertau 20g</li>
+                        <li>5 min: Coriandolo semi 20g (schiacciati)</li>
+                        <li>5 min: Buccia arancia amara 25g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafBrew T-58 o Mangrove Jack's M21</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">MAI bollire le spezie</span> - aggiungerle a fiamma spenta per preservare oli essenziali</div>
+                    <div class="note-item">Bucce d'arancia: usare SOLO Curaçao o arance amare, MAI dolci - rovinerebbero il profilo</div>
+                    <div class="note-item">Coriandolo: schiacciare leggermente 30 secondi prima dell'uso per massimo aroma</div>
+                    <div class="note-item">pH mash critico: 5.2-5.3 con acido lattico per brillantezza finale</div>
+                    <div class="note-item">Protein rest a 50°C per 10 min essenziale con 50% grano non maltato</div>
+                    <div class="note-item">Fermentazione: 18°C fissi, NO free rise o diventa medicinale</div>
+                    <div class="note-item">Servire torbida: agitare delicatamente bottiglia prima di versare</div>
+                    <div class="note-item">Carbonazione: 3.0-3.5 volumi per effetto champagne</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 2: American Wheat 5.0% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-low">5.0% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">2</span>
+                    <h2 class="recipe-title">American Wheat Beer</h2>
+                    <div class="bjcp-style">BJCP 1D American Wheat Beer</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">5.0%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">22</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">8</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (19L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>American 2-Row: 2.7 kg</li>
+                        <li>Wheat Malt: 2.7 kg</li>
+                        <li>Rice Hulls: 200 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: Centennial 21g</li>
+                        <li>30 min: Centennial 28g</li>
+                        <li>Flameout: Hallertauer 28g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafAle US-05 o Lallemand BRY-97</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Rice hulls OBBLIGATORI</span> con 48% grano - mescolare uniformemente nel grist</div>
+                    <div class="note-item">Vorlauf esteso: ricircolare minimo 15 minuti per wort cristallino</div>
+                    <div class="note-item">Lievito US-05: 11g reidratati in acqua a 27°C per 15 min prima del pitch</div>
+                    <div class="note-item">Fermentazione 18°C costante produce profilo pulito per esaltare grano</div>
+                    <div class="note-item">Aggiungere scorza di limone (2 strisce) in secondary per twist estivo</div>
+                    <div class="note-item">Cold crash a 0°C per 48h migliora chiarezza senza perdere haze naturale</div>
+                    <div class="note-item">Carbonazione 2.7 volumi ideale - più alta diventa pungente</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 3: Irish Red 5.0% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-low">5.0% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">3</span>
+                    <h2 class="recipe-title">Irish Red Ale</h2>
+                    <div class="bjcp-style">BJCP 15A Irish Red Ale</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">5.0%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">25</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">22</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Maris Otter: 4.0 kg</li>
+                        <li>Crystal 60L: 340 g</li>
+                        <li>Crystal 120L: 170 g</li>
+                        <li>Roasted Barley: 85 g</li>
+                        <li>Flaked Barley: 400 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: East Kent Goldings 35g</li>
+                        <li>15 min: Fuggles 14g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafAle S-04 o Lallemand London ESB</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Roasted barley MAX 2%</span> - oltre produce astringenza invece di colore rosso</div>
+                    <div class="note-item">Acqua: 150ppm carbonati necessari per bilanciare acidità dei tostati</div>
+                    <div class="note-item">Flaked barley NON sostituibile - crea il caratteristico mouthfeel cremoso</div>
+                    <div class="note-item">Mash spesso (2.5L/kg) migliora estrazione zuccheri e corpo</div>
+                    <div class="note-item">Fermentazione: partire a 16°C per 3 giorni poi salire a 18°C</div>
+                    <div class="note-item">Diacetyl rest a 20°C ultimi 2 giorni OBBLIGATORIO per lieviti inglesi</div>
+                    <div class="note-item">Servire a 10-12°C in pinta imperiale per esperienza autentica</div>
+                    <div class="note-item">Maturazione: migliora notevolmente dopo 3 settimane in bottiglia</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 4: Brown Porter 5.2% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-low">5.2% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">4</span>
+                    <h2 class="recipe-title">Brown Porter Tradizionale</h2>
+                    <div class="bjcp-style">BJCP 12A Brown Porter</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">5.2%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">28</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">50</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Maris Otter: 5.5 kg</li>
+                        <li>Crystal 60L: 700 g</li>
+                        <li>Chocolate Malt: 500 g</li>
+                        <li>Brown Malt: 300 g</li>
+                        <li>Munich Malt: 300 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: East Kent Goldings 25g</li>
+                        <li>20 min: Fuggles 20g</li>
+                        <li>5 min: East Kent Goldings 15g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafAle S-04 o Lallemand London ESB</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Brown Malt è INSOSTITUIBILE</span> - dà il carattere nocciola/biscotto distintivo delle Porter storiche</div>
+                    <div class="note-item">Chocolate malt: usare 350-450L, MAI black malt che rovina il profilo</div>
+                    <div class="note-item">Acqua Londra simulata: 100ppm Ca, 50ppm Mg, 150ppm carbonati</div>
+                    <div class="note-item">Mash a 68°C produce corpo medio-pieno caratteristico dello stile</div>
+                    <div class="note-item">First runnings scure: assaggiare per verificare assenza astringenza</div>
+                    <div class="note-item">S-04: floccula pesantemente - rousing delicato a metà fermentazione</div>
+                    <div class="note-item">Cold conditioning 2 settimane a 4°C amalgama sapori tostati</div>
+                    <div class="note-item">Invecchia magnificamente: picco a 3-6 mesi, buona fino a 2 anni</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 5: Hefeweizen 5.2% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-low">5.2% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">5</span>
+                    <h2 class="recipe-title">Hefeweizen Bavarese</h2>
+                    <div class="bjcp-style">BJCP 10A Weissbier</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">5.2%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">12</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">6</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Wheat Malt: 2.8 kg (60%)</li>
+                        <li>Pilsner Malt: 1.9 kg (40%)</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: Hallertau Mittelfrüh 15g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafBrew WB-06 o Mangrove Jack's M20</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Decozione OPZIONALE ma trasformativa</span> - decozione singola a 63°C porta complessità unica</div>
+                    <div class="note-item">Ferulic acid rest: 44°C per 15 min sviluppa precursori chiodi di garofano (4-vinylguaiacol)</div>
+                    <div class="note-item">Rapporto banana/clove: controllato da temperatura - 18°C più clove, 22°C più banana</div>
+                    <div class="note-item">WB-06 sotto-attenua: mash a 65°C MAX o rischi FG troppo alta</div>
+                    <div class="note-item">Open fermentation (coperto con garza) primi 3 giorni intensifica esteri</div>
+                    <div class="note-item">MAI cold crash o filtare - il lievito in sospensione È lo stile</div>
+                    <div class="note-item">Carbonazione 3.0-3.5 volumi MINIMO per autentica sensazione bavarese</div>
+                    <div class="note-item">Servire in Weizen glass con 1/3 lievito risospeso dall'ultima parte della bottiglia</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 6: American Pale Ale 6.2% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-medium">6.2% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">6</span>
+                    <h2 class="recipe-title">American Pale Ale Classica</h2>
+                    <div class="bjcp-style">BJCP 18B American Pale Ale</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">6.2%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">45</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">12</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (20L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pale Malt 2-row: 8.8 kg</li>
+                        <li>Crystal 40L: 640 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>75 min: Cascade 25g</li>
+                        <li>60 min: Cascade 25g</li>
+                        <li>15 min: Cascade 25g</li>
+                        <li>5 min: Cascade 25g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>LalBrew BRY-97 o SafAle US-05</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item">Ricetta AHA Big Brew testata 90+ volte - NON modificare rapporti per consistenza</div>
+                    <div class="note-item"><span class="critical">75 min boil inusuale ma critico</span> - sviluppa complessità malto unica</div>
+                    <div class="note-item">Crystal 40L specifico: non sostituire con mix di altri crystal</div>
+                    <div class="note-item">Cascade lotti diversi variano AA%: aggiustare solo primo hop per IBU target</div>
+                    <div class="note-item">BRY-97 vs US-05: BRY-97 lascia più esteri fruttati, US-05 più pulito</div>
+                    <div class="note-item">Hop creep possibile: monitorare FG se dry hopping (non nella ricetta base)</div>
+                    <div class="note-item">Acqua: Solfati 150ppm, Cloruri 50ppm per hop presence bilanciata</div>
+                    <div class="note-item">Perfetta per single hop experiments cambiando solo varietà Cascade</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 7: Saison 6.2% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-medium">6.2% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">7</span>
+                    <h2 class="recipe-title">Saison Farmhouse Rustica</h2>
+                    <div class="bjcp-style">BJCP 25B Saison</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">6.2%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">28</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">16</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (19L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pilsner Malt: 3.0 kg</li>
+                        <li>Vienna Malt: 500 g</li>
+                        <li>Wheat Malt: 500 g</li>
+                        <li>Zucchero bianco: 500 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: Aramis 28g</li>
+                        <li>Steep post-bollitura: Barbe Rouge 28g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafBrew BE-134 o Mangrove Jack's M29</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Saison stall è REALE</span> - BE-134 si blocca a 1.020, poi riprende dopo 3-5 giorni</div>
+                    <div class="note-item">Temperatura ramping essenziale: 20°C x3gg → 24°C x3gg → 28-30°C fino a FG</div>
+                    <div class="note-item">Zucchero: aggiungere a fermentazione attiva (giorno 3) per evitare stress osmotico</div>
+                    <div class="note-item">FG target 1.002-1.005: se più alta, aspettare - Saison richiede pazienza</div>
+                    <div class="note-item">Open fermentation tradizionale: coprire con garza permette espressione fenolica</div>
+                    <div class="note-item">Acqua soft essenziale: durezza >100ppm interferisce con attenuazione estrema</div>
+                    <div class="note-item">Brett opzionale: 5g Brett Brux in secondary per complessità funk dopo 3 mesi</div>
+                    <div class="note-item">Carbonazione 3.0 volumi minimo - Saison piatte sono failure totale</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 8: American IPA 6.4% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-medium">6.4% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">8</span>
+                    <h2 class="recipe-title">American IPA West Coast</h2>
+                    <div class="bjcp-style">BJCP 21A American IPA</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">6.4%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">65</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">16</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pale Malt 2-Row: 4.8 kg</li>
+                        <li>Wheat Malt: 600 g</li>
+                        <li>Fiocchi d'Avena: 600 g</li>
+                        <li>Crystal 40°L: 120 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>First Wort: CTZ 8g</li>
+                        <li>15 min: Simcoe 40g</li>
+                        <li>10 min: Citra 40g</li>
+                        <li>5 min: Amarillo 40g</li>
+                        <li>Whirlpool: Citra 40g, Amarillo 40g</li>
+                        <li>Dry Hop: Simcoe 80g, Citra 80g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafAle US-05 o Lallemand Verdant IPA</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">First Wort Hopping aumenta hop complexity</span> senza harsh bitterness</div>
+                    <div class="note-item">Whirlpool a 80°C ESATTI: sopra 82°C estrae amarezza, sotto 78°C poca isomerizzazione</div>
+                    <div class="note-item">Solfati 300ppm MINIMO per West Coast bite - gypsum nel mash e sparge</div>
+                    <div class="note-item">Dry hop durante krausen alto (giorno 3) per biotrasformazione anche con US-05</div>
+                    <div class="note-item">Hop creep reale: FG può scendere 2-3 punti dopo dry hop - monitorare</div>
+                    <div class="note-item">Oxygen scavenging: 0.5g acido ascorbico in packaging previene ossidazione</div>
+                    <div class="note-item">Closed transfer obbligatorio: anche 1 minuto aria rovina hop aroma</div>
+                    <div class="note-item">Consumare entro 6 settimane: dopo decade rapidamente anche se conservata perfettamente</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 9: Belgian Dubbel 7.0% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-medium">7.0% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">9</span>
+                    <h2 class="recipe-title">Belgian Dubbel Monastico</h2>
+                    <div class="bjcp-style">BJCP 18B Belgian Dubbel</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">7.0%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">22</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">33</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti e Zuccheri (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pilsner Belga: 4.3 kg</li>
+                        <li>Munich Scuro: 1.4 kg</li>
+                        <li>Munich Chiaro: 570 g</li>
+                        <li>CaraPils: 200 g</li>
+                        <li>Sciroppo Candi Ambra: 500 g</li>
+                        <li>Sciroppo Candi Scuro: 500 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: Styrian Goldings 25g</li>
+                        <li>15 min: Saaz 14g</li>
+                        <li>2 min: Saaz 14g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafBrew BE-256 o Mangrove Jack's M47</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Sciroppi candi VERI indispensabili</span> - zucchero caramellato NON è uguale</div>
+                    <div class="note-item">D-180 syrup aggiunge note fichi/datteri impossibili da replicare altrimenti</div>
+                    <div class="note-item">Mash schedule step: 63°C 30min → 68°C 30min → 72°C 10min per complessità</div>
+                    <div class="note-item">Pitch rate ridotto (0.5M cells/ml/°P) aumenta esteri desiderabili</div>
+                    <div class="note-item">Fermentazione: 18°C x3gg → free rise a 26°C naturalmente</div>
+                    <div class="note-item">BE-256 produce più fenoli di M47 - scegliere base preferenza chiodi garofano</div>
+                    <div class="note-item">Bottle conditioning obbligatorio: kegging perde complessità carbonazione</div>
+                    <div class="note-item">Peak flavor 3-12 mesi: troppo giovane è sbilanciata, migliora enormemente</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 10: Hazy IPA 7.2% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-high">7.2% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">10</span>
+                    <h2 class="recipe-title">Hazy IPA New England</h2>
+                    <div class="bjcp-style">BJCP 21C Hazy IPA</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">7.2%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">45</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">10</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pilsner Malt: 3.2 kg</li>
+                        <li>Pale Malt 2-Row: 1.6 kg</li>
+                        <li>Flaked Wheat: 800 g</li>
+                        <li>Flaked Oats: 600 g</li>
+                        <li>Dextrin Malt: 200 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>Whirlpool: Citra 60g, Galaxy 60g, Mosaic 60g</li>
+                        <li>Dry Hop #1: Citra 80g, Galaxy 60g</li>
+                        <li>Dry Hop #2: Mosaic 80g, Citra 60g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>Lallemand New England o SafAle S-04</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">ZERO luppoli in bollitura</span> - solo whirlpool per morbidezza assoluta</div>
+                    <div class="note-item">Chloride 200ppm, Sulfate 100ppm: rapporto 2:1 crea pillowy mouthfeel</div>
+                    <div class="note-item">pH 5.2 in mash con fosfato: migliora haze stability e hop expression</div>
+                    <div class="note-item">Whirlpool sotto 75°C per 30 min: estrae oli senza isomerizzazione</div>
+                    <div class="note-item">Dry hop #1 durante fermentazione attiva (giorno 2-3) per biotrasformazione</div>
+                    <div class="note-item">Dry hop #2 post-fermentazione a 18°C per 3 giorni MAX poi cold crash</div>
+                    <div class="note-item">New England yeast lascia haze stabile, S-04 può flocculare - agitare delicatamente</div>
+                    <div class="note-item">Grain to glass 10 giorni possibile: 7gg fermentazione + 3gg cold crash</div>
+                    <div class="note-item">Ossidazione nemico #1: purge tutto con CO2, closed transfer mandatory</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 11: Belgian Golden Strong 8.4% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-high">8.4% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">11</span>
+                    <h2 class="recipe-title">Belgian Golden Strong Ale</h2>
+                    <div class="bjcp-style">BJCP 25C Belgian Golden Strong</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">8.4%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">32-35</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">8-10</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (21L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pilsner Malt Belga: 4.5 kg</li>
+                        <li>Vienna Malt: 800 g</li>
+                        <li>Destrosio: 800 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>90 min: Perle 35g</li>
+                        <li>30 min: Saaz 10g</li>
+                        <li>10 min: Saaz 10g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafBrew BE-256 o Mangrove Jack's M47</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Destrosio aggiunto in 3 dosi</span> durante fermentazione previene stress alcolico</div>
+                    <div class="note-item">90 minuti bollitura NECESSARI per DMS removal con Pilsner belga</div>
+                    <div class="note-item">Mash 63°C produce wort super-fermentabile per secchezza Duvel-style</div>
+                    <div class="note-item">Pitch a 16°C, free rise fino a 28°C per carattere pera/pepe bianco</div>
+                    <div class="note-item">Fermentazione può durare 3 settimane - pazienza quando rallenta a 1.015</div>
+                    <div class="note-item">Lagering 6 settimane a 0°C essenziale per brillantezza champagne</div>
+                    <div class="note-item">Carbonazione 4.0 volumi: usare bottiglie champagne o belghe spesse</div>
+                    <div class="note-item">Conditioning minimo 2 mesi: carbona lentamente ma completamente</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 12: Belgian Tripel 8.5-9% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-high">8.5-9% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">12</span>
+                    <h2 class="recipe-title">Belgian Tripel Monastico</h2>
+                    <div class="bjcp-style">BJCP 26C Belgian Tripel</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">8.5-9%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">30-35</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">12-14</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (23L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Pilsner Malt Belga: 5.75 kg</li>
+                        <li>GoldSwaen Belge: 150 g</li>
+                        <li>Zucchero bianco: 700 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: Magnum 20g</li>
+                        <li>10 min: Fuggles 12.5g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafBrew T-58 o Mangrove Jack's M31</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Zucchero solo DOPO krausen</span> (giorno 3-4) o inibisce fermentazione sana</div>
+                    <div class="note-item">T-58 produce più speziato/fenolico, M31 più fruttato/estere - scegli profilo</div>
+                    <div class="note-item">Mash 65°C mantiene corpo nonostante 13% zucchero semplice</div>
+                    <div class="note-item">Ossigenazione doppia: pre-pitch E 12 ore dopo per gestire alta OG</div>
+                    <div class="note-item">18°C rigidi primi 72 ore poi free rise graduale a 24°C</div>
+                    <div class="note-item">Attenzione acetone/solventi: se presenti, temperatura salita troppo veloce</div>
+                    <div class="note-item">FG target 1.010-1.012: se più alta, rousing delicato e aspettare</div>
+                    <div class="note-item">Aging minimo 6 settimane: alcol hot si ammorbidisce col tempo</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 13: Double IPA 8.7% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-high">8.7% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">13</span>
+                    <h2 class="recipe-title">Double IPA Intensiva</h2>
+                    <div class="bjcp-style">BJCP 22A Double IPA</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">8.7%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">75</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">18</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (20L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>2-row Pale Malt: 11.2 kg</li>
+                        <li>Munich Malt: 1.36 kg</li>
+                        <li>Light Crystal 37°L: 1.04 kg</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>60 min: Magnum 18g</li>
+                        <li>30 min: Cascade 25g</li>
+                        <li>5 min: Cascade 38g</li>
+                        <li>Hopstand: Amarillo 50g</li>
+                        <li>Dry Hop: Cascade 50g + Amarillo 75g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafAle US-05 (2 bustine) o Lallemand Voss Kveik</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Doppia dose US-05 OBBLIGATORIA</span> o rischi fermentazione bloccata</div>
+                    <div class="note-item">Voss Kveik alternativa: fermenta a 35°C in 4 giorni, clean come US-05</div>
+                    <div class="note-item">Mash 65°C mantiene FG bassa (1.012) per drinkability nonostante 8.7%</div>
+                    <div class="note-item">Sulfate 350ppm per aggressive bitterness - può essere harsh se troppo</div>
+                    <div class="note-item">Hopstand 20 minuti a 75°C: sotto questa temp per evitare IBU aggiuntivi</div>
+                    <div class="note-item">Dry hop in 2 fasi: 100g a day 7, 25g a day 10 per layering aromatico</div>
+                    <div class="note-item">Anti-ox essenziale: 0.5g metabisolfito + 0.5g acido ascorbico in keg</div>
+                    <div class="note-item">Best fresh: picco 2-4 settimane, decade rapidamente dopo 8 settimane</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 14: Imperial Stout 10.0% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-extreme">10.0% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">14</span>
+                    <h2 class="recipe-title">Imperial Stout Potente</h2>
+                    <div class="bjcp-style">BJCP 20C Imperial Stout</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">10.0%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">70</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">80</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (19L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Maris Otter: 6.0 kg</li>
+                        <li>Munich Malt: 900 g</li>
+                        <li>Crystal 120L: 450 g</li>
+                        <li>Chocolate Malt: 450 g</li>
+                        <li>Roasted Barley: 340 g</li>
+                        <li>Black Patent: 225 g</li>
+                        <li>Flaked Oats: 450 g</li>
+                        <li>Golden Syrup: 340 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>90 min: Magnum 35g</li>
+                        <li>30 min: East Kent Goldings 28g</li>
+                        <li>10 min: Fuggles 28g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafAle US-05 (2 bustine) o Lallemand Nottingham (2 bustine)</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">OG 1.100+ richiede ossigenazione pura O2</span> - aria non basta</div>
+                    <div class="note-item">Mash esteso 90 minuti a 67°C per conversione completa con tanto grano</div>
+                    <div class="note-item">Roasted grains cold steep opzione: 24h acqua fredda, aggiungere liquore a fine boil</div>
+                    <div class="note-item">Nottingham tolera meglio alcol di US-05 ma meno esteri - profilo più clean</div>
+                    <div class="note-item">Fermentazione 18°C x14gg poi 20°C x7gg - lenta ma completa</div>
+                    <div class="note-item">FG target 1.022-1.025: più bassa diventa thin, più alta troppo dolce</div>
+                    <div class="note-item">Aging su oak chips 2 mesi aggiunge vanilla/bourbon notes</div>
+                    <div class="note-item">Peak 6-24 mesi: giovane è hot/harsh, invecchiata sviluppa sherry/porto notes</div>
+                    <div class="note-item">Vertical tasting: conserva bottiglie per assaggi annuali - evolve magnificamente</div>
+                </div>
+            </div>
+
+            <!-- Ricetta 15: Barleywine 10.5% -->
+            <div class="recipe-card">
+                <div class="abv-indicator abv-extreme">10.5% ABV</div>
+                <div class="recipe-header">
+                    <span class="recipe-number">15</span>
+                    <h2 class="recipe-title">English Barleywine</h2>
+                    <div class="bjcp-style">BJCP 17D English Barleywine</div>
+                </div>
+                <div class="specs">
+                    <div class="spec-item">
+                        <div class="spec-label">ABV</div>
+                        <div class="spec-value">10.5%</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">IBU</div>
+                        <div class="spec-value">55</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">EBC</div>
+                        <div class="spec-value">30</div>
+                    </div>
+                </div>
+                <div class="ingredients-section malts">
+                    <div class="section-title">Malti (19L batch)</div>
+                    <ul class="ingredient-list">
+                        <li>Maris Otter: 7.5 kg</li>
+                        <li>Crystal 60L: 500 g</li>
+                        <li>Crystal 120L: 250 g</li>
+                        <li>Special B: 125 g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section hops">
+                    <div class="section-title">Luppoli</div>
+                    <ul class="ingredient-list">
+                        <li>90 min: Target 40g</li>
+                        <li>30 min: East Kent Goldings 30g</li>
+                        <li>5 min: Fuggles 20g</li>
+                    </ul>
+                </div>
+                <div class="ingredients-section yeast">
+                    <div class="section-title">Lievito</div>
+                    <ul class="ingredient-list">
+                        <li>SafAle S-04 (2 bustine) o Lallemand Windsor (2 bustine)</li>
+                    </ul>
+                </div>
+                <div class="notes">
+                    <span class="notes-title">🔧 Note Tecniche Avanzate:</span>
+                    <div class="note-item"><span class="critical">Boil 3-4 ore per concentrazione e maillard reactions</span> - colore rame intenso</div>
+                    <div class="note-item">First runnings barleywine: parti-gyle possibile, second runnings = mild 3%</div>
+                    <div class="note-item">Mash efficiency cala con OG alta: calcola 65% max, sparge lento essenziale</div>
+                    <div class="note-item">Special B aggiunge complessità frutta secca - NON sostituibile con crystal scuro</div>
+                    <div class="note-item">S-04 produce più esteri fruttati di Windsor - importante per bilanciare malto</div>
+                    <div class="note-item">Pitch rate 1.5x normale + ossigenazione a 0 e 12 ore per gestire stress</div>
+                    <div class="note-item">Fermentazione può durare 4 settimane - normale con questa OG</div>
+                    <div class="note-item">Aging MINIMO 6 mesi, ottima 1-3 anni, leggendaria dopo 5+ anni</div>
+                    <div class="note-item">Bottiglie champagne consigliate: pressione carbonazione + aging lungo</div>
+                    <div class="note-item">Serving: 12-14°C in snifter, 60-90ml per volta - è un sipper non chugger</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="range-section">
+                <h3 class="range-title">📊 Range Alcolico Completo (4.5-10.5% ABV)</h3>
+                <div class="range-list">
+                    <div class="range-item"><strong>4.5-5.5% ABV:</strong> Witbier, Wheat, Irish Red, Porter, Hefeweizen</div>
+                    <div class="range-item"><strong>6.0-7.0% ABV:</strong> Pale Ale, Saison, American IPA, Dubbel</div>
+                    <div class="range-item"><strong>7.0-8.5% ABV:</strong> Hazy IPA, Golden Strong</div>
+                    <div class="range-item"><strong>8.5-9.5% ABV:</strong> Tripel, Double IPA</div>
+                    <div class="range-item"><strong>10%+ ABV:</strong> Imperial Stout, Barleywine</div>
+                </div>
+            </div>
+            <p style="margin-top: 20px; color: #666;">
+                <strong>💡 Note tecniche:</strong> Tutte le ricette utilizzano lieviti secchi liofilizzati facilmente reperibili. 
+                Per birre sopra 7% ABV, sempre doppia dose o starter. 
+                Ricette ottimizzate per Brewfather con efficiency 75%.
+            </p>
+            <p style="margin-top: 15px; color: #764ba2; font-weight: bold;">
+                🍺 Buona birrificazione! 🍺
+            </p>
+        </div>
+    </div>
+</body>
+</html>
