@@ -409,7 +409,6 @@
         </footer>
     </div>
 
-    <script src="parametri_bg.csv"></script>
     <script>
         // Funzione per parsare il CSV e convertire in JavaScript
         async function loadWaterData() {
@@ -417,105 +416,125 @@
                 const response = await fetch('parametri_bg.csv');
                 const csvText = await response.text();
                 const lines = csvText.trim().split('\n');
-                const header = lines[0].split(',').map(h => h.replace(/"/g, ''));
 
                 const municipalities = [];
 
+                // Parse each line (skip header)
                 for (let i = 1; i < lines.length; i++) {
-                    const values = lines[i].split(',');
-                    if (values.length < header.length) continue;
+                    const line = lines[i];
+                    if (!line.trim()) continue;
 
-                    const municipalityName = values[0].replace(/"/g, '').toLowerCase().trim();
+                    // Migliore parsing CSV che gestisce le virgole all'interno delle virgolette
+                    const values = [];
+                    let current = '';
+                    let inQuotes = false;
+
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            values.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    values.push(current.trim()); // Add the last value
+
+                    if (values.length < 19) continue;
+
+                    const municipalityName = values[0].toLowerCase().trim();
                     if (!municipalityName) continue;
 
                     const parameters = {
                         "Concentrazione ioni idrogeno (pH)": {
-                            value: values[1].replace(/"/g, ''),
+                            value: values[1],
                             limit: "6,5-9,5",
                             unit: "Unità pH"
                         },
                         "Residuo fisso (da calcolo)": {
-                            value: values[2].replace(/"/g, ''),
+                            value: values[2],
                             limit: "",
                             unit: "mg/l"
                         },
                         "Durezza totale": {
-                            value: values[3].replace(/"/g, ''),
+                            value: values[3],
                             limit: "",
                             unit: "°F"
                         },
                         "Conducibilità elettrica a 20°C": {
-                            value: values[4].replace(/"/g, ''),
+                            value: values[4],
                             limit: "2500",
                             unit: "µS/cm"
                         },
                         "Calcio": {
-                            value: values[5].replace(/"/g, ''),
+                            value: values[5],
                             limit: "",
                             unit: "mg/l"
                         },
                         "Magnesio": {
-                            value: values[6].replace(/"/g, ''),
+                            value: values[6],
                             limit: "",
                             unit: "mg/l"
                         },
                         "Ammonio": {
-                            value: values[7].replace(/"/g, ''),
+                            value: values[7],
                             limit: "0,5",
                             unit: "mg/l"
                         },
                         "Cloruro": {
-                            value: values[8].replace(/"/g, ''),
+                            value: values[8],
                             limit: "250",
                             unit: "mg/l"
                         },
                         "Solfato": {
-                            value: values[9].replace(/"/g, ''),
+                            value: values[9],
                             limit: "250",
                             unit: "mg/l"
                         },
                         "Potassio": {
-                            value: values[10].replace(/"/g, ''),
+                            value: values[10],
                             limit: "",
                             unit: "mg/l"
                         },
                         "Sodio": {
-                            value: values[11].replace(/"/g, ''),
+                            value: values[11],
                             limit: "200",
                             unit: "mg/l"
                         },
                         "Arsenico": {
-                            value: values[12].replace(/"/g, ''),
+                            value: values[12],
                             limit: "10",
                             unit: "µg/l"
                         },
                         "Bicarbonato": {
-                            value: values[13].replace(/"/g, ''),
+                            value: values[13],
                             limit: "",
                             unit: "mg/l"
                         },
                         "Cloro residuo libero": {
-                            value: values[14].replace(/"/g, ''),
+                            value: values[14],
                             limit: "",
                             unit: "mg/l"
                         },
                         "Fluoruri": {
-                            value: values[15].replace(/"/g, ''),
+                            value: values[15],
                             limit: "1,5",
                             unit: "mg/l"
                         },
                         "Nitrato": {
-                            value: values[16].replace(/"/g, ''),
+                            value: values[16],
                             limit: "50",
                             unit: "mg/l"
                         },
                         "Nitrito": {
-                            value: values[17].replace(/"/g, ''),
+                            value: values[17],
                             limit: "0,5",
                             unit: "mg/l"
                         },
                         "Manganese": {
-                            value: values[18].replace(/"/g, ''),
+                            value: values[18],
                             limit: "50",
                             unit: "µg/l"
                         }
@@ -585,7 +604,7 @@
                                     <tbody>`;
 
                 Object.entries(municipality.parameters).forEach(([paramName, paramData]) => {
-                    const isOverLimit = checkIfOverLimit(paramData.value, paramData.limit);
+                    const isOverLimit = checkIfOverLimit(paramName, paramData.value, paramData.limit);
                     html += `
                         <tr ${isOverLimit ? 'style="background-color: #ffebee;"' : ''}>
                             <th><a href="#" title="Parametro di qualità dell'acqua">${paramName}</a></th>
@@ -651,8 +670,11 @@
             renderMunicipalities();
         }
 
-        function checkIfOverLimit(value, limit) {
+        function checkIfOverLimit(parameterName, value, limit) {
             if (!limit || limit === '') return false;
+
+            // Per il cloro residuo libero, valori bassi sono POSITIVI, non mostrare warning
+            if (parameterName === "Cloro residuo libero") return false;
 
             const numValue = parseFloat(value.replace(/[<>]/g, '').replace(',', '.'));
             const numLimit = parseFloat(limit.replace(',', '.'));
