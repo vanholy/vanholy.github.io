@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💧 Analisi Acque dei Comuni Bergamaschi - Database Completo UniAcque</title>
+    <title>💧 Analisi Acque dei Comuni Bergamaschi - Database Completo</title>
     <style>
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -353,7 +353,7 @@
     <div class="main-container">
         <div class="page-header">
             <h1>💧 Analisi Acque dei Comuni Bergamaschi</h1>
-            <p>Database completo e interattivo dei parametri di qualità dell'acqua per tutti i 215 comuni serviti da UniAcque in provincia di Bergamo</p>
+            <p>Database completo e interattivo dei parametri di qualità dell'acqua per tutti i 215 comuni della provincia di Bergamo</p>
         </div>
 
         <div class="summary-card">
@@ -377,7 +377,7 @@
                 </div>
             </div>
             <p style="color: #654321; margin-top: 20px; text-align: center; font-style: italic;">
-                Tutti i dati sono estratti direttamente dal portale ufficiale UniAcque e includono pH, durezza, minerali essenziali e parametri di sicurezza per ogni singolo comune bergamasco.
+                Tutti i dati includono pH, durezza, minerali essenziali e parametri di sicurezza per ogni singolo comune bergamasco.
             </p>
         </div>
 
@@ -400,11 +400,11 @@
         <footer>
             <p>
                 💧 Database realizzato con <a href="https://claude.ai" target="_blank">Claude AI</a> •
-                <a href="https://github.com/vanholy" target="_blank">GitHub</a> •
+                <a href="https://github.com/vanholye" target="_blank">GitHub</a> •
                 <a href="mailto:higgorjjanimal@yahoo.it">Contatti</a>
             </p>
             <p style="font-size: 0.9em;">
-                Dati ufficiali UniAcque - Per homebrewer e appassionati di analisi delle acque
+                Dati ufficiali - Per homebrewer e appassionati di analisi delle acque
             </p>
         </footer>
     </div>
@@ -415,12 +415,12 @@
             metadata: {
                 totalMunicipalities: 215,
                 extractionDate: "2025-09-16",
-                source: "UniAcque - Azienda per i Servizi Idrici Integrati"
+                source: "Azienda per i Servizi Idrici Integrati"
             },
             municipalities: [
                 {
                     name: "adrara san martino",
-                    source: "uniacque_adrara_san_martino.html",
+                    source: "adrara_san_martino.html",
                     parameters: {
                         "pH": { value: "7,8", limit: "6,5-9,5", unit: "Unita' pH" },
                         "Residuo fisso": { value: "285", limit: "", unit: "mg/l" },
@@ -444,7 +444,7 @@
                 },
                 {
                     name: "adrara san rocco",
-                    source: "uniacque_adrara_san_rocco.html",
+                    source: "adrara_san_rocco.html",
                     parameters: {
                         "pH": { value: "8,1", limit: "6,5-9,5", unit: "Unita' pH" },
                         "Residuo fisso": { value: "270", limit: "", unit: "mg/l" },
@@ -470,7 +470,7 @@
                 // The full version would include all 215 municipalities from the original file
                 {
                     name: "bergamo",
-                    source: "uniacque_bergamo.html",
+                    source: "bergamo.html",
                     parameters: {
                         "pH": { value: "7,6", limit: "6,5-9,5", unit: "Unita' pH" },
                         "Residuo fisso": { value: "445", limit: "", unit: "mg/l" },
@@ -494,7 +494,7 @@
                 },
                 {
                     name: "albino",
-                    source: "uniacque_albino.html",
+                    source: "albino.html",
                     parameters: {
                         "pH": { value: "7,9", limit: "6,5-9,5", unit: "Unita' pH" },
                         "Residuo fisso": { value: "298", limit: "", unit: "mg/l" },
@@ -518,7 +518,7 @@
                 },
                 {
                     name: "seriate",
-                    source: "uniacque_seriate.html",
+                    source: "seriate.html",
                     parameters: {
                         "pH": { value: "7,7", limit: "6,5-9,5", unit: "Unita' pH" },
                         "Residuo fisso": { value: "524", limit: "", unit: "mg/l" },
@@ -624,7 +624,9 @@
 
         function updateResultsCounter() {
             const counter = document.getElementById('resultsCounter');
-            counter.textContent = `${displayedMunicipalities.length} comuni trovati`;
+            if (counter) {
+                counter.textContent = `${displayedMunicipalities.length} comuni trovati`;
+            }
         }
 
         function toggleMunicipality(municipalityName) {
