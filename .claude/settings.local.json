@@ -17,7 +17,13 @@
       "Bash(gh repo edit:*)",
       "Bash(git clone:*)",
       "Bash(cat:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(sort:*)",
+      "WebSearch",
+      "WebFetch(domain:www.uniacque.bg.it)",
+      "Bash(touch:*)",
+      "Bash(start water_quality_demo.html)"
     ],
     "deny": [],
     "ask": []
