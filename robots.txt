@@ -1,0 +1,24 @@
+# Robots.txt for Homebrewing Hub
+# https://vanholy.github.io
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://vanholy.github.io/sitemap.xml
+
+# Disallow backup files
+Disallow: /*-backup.html
+
+# Disallow development/test files (if any)
+Disallow: /*.bak
+Disallow: /*.tmp
+
+# Allow crawling of all resources
+Allow: /assets/
+Allow: /*.css
+Allow: /*.js
+Allow: /*.html
+
+# Crawl-delay (optional, adjust if needed)
+# Crawl-delay: 1
