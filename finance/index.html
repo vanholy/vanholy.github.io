@@ -376,6 +376,279 @@
             95% { opacity: 0.36108; }
             100% { opacity: 0.24387; }
         }
+
+        /* ===================================
+           MODAL FULLSCREEN MATRIX STYLE
+           =================================== */
+
+        /* Modal Wrapper - Hidden by default */
+        .matrix-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+
+        /* Modal visible state */
+        .matrix-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .matrix-modal.visible {
+            opacity: 1;
+        }
+
+        /* Overlay scuro con blur */
+        .matrix-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Container principale - 95vw x 95vh */
+        .matrix-modal-container {
+            position: relative;
+            width: 95vw;
+            height: 95vh;
+            max-width: 1920px;
+            max-height: 1080px;
+            background: #000;
+            border: 3px solid #00ff00;
+            border-radius: 0;
+            box-shadow:
+                0 0 30px rgba(0, 255, 0, 0.4),
+                0 0 60px rgba(0, 255, 0, 0.2),
+                inset 0 0 40px rgba(0, 255, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10001;
+        }
+
+        /* Header con titolo e close button */
+        .matrix-modal-header {
+            background: rgba(0, 255, 0, 0.08);
+            border-bottom: 2px solid #00ff00;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            position: relative;
+        }
+
+        /* Titolo modal */
+        .matrix-modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00ff00;
+            text-shadow:
+                0 0 10px rgba(0, 255, 0, 0.7),
+                0 0 20px rgba(0, 255, 0, 0.4);
+            margin: 0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Close Button - Stile Matrix X */
+        .matrix-modal-close {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 0;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .matrix-modal-close:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow:
+                0 0 20px rgba(0, 255, 0, 0.6),
+                inset 0 0 10px rgba(0, 255, 0, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .matrix-modal-close:focus {
+            outline: 2px solid #00ff00;
+            outline-offset: 2px;
+        }
+
+        .close-icon {
+            font-size: 2rem;
+            line-height: 1;
+            color: #00ff00;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        /* Content area - Iframe container */
+        .matrix-modal-content {
+            flex: 1;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 0, 0.03) 2px,
+                rgba(0, 255, 0, 0.03) 4px
+            );
+        }
+
+        /* Iframe fullscreen */
+        .matrix-modal-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #000;
+        }
+
+        /* Glitch Overlay - Animazione apertura */
+        .matrix-glitch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 3px,
+                rgba(0, 255, 0, 0.15) 3px,
+                rgba(0, 255, 0, 0.15) 6px
+            );
+            pointer-events: none;
+            opacity: 0;
+            z-index: 10002;
+            animation: glitchFade 0.6s ease-out;
+        }
+
+        /* Animazioni */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes modalSlideIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.95) translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes glitchFade {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-10px);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100vh);
+            }
+        }
+
+        /* Effetto scanline in movimento durante apertura */
+        .matrix-modal.opening .matrix-glitch-overlay {
+            animation: glitchScan 0.8s ease-out;
+        }
+
+        @keyframes glitchScan {
+            0% {
+                opacity: 1;
+                background-position: 0 0;
+            }
+            100% {
+                opacity: 0;
+                background-position: 0 100vh;
+            }
+        }
+
+        /* Body no-scroll quando modal aperto */
+        body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+
+        /* Responsive Mobile */
+        @media (max-width: 768px) {
+            .matrix-modal-container {
+                width: 100vw;
+                height: 100vh;
+                max-width: 100%;
+                max-height: 100%;
+                border-radius: 0;
+            }
+
+            .matrix-modal-header {
+                padding: 12px 15px;
+                min-height: 50px;
+            }
+
+            .matrix-modal-title {
+                font-size: 1rem;
+                letter-spacing: 1px;
+            }
+
+            .matrix-modal-close {
+                width: 40px;
+                height: 40px;
+            }
+
+            .close-icon {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Accessibility: Riduzione movimento */
+        @media (prefers-reduced-motion: reduce) {
+            .matrix-modal-container,
+            .matrix-modal-overlay,
+            .matrix-glitch-overlay {
+                animation: none;
+                transition: opacity 0.2s ease;
+            }
+
+            .matrix-modal-close:hover {
+                transform: none;
+            }
+        }
     </style>
 </head>
 <body class="crt">
@@ -454,6 +727,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Calcolatore Fondo Pensione -->
+            <div class="app-card">
+                <div class="app-header" onclick="toggleApp(this)">
+                    <h2 class="app-title">💰 CALCOLATORE FONDO PENSIONE</h2>
+                    <p class="app-description">
+                        Simulatore fondo pensione PERSEO SIRIO. Calcola la tua pensione complementare con proiezioni dettagliate,
+                        analisi contributi datore e dipendente, TFR e rendimenti attesi su diversi orizzonti temporali.
+                    </p>
+                    <div class="app-tags">
+                        <span class="app-tag">Pension Fund</span>
+                        <span class="app-tag">PERSEO SIRIO</span>
+                        <span class="app-tag">TFR</span>
+                        <span class="app-tag">Projections</span>
+                        <span class="app-tag">Calculator</span>
+                        <span class="app-tag">Retirement</span>
+                    </div>
+                </div>
+                <div class="app-content">
+                    <iframe src="calcolatore_fondo_pensione.html" class="app-iframe" height="800"></iframe>
+                    <div class="app-actions">
+                        <button class="app-btn" onclick="event.stopPropagation(); window.open('calcolatore_fondo_pensione.html', '_blank')">
+                            📊 CALCULATE
+                        </button>
+                        <div class="app-toggle">▼</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer>
@@ -510,15 +811,209 @@
             canvas.height = window.innerHeight;
         });
 
-        // Toggle App Expansion
+        /* ===================================
+           MODAL FULLSCREEN MANAGER
+           =================================== */
+
+        (function() {
+            'use strict';
+
+            // Elementi DOM
+            const modal = document.getElementById('matrix-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalIframe = document.getElementById('modal-iframe');
+            const modalOverlay = modal.querySelector('.matrix-modal-overlay');
+            const closeButton = modal.querySelector('.matrix-modal-close');
+            const modalContainer = modal.querySelector('.matrix-modal-container');
+
+            // Stato
+            let isModalOpen = false;
+            let lastFocusedElement = null;
+
+            /**
+             * Apre il modal fullscreen con app specifica
+             * @param {string} title - Titolo dell'app
+             * @param {string} src - URL dell'iframe
+             */
+            window.openMatrixModal = function(title, src) {
+                if (isModalOpen) return;
+
+                // Salva elemento con focus per ripristino
+                lastFocusedElement = document.activeElement;
+
+                // Imposta contenuto
+                modalTitle.textContent = title;
+                modalIframe.src = src;
+
+                // Mostra modal con animazioni
+                modal.classList.add('active');
+                modal.classList.add('opening');
+                modal.setAttribute('aria-hidden', 'false');
+
+                // Trigger reflow per animazione CSS
+                void modal.offsetWidth;
+
+                modal.classList.add('visible');
+
+                // Disabilita scroll body
+                document.body.classList.add('modal-open');
+
+                // Focus sul close button dopo apertura
+                setTimeout(() => {
+                    closeButton.focus();
+                    modal.classList.remove('opening');
+                }, 100);
+
+                isModalOpen = true;
+
+                // Aggiungi event listeners
+                attachEventListeners();
+
+                // Log per debugging
+                console.log('Modal opened:', title);
+            };
+
+            /**
+             * Chiude il modal e cleanup
+             */
+            window.closeMatrixModal = function() {
+                if (!isModalOpen) return;
+
+                // Animazione chiusura
+                modal.classList.remove('visible');
+
+                setTimeout(() => {
+                    modal.classList.remove('active');
+                    modal.setAttribute('aria-hidden', 'true');
+
+                    // Cleanup iframe
+                    modalIframe.src = 'about:blank';
+                    modalTitle.textContent = '';
+
+                    // Riabilita scroll
+                    document.body.classList.remove('modal-open');
+
+                    // Ripristina focus
+                    if (lastFocusedElement) {
+                        lastFocusedElement.focus();
+                    }
+
+                    isModalOpen = false;
+
+                    // Rimuovi event listeners
+                    detachEventListeners();
+
+                    console.log('Modal closed');
+                }, 300); // Durata transizione opacity
+            };
+
+            /**
+             * Handler click su overlay (fuori container)
+             */
+            function handleOverlayClick(e) {
+                if (e.target === modalOverlay) {
+                    closeMatrixModal();
+                }
+            }
+
+            /**
+             * Handler ESC key
+             */
+            function handleEscKey(e) {
+                if (e.key === 'Escape' && isModalOpen) {
+                    closeMatrixModal();
+                }
+            }
+
+            /**
+             * Focus trap - mantiene focus dentro modal
+             */
+            function handleFocusTrap(e) {
+                if (!isModalOpen) return;
+
+                const focusableElements = modalContainer.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+
+                const firstFocusable = focusableElements[0];
+                const lastFocusable = focusableElements[focusableElements.length - 1];
+
+                // Tab normale: se su ultimo elemento, torna al primo
+                if (e.key === 'Tab' && !e.shiftKey && document.activeElement === lastFocusable) {
+                    e.preventDefault();
+                    firstFocusable.focus();
+                }
+
+                // Shift+Tab: se su primo elemento, va all'ultimo
+                if (e.key === 'Tab' && e.shiftKey && document.activeElement === firstFocusable) {
+                    e.preventDefault();
+                    lastFocusable.focus();
+                }
+            }
+
+            /**
+             * Attach event listeners
+             */
+            function attachEventListeners() {
+                modalOverlay.addEventListener('click', handleOverlayClick);
+                closeButton.addEventListener('click', closeMatrixModal);
+                document.addEventListener('keydown', handleEscKey);
+                document.addEventListener('keydown', handleFocusTrap);
+            }
+
+            /**
+             * Detach event listeners
+             */
+            function detachEventListeners() {
+                modalOverlay.removeEventListener('click', handleOverlayClick);
+                closeButton.removeEventListener('click', closeMatrixModal);
+                document.removeEventListener('keydown', handleEscKey);
+                document.removeEventListener('keydown', handleFocusTrap);
+            }
+
+            /**
+             * Previene chiusura accidentale su click dentro container
+             */
+            modalContainer.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+        })();
+
+        // Open App in Modal
         function toggleApp(header) {
             const card = header.parentElement;
-            const content = card.querySelector('.app-content');
-            const toggle = card.querySelector('.app-toggle');
+            const titleElement = card.querySelector('.app-title');
+            const iframeElement = card.querySelector('.app-iframe');
 
-            content.classList.toggle('expanded');
-            toggle.classList.toggle('expanded');
+            if (!titleElement || !iframeElement) {
+                console.error('App elements not found');
+                return;
+            }
+
+            const appTitle = titleElement.textContent.trim();
+            const appSrc = iframeElement.getAttribute('src');
+
+            // Open modal fullscreen instead of inline toggle
+            openMatrixModal(appTitle, appSrc);
         }
     </script>
+
+    <!-- Modal Fullscreen Matrix -->
+    <div id="matrix-modal" class="matrix-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="matrix-modal-overlay"></div>
+        <div class="matrix-modal-container">
+            <div class="matrix-modal-header">
+                <h2 id="modal-title" class="matrix-modal-title"></h2>
+                <button class="matrix-modal-close" aria-label="Chiudi modal" title="Chiudi (ESC)">
+                    <span class="close-icon">×</span>
+                </button>
+            </div>
+            <div class="matrix-modal-content">
+                <iframe id="modal-iframe" class="matrix-modal-iframe" frameborder="0" allow="autoplay"></iframe>
+            </div>
+            <div class="matrix-glitch-overlay"></div>
+        </div>
+    </div>
 </body>
 </html>

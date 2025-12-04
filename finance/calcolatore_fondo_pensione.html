@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolatore Fondo Pensione PERSEO SIRIO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+            text-align: center;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 13px;
+        }
+        
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .input-group {
+            flex: 1;
+        }
+        
+        .stipendio-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 0 12px;
+            max-width: 180px;
+        }
+        
+        .currency-symbol {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .stipendio-input {
+            border: none;
+            outline: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            width: 100%;
+            padding: 8px 4px;
+            background: transparent;
+        }
+        
+        .stipendio-input:focus {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        /* Chrome, Safari, Edge, Opera */
+        .stipendio-input::-webkit-outer-spin-button,
+        .stipendio-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        /* Firefox */
+        .stipendio-input[type=number] {
+            -moz-appearance: textfield;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+        
+        .percentage-display {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle-label-inline {
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 140px;
+            height: 32px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #667eea;
+            transition: .3s;
+            border-radius: 16px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 67px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 13px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        input:checked + .toggle-slider {
+            background: #FF6B6B;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(67px);
+        }
+        
+        .toggle-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            pointer-events: none;
+            font-weight: 600;
+            font-size: 10px;
+            z-index: 1;
+        }
+        
+        .toggle-option {
+            flex: 1;
+            text-align: center;
+            transition: color .3s;
+        }
+        
+        .toggle-option.left {
+            color: white;
+        }
+        
+        .toggle-option.right {
+            color: #999;
+        }
+        
+        input:checked ~ .toggle-text .toggle-option.left {
+            color: #999;
+        }
+        
+        input:checked ~ .toggle-text .toggle-option.right {
+            color: white;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .result-title {
+            color: #666;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .result-value {
+            color: #333;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .highlight-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .highlight-title {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+        
+        .highlight-value {
+            font-size: 26px;
+            font-weight: bold;
+        }
+        
+        .breakdown {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .breakdown h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px;
+            margin-bottom: 4px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .breakdown-label {
+            color: #666;
+        }
+        
+        .breakdown-value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .tax-section {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #b3d9ff;
+        }
+        
+        .tax-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .tax-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .tax-card {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .tax-card.highlight {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+        
+        .tax-label {
+            color: #666;
+            font-size: 10px;
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .tax-value {
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .tax-detail {
+            color: #888;
+            font-size: 9px;
+            margin-top: 2px;
+        }
+        
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .annual-summary {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .annual-summary h4 {
+            color: #555;
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .summary-item {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .summary-item.highlight {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+        
+        .summary-label {
+            display: block;
+            font-size: 10px;
+            margin-bottom: 4px;
+            color: #666;
+        }
+        
+        .summary-item.highlight .summary-label {
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .summary-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .summary-item.highlight .summary-value {
+            color: white;
+        }
+        
+        .info-panel {
+            background: #e8f4fd;
+            border-left: 3px solid #2196F3;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        
+        .info-panel p {
+            color: #555;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        
+        .warning-box {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .warning-box h4 {
+            color: #e65100;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .warning-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .warning-item {
+            background: white;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+        }
+        
+        .warning-note {
+            font-size: 10px;
+            color: #795548;
+            line-height: 1.4;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .bottom-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-header {
+                flex-wrap: wrap;
+            }
+            
+            .toggle-container {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .input-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .tax-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stipendio-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 Calcolatore Fondo Pensione</h1>
+        <p class="subtitle">PERSEO SIRIO - Politecnico di Milano</p>
+        
+        <div class="input-section">
+            <div class="input-header">
+                <div class="input-group">
+                    <label for="stipendio">Stipendio lordo mensile:</label>
+                    <div class="stipendio-container">
+                        <span class="currency-symbol">€</span>
+                        <input type="number" id="stipendio" value="2086.49" step="0.01" min="0" class="stipendio-input">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="percentage">Percentuale di contribuzione:</label>
+                    <div class="slider-container">
+                        <input type="range" id="percentage" min="1" max="30" value="15" step="0.5">
+                        <div class="percentage-display" id="percentageDisplay">15%</div>
+                    </div>
+                </div>
+                
+                <div class="toggle-container">
+                    <span class="toggle-label-inline">Modalità:</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="contributionToggle">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">
+                            <span class="toggle-option left">Tramite Datore</span>
+                            <span class="toggle-option right">Fondo Aperto</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-grid">
+            <div class="column">
+                <div class="result-card">
+                    <div class="result-title">Tuo Contributo Mensile</div>
+                    <div class="result-value" id="monthlyContribution">€312.97</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title" id="monthlyTotalLabel">Totale Mensile al Fondo</div>
+                    <div class="result-value" id="monthlyTotal">€464.93</div>
+                </div>
+                
+                <div class="highlight-card">
+                    <div class="highlight-title">TOTALE ANNUO (13 mens.)</div>
+                    <div class="highlight-value" id="yearlyTotal">€6,044.09</div>
+                </div>
+            </div>
+            
+            <div class="column">
+                <div class="breakdown">
+                    <h3>📊 Dettaglio Annuale</h3>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">👤 Tuo contributo</span>
+                        <span class="breakdown-value" id="yearlyYourContribution">€4,068.61</span>
+                    </div>
+                    <div class="breakdown-item employer-row">
+                        <span class="breakdown-label">🏢 Datore (1%)</span>
+                        <span class="breakdown-value" id="yearlyEmployer">€271.18</span>
+                    </div>
+                    <div class="breakdown-item tfr-row">
+                        <span class="breakdown-label">💰 TFR</span>
+                        <span class="breakdown-value" id="yearlyTFR">€1,704.30</span>
+                    </div>
+                    <div class="breakdown-item" style="background: #e8f4fd; font-weight: bold; margin-top: 5px;">
+                        <span class="breakdown-label">TOTALE</span>
+                        <span class="breakdown-value" id="yearlyTotalBreakdown">€6,044.09</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="column">
+                <div class="tax-section">
+                    <h3>💶 Vantaggio Fiscale</h3>
+                    <div class="tax-grid">
+                        <div class="tax-card">
+                            <div class="tax-label">Risparmio/mese</div>
+                            <div class="tax-value" id="taxSaving">€109.54</div>
+                            <div class="tax-detail">(35% deduzione)</div>
+                        </div>
+                        <div class="tax-card highlight">
+                            <div class="tax-label">⭐ Costo Effettivo</div>
+                            <div class="tax-value" id="effectiveCost">€203.43</div>
+                            <div class="tax-detail">al mese dal netto</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bottom-section">
+            <div class="annual-summary">
+                <h4>Riepilogo Impatto Annuale</h4>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="summary-label">Versi al fondo</span>
+                        <span class="summary-value" id="annualGross">€4,068.61</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Risparmi di tasse</span>
+                        <span class="summary-value" id="annualTaxSaving" style="color: #4CAF50;">€1,424.01</span>
+                    </div>
+                    <div class="summary-item highlight">
+                        <span class="summary-label">Costo effettivo netto</span>
+                        <span class="summary-value" id="annualEffectiveCost">€2,644.60</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <p id="infoText">💡 <strong>Nota bene:</strong> I tuoi contributi sono deducibili fiscalmente. Con un'aliquota marginale del 35%, il tuo costo effettivo è molto inferiore a quanto versi. Inoltre, ricevi €271.18 all'anno "gratis" dal datore di lavoro!</p>
+            </div>
+        </div>
+        
+        <div class="warning-box" id="deductibilityWarning">
+            <h4>⚠️ Limite di Deducibilità Superato</h4>
+            <div class="warning-grid">
+                <div class="warning-item">
+                    <strong>Deducibile:</strong> <span id="deducibleAmount">€5,164.57</span>
+                </div>
+                <div class="warning-item">
+                    <strong>NON deducibile:</strong> <span id="nonDeducibleAmount">€0.00</span>
+                </div>
+            </div>
+            <p class="warning-note" id="warningNote">La parte non deducibile sarà esente da tassazione quando ritirerai la pensione (previa comunicazione al fondo).</p>
+        </div>
+    </div>
+    
+    <script>
+        // Dati base
+        const tfrPercentuale = 6.91 / 100; // TFR è circa 6.91% dello stipendio
+        const contributoDatorePercentuale = 0.01; // 1% dello stipendio
+        const mensilita = 13;
+        const aliquotaMarginale = 0.35; // 35% di aliquota marginale IRPEF
+        const limiteDeducibilita = 5164.57;
+        
+        // Elementi DOM
+        const stipendioInput = document.getElementById('stipendio');
+        const slider = document.getElementById('percentage');
+        const percentageDisplay = document.getElementById('percentageDisplay');
+        const contributionToggle = document.getElementById('contributionToggle');
+        
+        // Gestione input stipendio
+        stipendioInput.addEventListener('input', function() {
+            // Previeni valori negativi
+            if (this.value < 0) this.value = 0;
+            updateCalculations();
+        });
+        
+        stipendioInput.addEventListener('blur', function() {
+            // Formatta il valore quando l'utente esce dal campo
+            const value = parseFloat(this.value) || 0;
+            this.value = value.toFixed(2);
+            updateCalculations();
+        });
+        
+        // Gestione toggle
+        contributionToggle.addEventListener('change', function() {
+            const isOpenFund = this.checked;
+            
+            // Aggiorna visibilità righe
+            document.querySelectorAll('.employer-row, .tfr-row').forEach(row => {
+                row.style.display = isOpenFund ? 'none' : 'flex';
+            });
+            
+            // Aggiorna etichetta
+            document.getElementById('monthlyTotalLabel').textContent = 
+                isOpenFund ? 'Versamento Mensile' : 'Totale Mensile al Fondo';
+            
+            // Aggiorna info text
+            const infoText = document.getElementById('infoText');
+            if (isOpenFund) {
+                infoText.innerHTML = '💡 <strong>Fondo Aperto:</strong> I versamenti diretti sono interamente deducibili fino a €5,164.57 annui. Non ricevi contributi dal datore né TFR, ma hai piena flessibilità sui versamenti.';
+            } else {
+                const contributoDatoreAnnuo = (parseFloat(stipendioInput.value) * contributoDatorePercentuale * mensilita).toFixed(2);
+                infoText.innerHTML = `💡 <strong>Nota bene:</strong> I tuoi contributi sono deducibili fiscalmente. Con un'aliquota marginale del 35%, il tuo costo effettivo è molto inferiore a quanto versi. Inoltre, ricevi €${contributoDatoreAnnuo} all'anno "gratis" dal datore di lavoro!`;
+            }
+            
+            updateCalculations();
+        });
+        
+        function formatCurrency(value) {
+            return '€' + value.toLocaleString('it-IT', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        }
+        
+        function updateCalculations() {
+            const stipendioBase = parseFloat(stipendioInput.value) || 0;
+            const percentage = parseFloat(slider.value);
+            const isOpenFund = contributionToggle.checked;
+            
+            // Calcola valori dinamici basati sullo stipendio
+            const contributoDatore = stipendioBase * contributoDatorePercentuale;
+            const tfrMensile = (stipendioBase / 13.5) * 12 / 12; // Formula approssimativa TFR
+            
+            // Aggiorna display percentuale
+            percentageDisplay.textContent = percentage + '%';
+            
+            // Calcola contributi
+            const tuoContributoMensile = (stipendioBase * percentage) / 100;
+            
+            // Valori che cambiano in base alla modalità
+            const contributoDatoreMensile = isOpenFund ? 0 : contributoDatore;
+            const tfrMensileEffettivo = isOpenFund ? 0 : tfrMensile;
+            const totaleMensile = tuoContributoMensile + contributoDatoreMensile + tfrMensileEffettivo;
+            
+            // Calcola annuali
+            const tuoContributoAnnuo = tuoContributoMensile * mensilita;
+            const contributoDatoreAnnuo = contributoDatoreMensile * mensilita;
+            const tfrAnnuo = tfrMensileEffettivo * mensilita;
+            const totaleAnnuo = totaleMensile * mensilita;
+            
+            // Calcola deducibilità
+            const totaleContributiDeducibili = isOpenFund ? 
+                tuoContributoAnnuo : 
+                (tuoContributoAnnuo + contributoDatoreAnnuo);
+            
+            const importoDeducibile = Math.min(totaleContributiDeducibili, limiteDeducibilita);
+            const importoNonDeducibile = Math.max(0, totaleContributiDeducibili - limiteDeducibilita);
+            
+            // Calcola vantaggio fiscale
+            let tuoContributoDeducibile;
+            if (isOpenFund) {
+                tuoContributoDeducibile = Math.min(tuoContributoAnnuo, limiteDeducibilita);
+            } else {
+                tuoContributoDeducibile = Math.min(tuoContributoAnnuo, 
+                    Math.max(0, importoDeducibile - contributoDatoreAnnuo));
+            }
+            
+            const risparmioFiscaleAnnuo = tuoContributoDeducibile * aliquotaMarginale;
+            const costoEffettivoAnnuo = tuoContributoAnnuo - risparmioFiscaleAnnuo;
+            
+            // Valori mensili
+            const risparmioFiscaleMensile = risparmioFiscaleAnnuo / mensilita;
+            const costoEffettivoMensile = costoEffettivoAnnuo / mensilita;
+            
+            // Aggiorna DOM
+            document.getElementById('monthlyContribution').textContent = formatCurrency(tuoContributoMensile);
+            document.getElementById('monthlyTotal').textContent = formatCurrency(totaleMensile);
+            document.getElementById('yearlyTotal').textContent = formatCurrency(totaleAnnuo);
+            document.getElementById('yearlyYourContribution').textContent = formatCurrency(tuoContributoAnnuo);
+            document.getElementById('yearlyEmployer').textContent = formatCurrency(contributoDatoreAnnuo);
+            document.getElementById('yearlyTFR').textContent = formatCurrency(tfrAnnuo);
+            document.getElementById('yearlyTotalBreakdown').textContent = formatCurrency(totaleAnnuo);
+            
+            // Vantaggio fiscale
+            document.getElementById('taxSaving').textContent = formatCurrency(risparmioFiscaleMensile);
+            document.getElementById('effectiveCost').textContent = formatCurrency(costoEffettivoMensile);
+            document.getElementById('annualGross').textContent = formatCurrency(tuoContributoAnnuo);
+            document.getElementById('annualTaxSaving').textContent = formatCurrency(risparmioFiscaleAnnuo);
+            document.getElementById('annualEffectiveCost').textContent = formatCurrency(costoEffettivoAnnuo);
+            
+            // Warning deducibilità
+            const warningElement = document.getElementById('deductibilityWarning');
+            if (importoNonDeducibile > 0) {
+                warningElement.style.display = 'block';
+                document.getElementById('deducibleAmount').textContent = formatCurrency(importoDeducibile);
+                document.getElementById('nonDeducibleAmount').textContent = formatCurrency(importoNonDeducibile);
+                
+                const warningNote = document.getElementById('warningNote');
+                if (isOpenFund) {
+                    warningNote.textContent = 'Con un fondo aperto, solo i tuoi versamenti sono deducibili. La parte non deducibile sarà esente da tassazione al pensionamento.';
+                } else {
+                    warningNote.textContent = 'La parte non deducibile sarà esente da tassazione quando ritirerai la pensione (previa comunicazione al fondo).';
+                }
+            } else {
+                warningElement.style.display = 'none';
+            }
+            
+            // Aggiorna info text con valori dinamici se tramite datore
+            if (!isOpenFund) {
+                const infoText = document.getElementById('infoText');
+                infoText.innerHTML = `💡 <strong>Nota bene:</strong> I tuoi contributi sono deducibili fiscalmente. Con un'aliquota marginale del 35%, il tuo costo effettivo è molto inferiore a quanto versi. Inoltre, ricevi €${contributoDatoreAnnuo.toFixed(2)} all'anno "gratis" dal datore di lavoro!`;
+            }
+        }
+        
+        // Event listener per lo slider
+        slider.addEventListener('input', updateCalculations);
+        
+        // Calcolo iniziale
+        updateCalculations();
+    </script>
+</body>
+</html>
