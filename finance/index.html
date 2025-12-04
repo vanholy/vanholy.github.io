@@ -769,6 +769,23 @@
         </footer>
     </div>
 
+    <!-- Modal Fullscreen Matrix -->
+    <div id="matrix-modal" class="matrix-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="matrix-modal-overlay"></div>
+        <div class="matrix-modal-container">
+            <div class="matrix-modal-header">
+                <h2 id="modal-title" class="matrix-modal-title"></h2>
+                <button class="matrix-modal-close" aria-label="Chiudi modal" title="Chiudi (ESC)">
+                    <span class="close-icon">×</span>
+                </button>
+            </div>
+            <div class="matrix-modal-content">
+                <iframe id="modal-iframe" class="matrix-modal-iframe" frameborder="0" allow="autoplay"></iframe>
+            </div>
+            <div class="matrix-glitch-overlay"></div>
+        </div>
+    </div>
+
     <script>
         // Matrix Rain Effect
         const canvas = document.getElementById('matrix-canvas');
@@ -998,22 +1015,5 @@
             openMatrixModal(appTitle, appSrc);
         }
     </script>
-
-    <!-- Modal Fullscreen Matrix -->
-    <div id="matrix-modal" class="matrix-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
-        <div class="matrix-modal-overlay"></div>
-        <div class="matrix-modal-container">
-            <div class="matrix-modal-header">
-                <h2 id="modal-title" class="matrix-modal-title"></h2>
-                <button class="matrix-modal-close" aria-label="Chiudi modal" title="Chiudi (ESC)">
-                    <span class="close-icon">×</span>
-                </button>
-            </div>
-            <div class="matrix-modal-content">
-                <iframe id="modal-iframe" class="matrix-modal-iframe" frameborder="0" allow="autoplay"></iframe>
-            </div>
-            <div class="matrix-glitch-overlay"></div>
-        </div>
-    </div>
 </body>
 </html>
