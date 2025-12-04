@@ -1,0 +1,2856 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cicciopalla Trader 📈</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a1a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 15px 0;
+            font-family: 'VT323', monospace;
+            color: #fff;
+            overflow-y: auto;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 22px;
+            color: #ffcc00;
+            text-shadow: 4px 4px 0 #ff6600, -2px -2px 0 #ff0066;
+            margin-bottom: 12px;
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .game-container {
+            display: flex;
+            gap: 15px;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            padding: 18px;
+            border-radius: 20px;
+            border: 4px solid #ff6600;
+            box-shadow: 
+                0 0 30px rgba(255, 102, 0, 0.3),
+                inset 0 0 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .chart-panel {
+            background: #0d0d1a;
+            border-radius: 12px;
+            padding: 10px;
+            border: 3px solid #333;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            padding: 0 8px;
+        }
+
+        .stock-name {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 11px;
+            color: #00ff88;
+        }
+
+        .stock-price {
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        .price-up { color: #00ff88; }
+        .price-down { color: #ff4466; }
+
+        .chart-wrapper {
+            position: relative;
+        }
+
+        #chartCanvas, #yearChartCanvas {
+            background: linear-gradient(180deg, #0a0a15 0%, #151525 100%);
+            border-radius: 8px;
+            border: 2px solid #222;
+        }
+
+        .pause-btn {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            background: rgba(30, 30, 60, 0.85);
+            border: 2px solid #444;
+            border-radius: 6px;
+            color: #ffcc00;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            z-index: 10;
+        }
+
+        .pause-btn:hover, .audio-btn:hover {
+            background: rgba(50, 50, 80, 0.95);
+            border-color: #ffcc00;
+        }
+
+        .pause-btn.paused {
+            background: rgba(255, 100, 100, 0.3);
+            border-color: #ff6666;
+            animation: pausePulse 1s ease-in-out infinite;
+        }
+
+        .audio-btn {
+            position: absolute;
+            bottom: 8px;
+            right: 42px;
+            width: 28px;
+            height: 28px;
+            background: rgba(30, 30, 60, 0.85);
+            border: 2px solid #444;
+            border-radius: 6px;
+            color: #ffcc00;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            z-index: 10;
+        }
+
+        .audio-btn.muted {
+            color: #666;
+            border-color: #333;
+        }
+
+        @keyframes pausePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .year-chart-panel {
+            background: #0d0d1a;
+            border-radius: 10px;
+            padding: 8px;
+            border: 2px solid #333;
+        }
+
+        .year-chart-header {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .calendar-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 8px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+            border-radius: 10px;
+            border: 2px solid #333;
+        }
+
+        .calendar-icon {
+            font-size: 22px;
+        }
+
+        .calendar-date {
+            text-align: center;
+        }
+
+        .calendar-day {
+            font-size: 20px;
+            color: #ffcc00;
+            font-family: 'VT323', monospace;
+        }
+
+        .calendar-year {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .reports-box {
+            background: #0a0a15;
+            border-radius: 10px;
+            border: 2px solid #333;
+            padding: 10px;
+            min-height: 180px;
+        }
+
+        .reports-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .reports-box::-webkit-scrollbar-track {
+            background: #1a1a2e;
+            border-radius: 3px;
+        }
+
+        .reports-box::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 3px;
+        }
+
+        .reports-title {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 8px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 6px;
+        }
+
+        .report-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, #1a1a2e 0%, #0d0d1a 100%);
+            border-radius: 6px;
+            font-size: 15px;
+            border-left: 4px solid #444;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .report-entry.profit { border-left-color: #00ff88; }
+        .report-entry.loss { border-left-color: #ff4466; }
+        .report-month { color: #ffcc00; font-weight: bold; font-size: 16px; }
+        .report-pl { font-weight: bold; }
+        .report-pl.profit { color: #00ff88; }
+        .report-pl.loss { color: #ff4466; }
+        .no-reports { color: #555; text-align: center; font-style: italic; padding: 20px 10px; font-size: 14px; }
+
+        .sidebar {
+            width: 270px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .character-box {
+            background: linear-gradient(180deg, #1e1e3a 0%, #141428 100%);
+            border-radius: 12px;
+            padding: 10px;
+            border: 3px solid #444;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #characterCanvas {
+            margin: 3px auto;
+            display: block;
+        }
+
+        .mood-text {
+            font-size: 14px;
+            margin-top: 4px;
+            color: #ccc;
+        }
+
+        /* Game Over Panel (dentro character-box) */
+        .game-over-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            z-index: 100;
+            animation: panelSlide 0.4s ease;
+        }
+
+        .game-over-panel.active {
+            display: flex;
+        }
+
+        @keyframes panelSlide {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .go-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            color: #ffcc00;
+            margin-bottom: 5px;
+        }
+
+        .go-rank {
+            font-size: 32px;
+            margin: 3px 0;
+        }
+
+        .go-rank-text {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 7px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .go-score {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: #00ff88;
+            margin: 5px 0;
+        }
+
+        .go-score.loss {
+            color: #ff4466;
+        }
+
+        .go-return {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .go-return span {
+            font-weight: bold;
+        }
+
+        .go-return span.profit { color: #00ff88; }
+        .go-return span.loss { color: #ff4466; }
+
+        .go-btn {
+            padding: 8px 16px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 7px;
+            background: linear-gradient(180deg, #ffcc00 0%, #ff9900 100%);
+            border: none;
+            border-radius: 6px;
+            color: #000;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #aa6600;
+        }
+
+        .go-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 #aa6600;
+        }
+
+        .go-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #aa6600;
+        }
+
+        .stats-box {
+            background: linear-gradient(180deg, #1e1e3a 0%, #141428 100%);
+            border-radius: 12px;
+            padding: 10px;
+            border: 3px solid #444;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        .stat-row.separator {
+            border-top: 1px solid #333;
+            padding-top: 6px;
+            margin-top: 2px;
+        }
+
+        .stat-label { color: #888; }
+        .stat-value { font-weight: bold; }
+        .profit { color: #00ff88; }
+        .loss { color: #ff4466; }
+
+        .trading-box {
+            background: linear-gradient(180deg, #1e1e3a 0%, #141428 100%);
+            border-radius: 12px;
+            padding: 10px;
+            border: 3px solid #444;
+        }
+
+        .shares-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .shares-input label {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .shares-input input {
+            width: 75px;
+            padding: 6px;
+            font-size: 16px;
+            font-family: 'VT323', monospace;
+            background: #0a0a15;
+            border: 2px solid #444;
+            border-radius: 6px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .percent-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .percent-buttons.row2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .btn-percent {
+            padding: 6px 4px;
+            font-family: 'VT323', monospace;
+            font-size: 13px;
+            background: #2a2a4a;
+            border: 2px solid #444;
+            border-radius: 5px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-percent:hover {
+            background: #3a3a5a;
+            border-color: #666;
+        }
+
+        .btn-percent.active {
+            background: #ffcc00;
+            color: #000;
+            border-color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn:active { transform: scale(0.95); }
+
+        .btn-buy {
+            background: linear-gradient(180deg, #00cc66 0%, #009944 100%);
+            color: #fff;
+            box-shadow: 0 3px 0 #006622;
+        }
+
+        .btn-sell {
+            background: linear-gradient(180deg, #ff4466 0%, #cc2244 100%);
+            color: #fff;
+            box-shadow: 0 3px 0 #991133;
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .message-box {
+            background: #0a0a15;
+            border-radius: 6px;
+            padding: 6px;
+            border: 2px solid #333;
+        }
+
+        .message {
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Transaction Popup */
+        .tx-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #ffcc00;
+            border-radius: 15px;
+            padding: 20px 30px;
+            z-index: 2500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 204, 0, 0.4);
+        }
+
+        .tx-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .tx-popup.buy { border-color: #00ff88; box-shadow: 0 0 40px rgba(0, 255, 136, 0.4); }
+        .tx-popup.sell { border-color: #ff4466; box-shadow: 0 0 40px rgba(255, 68, 102, 0.4); }
+
+        .tx-popup h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .tx-popup.buy h3 { color: #00ff88; }
+        .tx-popup.sell h3 { color: #ff4466; }
+
+        .tx-popup .tx-details {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .tx-popup .tx-total {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #444;
+        }
+
+        /* Month Flash */
+        .month-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1500;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .month-flash.show {
+            opacity: 1;
+            animation: flashPulse 0.4s ease-out;
+        }
+
+        .month-flash.intense {
+            animation: flashPulseIntense 0.5s ease-out;
+        }
+
+        @keyframes flashPulse {
+            0% { opacity: 0; }
+            30% { opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes flashPulseIntense {
+            0% { opacity: 0; }
+            30% { opacity: 0.5; }
+            100% { opacity: 0; }
+        }
+
+        /* Game Over Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            border: 4px solid #ffcc00;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 0 50px rgba(255, 204, 0, 0.5);
+            animation: modalPop 0.3s ease;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            color: #ffcc00;
+            margin-bottom: 15px;
+        }
+
+        .modal-stats { font-size: 18px; margin: 12px 0; }
+
+        .modal-btn {
+            margin-top: 15px;
+            padding: 12px 25px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            background: linear-gradient(180deg, #ffcc00 0%, #ff9900 100%);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #aa6600;
+        }
+
+        .rank { font-size: 44px; margin: 8px 0; }
+        .rank-text { font-family: 'Press Start 2P', cursive; font-size: 11px; color: #aaa; }
+        .final-score { font-family: 'Press Start 2P', cursive; font-size: 26px; color: #00ff88; margin: 12px 0; }
+        .final-score.loss { color: #ff4466; }
+
+        /* Start Screen */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+        }
+
+        .start-screen.hidden {
+            display: none;
+        }
+
+        .start-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 36px;
+            color: #ffcc00;
+            text-shadow: 6px 6px 0 #ff6600, -3px -3px 0 #ff0066;
+            margin-bottom: 20px;
+            animation: titleBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .start-subtitle {
+            font-family: 'VT323', monospace;
+            font-size: 24px;
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        .start-character {
+            margin-bottom: 30px;
+            animation: characterFloat 2s ease-in-out infinite;
+        }
+
+        @keyframes characterFloat {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        .start-btn {
+            padding: 20px 60px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            background: linear-gradient(180deg, #00cc66 0%, #009944 100%);
+            border: 4px solid #00ff88;
+            border-radius: 15px;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #006622, 0 0 30px rgba(0, 255, 136, 0.4);
+            transition: all 0.1s;
+            animation: startPulse 1.5s ease-in-out infinite;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 9px 0 #006622, 0 0 50px rgba(0, 255, 136, 0.6);
+        }
+
+        .start-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #006622;
+        }
+
+        @keyframes startPulse {
+            0%, 100% { box-shadow: 0 6px 0 #006622, 0 0 30px rgba(0, 255, 136, 0.4); }
+            50% { box-shadow: 0 6px 0 #006622, 0 0 50px rgba(0, 255, 136, 0.7); }
+        }
+
+        .start-instructions {
+            margin-top: 40px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            color: #666;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .start-instructions span {
+            color: #ffcc00;
+        }
+
+        /* Quit Button */
+        .quit-btn {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            width: 30px;
+            height: 30px;
+            background: rgba(80, 30, 30, 0.95);
+            border: 2px solid #884444;
+            border-radius: 6px;
+            color: #ff6666;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            z-index: 100;
+        }
+
+        .quit-btn:hover {
+            background: rgba(120, 40, 40, 0.95);
+            border-color: #ff6666;
+            color: #ff8888;
+            transform: scale(1.1);
+        }
+
+        .quit-btn:active {
+            transform: scale(0.95);
+        }
+
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3000;
+        }
+
+        footer {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div class="start-screen" id="startScreen">
+        <div class="start-title">🎮 CICCIOPALLA TRADER 📈</div>
+        <div class="start-subtitle">Diventa il Re del Trading!</div>
+        <div class="start-character">
+            <canvas id="startCharCanvas" width="180" height="160"></canvas>
+        </div>
+        <button class="start-btn" id="startBtn">▶ START</button>
+        <div class="start-instructions">
+            <span>B</span> = Compra &nbsp; <span>S</span> = Vendi<br>
+            <span>Spazio</span> = Pausa &nbsp; <span>M</span> = Mute<br><br>
+            💰 Inizia con €10,000 - Hai 1 anno per fare profitto!
+        </div>
+    </div>
+
+    <h1>🎮 CICCIOPALLA TRADER 📈</h1>
+    
+    <div class="game-container">
+        <div class="left-panel">
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <span class="stock-name">$CICCIO</span>
+                    <span id="currentPrice" class="stock-price price-up">€100.00</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="chartCanvas" width="550" height="220"></canvas>
+                    <button class="quit-btn" id="quitBtn" title="Abbandona (Q)">✕</button>
+                    <button class="pause-btn" id="pauseBtn" title="Pausa/Riprendi (Spazio)">⏸</button>
+                    <button class="audio-btn" id="audioBtn" title="Audio On/Off (M)">🔊</button>
+                </div>
+            </div>
+            
+            <div class="year-chart-panel">
+                <div class="year-chart-header">📊 ANDAMENTO ANNUALE (Candele Settimanali)</div>
+                <canvas id="yearChartCanvas" width="550" height="110"></canvas>
+            </div>
+            
+            <div class="calendar-box">
+                <span class="calendar-icon">📅</span>
+                <div class="calendar-date">
+                    <div class="calendar-day" id="calendarDay">1 Gennaio</div>
+                    <div class="calendar-year" id="calendarYear">Anno 2024</div>
+                </div>
+                <span class="calendar-icon">⏰</span>
+                <div class="calendar-date">
+                    <div class="calendar-day" id="tradingDays">Giorno 1</div>
+                    <div class="calendar-year">di 365</div>
+                </div>
+            </div>
+            
+            <div class="reports-box" id="reportsBox">
+                <div class="reports-title">📊 REPORT TRIMESTRALI</div>
+                <div id="reportsList">
+                    <div class="no-reports">I report trimestrali appariranno qui...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="character-box">
+                <canvas id="characterCanvas" width="160" height="140"></canvas>
+                <div id="moodText" class="mood-text">Pronto a tradare!</div>
+                
+                <!-- Game Over Panel (dentro character-box) -->
+                <div class="game-over-panel" id="gameOverPanel">
+                    <div class="go-title">🏆 FINE 2024 🏆</div>
+                    <div class="go-rank" id="goRankEmoji">🎯</div>
+                    <div class="go-rank-text" id="goRankText">Trader</div>
+                    <div class="go-score" id="goScore">€0</div>
+                    <div class="go-return">Rend: <span id="goReturn">0%</span></div>
+                    <button class="go-btn" onclick="restartGame()">🔄 RIGIOCA</button>
+                </div>
+            </div>
+            
+            <div class="stats-box">
+                <div class="stat-row">
+                    <span class="stat-label">💰 Cash:</span>
+                    <span id="cash" class="stat-value">€10,000.00</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">📦 Azioni:</span>
+                    <span id="shares" class="stat-value">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">💼 Portfolio:</span>
+                    <span id="portfolio" class="stat-value">€10,000.00</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">📊 P/L:</span>
+                    <span id="profitLoss" class="stat-value">€0.00</span>
+                </div>
+                <div class="stat-row separator">
+                    <span class="stat-label">📅 P/L Trim:</span>
+                    <span id="quarterPL" class="stat-value">€0.00</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">🔄 Ultima Op:</span>
+                    <span id="lastOp" class="stat-value">-</span>
+                </div>
+            </div>
+            
+            <div class="trading-box">
+                <div class="shares-input">
+                    <label>Qtà:</label>
+                    <input type="number" id="quantity" value="10" min="1" max="100000">
+                </div>
+                <div class="percent-buttons">
+                    <button class="btn-percent" data-percent="25">25%</button>
+                    <button class="btn-percent" data-percent="50">50%</button>
+                    <button class="btn-percent" data-percent="75">75%</button>
+                    <button class="btn-percent" data-percent="100">100%</button>
+                </div>
+                <div class="percent-buttons row2">
+                    <button class="btn-percent" data-action="max">MAX</button>
+                    <button class="btn-percent" data-action="all">ALL</button>
+                </div>
+                <div class="buttons">
+                    <button class="btn btn-buy" id="buyBtn">Compra</button>
+                    <button class="btn btn-sell" id="sellBtn">Vendi</button>
+                </div>
+                <div class="message-box">
+                    <div id="message" class="message">B=Compra S=Vendi</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>Creato con ❤️ per Cicciopalla</footer>
+
+    <!-- Transaction Popup -->
+    <div class="tx-popup" id="txPopup">
+        <h3 id="txType">ACQUISTO</h3>
+        <div class="tx-details">
+            <div><span id="txQty">0</span> azioni</div>
+            <div>@ €<span id="txPrice">0.00</span></div>
+        </div>
+        <div class="tx-total">
+            Totale: €<span id="txTotal">0.00</span>
+        </div>
+    </div>
+
+    <!-- Month Flash -->
+    <div class="month-flash" id="monthFlash"></div>
+
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="gameOverModal">
+        <div class="modal">
+            <h2>🏆 FINE ANNO 2024 🏆</h2>
+            <div class="rank" id="rankEmoji">🎯</div>
+            <div class="rank-text" id="rankText">Trader</div>
+            <div class="final-score" id="finalScore">€0</div>
+            <div class="modal-stats">
+                <div>Capitale iniziale: €10,000.00</div>
+                <div>Rendimento: <span id="finalReturn">0%</span></div>
+            </div>
+            <canvas id="finalCharCanvas" width="130" height="110" style="margin: 12px auto; display: block;"></canvas>
+            <button class="modal-btn" onclick="restartGame()">🔄 GIOCA ANCORA</button>
+        </div>
+    </div>
+
+    <canvas id="confettiCanvas"></canvas>
+
+    <script>
+        // ============================================
+        // GAME STATE
+        // ============================================
+        const state = {
+            cash: 10000,
+            shares: 0,
+            initialCash: 10000,
+            priceHistory: [],
+            yearPriceHistory: [],
+            currentPrice: 100,
+            currentMood: 'neutral',
+            gameStartTime: Date.now(),
+            tradingDay: 1,
+            currentDate: new Date(2024, 0, 1),
+            currentMonth: 0,
+            currentQuarter: 0,
+            quarterStartPortfolio: 10000,
+            quarterlyReports: [],
+            gameOver: false,
+            gameStarted: false,
+            isPaused: false,
+            pausedTime: 0, // Tempo totale in pausa
+            pauseStartTime: 0,
+            volatility: 0.02,
+            drift: 0.0001,
+            meanReversionStrength: 0.001,
+            meanPrice: 100,
+            trendStrength: 0,
+            trendDirection: 0,
+            tears: [],
+            tearsActive: false,
+            // Trading tracking
+            transactions: [], // {day, price, type: 'buy'|'sell', qty}
+            lastOperation: null,
+            activePercentBtn: null,
+            avgBuyPrice: 0,
+            totalBought: 0
+        };
+
+        const MONTHS = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                        'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+        const QUARTERS = ['Q1 (Gen-Mar)', 'Q2 (Apr-Giu)', 'Q3 (Lug-Set)', 'Q4 (Ott-Dic)'];
+
+        const SEASON_COLORS = {
+            winter: '#87CEEB',   // Azzurro (Gen, Feb, Dic)
+            spring: '#90EE90',   // Verde chiaro (Mar, Apr, Mag)
+            summer: '#FFD700',   // Giallo (Giu, Lug, Ago)
+            autumn: '#FF8C00'    // Arancione (Set, Ott, Nov)
+        };
+
+        // 3 minuti per anno completo: ~493ms per giorno (25% più veloce)
+        const MS_PER_DAY = 493;
+
+        // ============================================
+        // AUDIO SYSTEM - Web Audio API
+        // ============================================
+        let audioCtx = null;
+        let bgmOscillators = [];
+        let bgmGain = null;
+        let currentMoodMusic = null;
+        let audioEnabled = true;
+        let bgmInterval = null;
+
+        function initAudio() {
+            if (audioCtx) {
+                // Resume se era sospeso
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                return;
+            }
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                bgmGain = audioCtx.createGain();
+                bgmGain.gain.value = 0.08;
+                bgmGain.connect(audioCtx.destination);
+                console.log('Audio inizializzato!');
+            } catch(e) {
+                console.log('Audio non supportato:', e);
+                audioEnabled = false;
+            }
+        }
+
+        // Genera un beep/nota semplice
+        function playTone(freq, duration, type = 'square', volume = 0.15, delay = 0) {
+            if (!audioCtx || !audioEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+                gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + delay + 0.02);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + delay + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + delay);
+                osc.stop(audioCtx.currentTime + delay + duration + 0.1);
+            } catch(e) {}
+        }
+
+        // 🔊 Cha-ching! quando compri
+        function playChaChingSound() {
+            if (!audioCtx || !audioEnabled) return;
+            // Registro di cassa classico - campanello doppio
+            playTone(1200, 0.08, 'square', 0.15, 0);
+            playTone(1600, 0.08, 'square', 0.15, 0.08);
+            playTone(2000, 0.15, 'square', 0.18, 0.16);
+            // Moneta che tintinna
+            playTone(3000, 0.05, 'sine', 0.1, 0.25);
+            playTone(3500, 0.05, 'sine', 0.08, 0.30);
+        }
+
+        // 💰 Monete quando vendi in profitto
+        function playCoinSound() {
+            if (!audioCtx || !audioEnabled) return;
+            // Cascade di monete
+            const notes = [800, 1000, 1200, 1400, 1600];
+            notes.forEach((freq, i) => {
+                playTone(freq, 0.1, 'square', 0.12, i * 0.06);
+            });
+            // Brillio finale
+            playTone(2400, 0.2, 'sine', 0.1, 0.35);
+        }
+
+        // 📉 Suono triste quando vendi in perdita
+        function playLossSound() {
+            if (!audioCtx || !audioEnabled) return;
+            // Discesa triste
+            playTone(400, 0.15, 'sawtooth', 0.12, 0);
+            playTone(300, 0.15, 'sawtooth', 0.12, 0.12);
+            playTone(200, 0.25, 'sawtooth', 0.14, 0.24);
+        }
+
+        // ❌ Errore
+        function playErrorSound() {
+            if (!audioCtx || !audioEnabled) return;
+            playTone(200, 0.15, 'square', 0.15, 0);
+            playTone(150, 0.2, 'square', 0.15, 0.1);
+        }
+
+        // ⚡ Woosh cambio mese
+        function playMonthChangeSound() {
+            if (!audioCtx || !audioEnabled) return;
+            // Sweep verso l'alto
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.35);
+            // Piccolo chime
+            playTone(1200, 0.1, 'sine', 0.08, 0.15);
+        }
+
+        // 📊 Jingle cambio trimestre
+        function playQuarterSound() {
+            if (!audioCtx || !audioEnabled) return;
+            // Fanfaretta breve per nuovo trimestre
+            const notes = [
+                { f: 523, d: 0.12 },  // C5
+                { f: 659, d: 0.12 },  // E5
+                { f: 784, d: 0.12 },  // G5
+                { f: 1047, d: 0.25 }  // C6
+            ];
+            let time = 0;
+            notes.forEach(note => {
+                playTone(note.f, note.d, 'square', 0.12, time);
+                playTone(note.f / 2, note.d, 'triangle', 0.08, time); // Bass
+                time += note.d * 0.9;
+            });
+            // Brillio finale
+            playTone(1568, 0.15, 'sine', 0.06, time);
+            playTone(2093, 0.2, 'sine', 0.05, time + 0.08);
+        }
+
+        // 🎉 Fanfare vittoria
+        function playVictoryFanfare() {
+            if (!audioCtx || !audioEnabled) return;
+            // Fanfare epica 8-bit
+            const melody = [
+                {f: 523, d: 0.15}, // C5
+                {f: 659, d: 0.15}, // E5
+                {f: 784, d: 0.15}, // G5
+                {f: 1047, d: 0.3}, // C6
+                {f: 784, d: 0.1},  // G5
+                {f: 1047, d: 0.5}, // C6 lungo
+            ];
+            let time = 0;
+            melody.forEach(note => {
+                playTone(note.f, note.d, 'square', 0.12, time);
+                playTone(note.f * 0.5, note.d, 'square', 0.08, time); // Bass
+                time += note.d + 0.02;
+            });
+            // Arpeggio finale
+            [1047, 1319, 1568, 2093].forEach((f, i) => {
+                playTone(f, 0.3, 'sine', 0.06, time + i * 0.08);
+            });
+        }
+
+        // 😢 Trombone triste (wah wah wah wahhh)
+        function playSadTrombone() {
+            if (!audioCtx || !audioEnabled) return;
+            const notes = [
+                {f: 311, d: 0.35}, // Eb
+                {f: 293, d: 0.35}, // D
+                {f: 277, d: 0.35}, // Db
+                {f: 261, d: 0.8},  // C lungo con vibrato
+            ];
+            let time = 0;
+            notes.forEach((note, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(note.f, audioCtx.currentTime + time);
+                // Vibrato sull'ultima nota
+                if (i === 3) {
+                    const vibrato = audioCtx.createOscillator();
+                    const vibratoGain = audioCtx.createGain();
+                    vibrato.frequency.value = 5;
+                    vibratoGain.gain.value = 8;
+                    vibrato.connect(vibratoGain);
+                    vibratoGain.connect(osc.frequency);
+                    vibrato.start(audioCtx.currentTime + time);
+                    vibrato.stop(audioCtx.currentTime + time + note.d);
+                }
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime + time);
+                gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + time + note.d * 0.8);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + time + note.d);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + time);
+                osc.stop(audioCtx.currentTime + time + note.d + 0.1);
+                time += note.d + 0.05;
+            });
+        }
+
+        // 🎵 Musica di sottofondo dinamica
+        function stopBgm() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+            bgmOscillators.forEach(osc => {
+                try { osc.stop(); } catch(e) {}
+            });
+            bgmOscillators = [];
+            currentMoodMusic = null;
+        }
+
+        function playBgm(mood) {
+            if (!audioCtx || !audioEnabled || !state.gameStarted || state.gameOver) return;
+            if (mood === currentMoodMusic) return;
+            
+            stopBgm();
+            currentMoodMusic = mood;
+
+            const patterns = {
+                profit: { // Allegro, maggiore
+                    notes: [523, 659, 784, 659, 523, 784, 659, 523],
+                    bass: [262, 262, 330, 330, 262, 262, 392, 392],
+                    tempo: 250
+                },
+                neutral: { // Calmo, sospeso
+                    notes: [440, 523, 440, 392, 440, 523, 392, 440],
+                    bass: [220, 220, 220, 196, 220, 220, 196, 220],
+                    tempo: 400
+                },
+                loss: { // Teso, minore
+                    notes: [440, 415, 392, 370, 392, 370, 349, 330],
+                    bass: [220, 208, 196, 185, 196, 185, 175, 165],
+                    tempo: 350
+                }
+            };
+
+            const pattern = patterns[mood] || patterns.neutral;
+            let noteIndex = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!audioEnabled || !audioCtx || state.gameOver || state.isPaused) return;
+                
+                try {
+                    const freq = pattern.notes[noteIndex];
+                    const bassFreq = pattern.bass[noteIndex];
+
+                    // Melodia
+                    const osc1 = audioCtx.createOscillator();
+                    const gain1 = audioCtx.createGain();
+                    osc1.type = 'square';
+                    osc1.frequency.value = freq;
+                    gain1.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain1.gain.linearRampToValueAtTime(0, audioCtx.currentTime + pattern.tempo / 1000 * 0.9);
+                    osc1.connect(gain1);
+                    gain1.connect(bgmGain);
+                    osc1.start();
+                    osc1.stop(audioCtx.currentTime + pattern.tempo / 1000);
+
+                    // Basso
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.type = 'triangle';
+                    osc2.frequency.value = bassFreq;
+                    gain2.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain2.gain.linearRampToValueAtTime(0, audioCtx.currentTime + pattern.tempo / 1000 * 0.9);
+                    osc2.connect(gain2);
+                    gain2.connect(bgmGain);
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + pattern.tempo / 1000);
+
+                    noteIndex = (noteIndex + 1) % pattern.notes.length;
+                } catch(e) {}
+            }, pattern.tempo);
+        }
+
+        function updateBgmMood(profitPercent) {
+            if (!audioEnabled || !state.gameStarted) return;
+            if (profitPercent > 5) playBgm('profit');
+            else if (profitPercent < -5) playBgm('loss');
+            else playBgm('neutral');
+        }
+
+        // ============================================
+        // CANVAS SETUP
+        // ============================================
+        const chartCanvas = document.getElementById('chartCanvas');
+        const chartCtx = chartCanvas.getContext('2d');
+        const yearChartCanvas = document.getElementById('yearChartCanvas');
+        const yearChartCtx = yearChartCanvas.getContext('2d');
+        const charCanvas = document.getElementById('characterCanvas');
+        const charCtx = charCanvas.getContext('2d');
+        const confettiCanvas = document.getElementById('confettiCanvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+
+        // ============================================
+        // TROLL FACE CHARACTER
+        // ============================================
+        function drawTrollFace(mood = 'neutral') {
+            const ctx = charCtx;
+            const width = charCanvas.width;
+            const height = charCanvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const scale = 0.9;
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.scale(scale, scale);
+            
+            // Testa
+            ctx.beginPath();
+            ctx.moveTo(-50, -10);
+            ctx.quadraticCurveTo(-55, -38, -35, -50);
+            ctx.quadraticCurveTo(-8, -60, 18, -50);
+            ctx.quadraticCurveTo(50, -35, 55, 0);
+            ctx.quadraticCurveTo(50, 32, 28, 45);
+            ctx.quadraticCurveTo(0, 55, -28, 42);
+            ctx.quadraticCurveTo(-50, 28, -50, -10);
+            
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fill();
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
+            switch(mood) {
+                case 'ecstatic': drawTrollEcstatic(ctx); break;
+                case 'happy': drawTrollHappy(ctx); break;
+                case 'neutral': drawTrollNeutral(ctx); break;
+                case 'worried': drawTrollWorried(ctx); break;
+                case 'sad': drawTrollSad(ctx); break;
+                case 'devastated': drawTrollDevastated(ctx); break;
+            }
+            
+            ctx.restore();
+            
+            if (state.tearsActive) {
+                drawTearsFountain(charCtx, centerX, centerY);
+            }
+        }
+        
+        function drawTrollEcstatic(ctx) {
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(-32, -22);
+            ctx.quadraticCurveTo(-22, -32, -12, -22);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(8, -25);
+            ctx.quadraticCurveTo(20, -35, 32, -22);
+            ctx.stroke();
+            
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#228B22';
+            ctx.textAlign = 'center';
+            ctx.fillText('€', -22, -18);
+            ctx.fillText('€', 20, -18);
+            
+            ctx.beginPath();
+            ctx.moveTo(-5, -5);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(5, 0);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            drawTrollSmile(ctx, 1.1);
+            
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(-36, -32);
+            ctx.quadraticCurveTo(-22, -42, -10, -32);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(6, -35);
+            ctx.quadraticCurveTo(20, -45, 35, -30);
+            ctx.stroke();
+            
+            drawSparkles(ctx);
+        }
+        
+        function drawTrollHappy(ctx) {
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.ellipse(-22, -22, 5, 7, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(20, -25, 5, 7, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(-5, -5);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(5, 0);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            drawTrollSmile(ctx, 0.85);
+            
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-35, -35);
+            ctx.quadraticCurveTo(-22, -40, -10, -35);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(8, -38);
+            ctx.quadraticCurveTo(20, -42, 32, -35);
+            ctx.stroke();
+        }
+        
+        function drawTrollNeutral(ctx) {
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.ellipse(-22, -22, 4, 6, -0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(20, -25, 4, 6, 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(-5, -5);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(5, 0);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            drawTrollSmile(ctx, 0.75);
+            
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-35, -32);
+            ctx.lineTo(-10, -35);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(8, -37);
+            ctx.lineTo(32, -32);
+            ctx.stroke();
+        }
+        
+        function drawTrollWorried(ctx) {
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.ellipse(-22, -22, 9, 11, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(20, -25, 9, 11, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(-22, -24, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(20, -27, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(-5, -5);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(5, 0);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-28, 22);
+            ctx.quadraticCurveTo(-12, 32, 0, 22);
+            ctx.quadraticCurveTo(12, 12, 28, 22);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(-35, -38);
+            ctx.lineTo(-10, -45);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(8, -47);
+            ctx.lineTo(32, -40);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(42, -32);
+            ctx.quadraticCurveTo(48, -22, 42, -15);
+            ctx.quadraticCurveTo(36, -22, 42, -32);
+            ctx.fillStyle = '#87CEEB';
+            ctx.fill();
+        }
+        
+        function drawTrollSad(ctx) {
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.ellipse(-22, -20, 4, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(20, -23, 4, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(-5, -5);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(5, 0);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(0, 38, 18, 1.2 * Math.PI, 1.8 * Math.PI);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-35, -30);
+            ctx.lineTo(-10, -26);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(8, -28);
+            ctx.lineTo(32, -32);
+            ctx.stroke();
+        }
+        
+        function drawTrollDevastated(ctx) {
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.ellipse(-22, -22, 12, 14, -0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(20, -25, 12, 14, 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(-22, -22, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(20, -25, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 1;
+            for (let eye of [[-22, -22], [20, -25]]) {
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i / 5) * Math.PI * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(eye[0], eye[1]);
+                    ctx.lineTo(eye[0] + Math.cos(angle) * 10, eye[1] + Math.sin(angle) * 12);
+                    ctx.stroke();
+                }
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(-5, -5);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(5, 0);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.ellipse(0, 28, 22, 15, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#300';
+            ctx.fill();
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-16, 15, 32, 7);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            for (let i = -12; i <= 12; i += 6) {
+                ctx.beginPath();
+                ctx.moveTo(i, 15);
+                ctx.lineTo(i, 22);
+                ctx.stroke();
+            }
+            
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-38, -48);
+            ctx.lineTo(-8, -38);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(6, -40);
+            ctx.lineTo(35, -50);
+            ctx.stroke();
+        }
+        
+        function drawTrollSmile(ctx, scale = 1) {
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(-32 * scale, 18);
+            ctx.quadraticCurveTo(-18 * scale, 13, -5 * scale, 20);
+            ctx.quadraticCurveTo(8 * scale, 26, 22 * scale, 16);
+            ctx.quadraticCurveTo(32 * scale, 10, 36 * scale, 16);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-32 * scale, 18);
+            ctx.quadraticCurveTo(-12 * scale, 38 * scale, 5 * scale, 32 * scale);
+            ctx.quadraticCurveTo(22 * scale, 28, 36 * scale, 16);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(-22 * scale, 20);
+            ctx.lineTo(-22 * scale, 27);
+            ctx.lineTo(26 * scale, 22);
+            ctx.lineTo(26 * scale, 16);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            for (let i = -18; i <= 22; i += 8) {
+                ctx.beginPath();
+                ctx.moveTo(i * scale, 18);
+                ctx.lineTo(i * scale, 26);
+                ctx.stroke();
+            }
+        }
+        
+        function drawSparkles(ctx) {
+            const time = Date.now() / 200;
+            const sparkles = [{ x: -55, y: -32 }, { x: 55, y: -37 }, { x: -50, y: 28 }, { x: 50, y: 23 }];
+            
+            sparkles.forEach((s, i) => {
+                const phase = time + i * 1.5;
+                const sc = 0.5 + Math.sin(phase) * 0.5;
+                
+                ctx.save();
+                ctx.translate(s.x, s.y);
+                ctx.scale(sc, sc);
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                for (let j = 0; j < 4; j++) {
+                    const angle = (j / 4) * Math.PI * 2 - Math.PI / 2;
+                    const x = Math.cos(angle) * 8;
+                    const y = Math.sin(angle) * 8;
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                    ctx.lineTo(Math.cos(angle + Math.PI / 4) * 3, Math.sin(angle + Math.PI / 4) * 3);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+        
+        // ============================================
+        // LACRIME
+        // ============================================
+        function initTears() {
+            state.tears = [];
+            for (let side = 0; side < 2; side++) {
+                for (let i = 0; i < 10; i++) {
+                    state.tears.push({
+                        side: side,
+                        y: Math.random() * 60,
+                        speed: 2.5 + Math.random() * 2.5,
+                        size: 2.5 + Math.random() * 2.5,
+                        xOffset: (Math.random() - 0.5) * 15,
+                        delay: Math.random() * 10,
+                        wobble: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+        }
+        
+        function updateTears() {
+            state.tears.forEach(tear => {
+                if (tear.delay > 0) { tear.delay -= 0.5; return; }
+                tear.y += tear.speed;
+                tear.wobble += 0.15;
+                if (tear.y > 75) {
+                    tear.y = 0;
+                    tear.xOffset = (Math.random() - 0.5) * 15;
+                }
+            });
+        }
+        
+        function drawTearsFountain(ctx, cx, cy) {
+            const leftEyeX = cx - 20;
+            const rightEyeX = cx + 18;
+            const eyeY = cy - 20;
+            
+            state.tears.forEach(tear => {
+                if (tear.delay > 0) return;
+                const baseX = tear.side === 0 ? leftEyeX : rightEyeX;
+                const x = baseX + tear.xOffset + Math.sin(tear.wobble) * 2;
+                const y = eyeY + 10 + tear.y;
+                
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, tear.size);
+                gradient.addColorStop(0, 'rgba(173, 216, 250, 0.95)');
+                gradient.addColorStop(1, 'rgba(100, 149, 237, 0.4)');
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y - tear.size);
+                ctx.bezierCurveTo(x + tear.size, y, x + tear.size, y + tear.size, x, y + tear.size * 1.4);
+                ctx.bezierCurveTo(x - tear.size, y + tear.size, x - tear.size, y, x, y - tear.size);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            });
+        }
+
+        // ============================================
+        // SEASONAL FLASH
+        // ============================================
+        function getSeason(month) {
+            if (month === 11 || month === 0 || month === 1) return 'winter';
+            if (month >= 2 && month <= 4) return 'spring';
+            if (month >= 5 && month <= 7) return 'summer';
+            return 'autumn';
+        }
+
+        function triggerQuarterFlash(quarter) {
+            // Colori per trimestre
+            const quarterColors = {
+                0: '#87CEEB',   // Q1 - Azzurro (inverno/primavera)
+                1: '#90EE90',   // Q2 - Verde (primavera/estate)
+                2: '#FFD700',   // Q3 - Giallo (estate/autunno)
+                3: '#FF8C00'    // Q4 - Arancione (autunno/inverno)
+            };
+            
+            const flash = document.getElementById('monthFlash');
+            flash.style.background = quarterColors[quarter] || '#FFD700';
+            flash.classList.remove('show', 'intense');
+            
+            setTimeout(() => {
+                flash.classList.add('show', 'intense');
+            }, 10);
+            
+            setTimeout(() => {
+                flash.classList.remove('show', 'intense');
+            }, 600);
+        }
+
+        // ============================================
+        // TRANSACTION POPUP
+        // ============================================
+        function showTransactionPopup(type, qty, price, total) {
+            const popup = document.getElementById('txPopup');
+            popup.className = 'tx-popup ' + type;
+            document.getElementById('txType').textContent = type === 'buy' ? 'ACQUISTO' : 'VENDITA';
+            document.getElementById('txQty').textContent = qty;
+            document.getElementById('txPrice').textContent = price.toFixed(2);
+            document.getElementById('txTotal').textContent = total.toFixed(2);
+            
+            popup.classList.add('show');
+            
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 1500);
+        }
+
+        // ============================================
+        // TIME SYSTEM
+        // ============================================
+        function getQuarter(month) {
+            return Math.floor(month / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
+        }
+
+        function updateCalendar() {
+            if (state.gameOver) return;
+            
+            // Sottrai il tempo in pausa dal tempo trascorso
+            const elapsed = Date.now() - state.gameStartTime - state.pausedTime;
+            const daysPassed = Math.floor(elapsed / MS_PER_DAY);
+            
+            if (daysPassed !== state.tradingDay - 1) {
+                state.tradingDay = daysPassed + 1;
+                
+                if (state.tradingDay > 365) {
+                    endGame();
+                    return;
+                }
+                
+                state.currentDate = new Date(2024, 0, 1);
+                state.currentDate.setDate(state.currentDate.getDate() + daysPassed);
+                
+                const newMonth = state.currentDate.getMonth();
+                const newQuarter = getQuarter(newMonth);
+                
+                // Aggiorna mese corrente (senza flash)
+                if (newMonth !== state.currentMonth && state.tradingDay > 1) {
+                    state.currentMonth = newMonth;
+                }
+                
+                // Report e FLASH al cambio trimestre
+                if (newQuarter !== state.currentQuarter && state.tradingDay > 1) {
+                    addQuarterlyReport(state.currentQuarter);
+                    triggerQuarterFlash(newQuarter); // Flash solo al trimestre!
+                    playQuarterSound(); // Musichetta trimestrale
+                    state.currentQuarter = newQuarter;
+                    state.quarterStartPortfolio = state.cash + (state.shares * state.currentPrice);
+                }
+                
+                const day = state.currentDate.getDate();
+                const month = MONTHS[state.currentDate.getMonth()];
+                
+                document.getElementById('calendarDay').textContent = `${day} ${month}`;
+                document.getElementById('calendarYear').textContent = `Anno 2024`;
+                document.getElementById('tradingDays').textContent = `Giorno ${state.tradingDay}`;
+            }
+        }
+
+        function addQuarterlyReport(quarterIndex) {
+            const portfolioValue = state.cash + (state.shares * state.currentPrice);
+            const quarterPL = portfolioValue - state.quarterStartPortfolio;
+            const totalPL = portfolioValue - state.initialCash;
+            
+            state.quarterlyReports.push({
+                quarter: QUARTERS[quarterIndex],
+                quarterPL: quarterPL,
+                totalPL: totalPL,
+                portfolio: portfolioValue
+            });
+            
+            renderReports();
+        }
+        
+        function renderReports() {
+            const container = document.getElementById('reportsList');
+            
+            if (state.quarterlyReports.length === 0) {
+                container.innerHTML = '<div class="no-reports">I report trimestrali appariranno qui...</div>';
+                return;
+            }
+            
+            container.innerHTML = state.quarterlyReports.map(r => {
+                const isProfit = r.quarterPL >= 0;
+                return `
+                    <div class="report-entry ${isProfit ? 'profit' : 'loss'}">
+                        <span class="report-month">${r.quarter}</span>
+                        <span class="report-pl ${isProfit ? 'profit' : 'loss'}">
+                            ${isProfit ? '+' : ''}€${r.quarterPL.toFixed(0)}
+                        </span>
+                        <span style="color: #888; font-size: 13px;">
+                            Tot: ${r.totalPL >= 0 ? '+' : ''}€${r.totalPL.toFixed(0)}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // STOCK SIMULATION
+        // ============================================
+        function generateNextPrice() {
+            if (state.gameOver) return;
+            
+            if (Math.random() < 0.01) {
+                state.trendDirection = (Math.random() - 0.5) * 2;
+                state.trendStrength = Math.random() * 0.002;
+            }
+            state.trendStrength *= 0.999;
+            
+            const randomShock = (Math.random() - 0.5) * 2 * state.volatility;
+            const meanReversion = (state.meanPrice - state.currentPrice) * state.meanReversionStrength;
+            const trendComponent = state.trendDirection * state.trendStrength;
+            let jump = Math.random() < 0.02 ? (Math.random() - 0.5) * state.volatility * 3 : 0;
+            
+            const priceChange = state.currentPrice * (state.drift + randomShock + trendComponent + jump) + meanReversion;
+            state.currentPrice = Math.max(1, state.currentPrice + priceChange);
+            
+            state.meanPrice += (Math.random() - 0.5) * 0.1;
+            state.meanPrice = Math.max(50, Math.min(200, state.meanPrice));
+        }
+
+        // ============================================
+        // CHARTS
+        // ============================================
+        function drawChart() {
+            const width = chartCanvas.width;
+            const height = chartCanvas.height;
+            const padding = 40;
+            
+            chartCtx.fillStyle = '#0a0a15';
+            chartCtx.fillRect(0, 0, width, height);
+            
+            if (state.priceHistory.length < 2) return;
+            
+            const prices = state.priceHistory;
+            const minPrice = Math.min(...prices) * 0.98;
+            const maxPrice = Math.max(...prices) * 1.02;
+            const priceRange = maxPrice - minPrice || 1;
+            
+            chartCtx.strokeStyle = '#222233';
+            chartCtx.lineWidth = 1;
+            
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (height - padding * 2) * (i / 4);
+                chartCtx.beginPath();
+                chartCtx.moveTo(padding, y);
+                chartCtx.lineTo(width - padding, y);
+                chartCtx.stroke();
+                
+                const price = maxPrice - (priceRange * i / 4);
+                chartCtx.fillStyle = '#555566';
+                chartCtx.font = '10px VT323';
+                chartCtx.textAlign = 'right';
+                chartCtx.fillText(`€${price.toFixed(2)}`, padding - 4, y + 4);
+            }
+            
+            const drawWidth = width - padding * 2;
+            const drawHeight = height - padding * 2;
+            const pointSpacing = drawWidth / Math.max(1, prices.length - 1);
+            
+            const lastPrice = prices[prices.length - 1];
+            const firstPrice = prices[0];
+            
+            const gradient = chartCtx.createLinearGradient(0, padding, 0, height - padding);
+            if (lastPrice >= firstPrice) {
+                gradient.addColorStop(0, 'rgba(0, 255, 136, 0.3)');
+                gradient.addColorStop(1, 'rgba(0, 255, 136, 0.0)');
+            } else {
+                gradient.addColorStop(0, 'rgba(255, 68, 102, 0.3)');
+                gradient.addColorStop(1, 'rgba(255, 68, 102, 0.0)');
+            }
+            
+            chartCtx.beginPath();
+            chartCtx.moveTo(padding, height - padding);
+            prices.forEach((price, i) => {
+                const x = padding + i * pointSpacing;
+                const y = padding + drawHeight - ((price - minPrice) / priceRange) * drawHeight;
+                chartCtx.lineTo(x, y);
+            });
+            chartCtx.lineTo(padding + (prices.length - 1) * pointSpacing, height - padding);
+            chartCtx.closePath();
+            chartCtx.fillStyle = gradient;
+            chartCtx.fill();
+            
+            chartCtx.beginPath();
+            chartCtx.strokeStyle = lastPrice >= firstPrice ? '#00ff88' : '#ff4466';
+            chartCtx.lineWidth = 2;
+            prices.forEach((price, i) => {
+                const x = padding + i * pointSpacing;
+                const y = padding + drawHeight - ((price - minPrice) / priceRange) * drawHeight;
+                if (i === 0) chartCtx.moveTo(x, y);
+                else chartCtx.lineTo(x, y);
+            });
+            chartCtx.stroke();
+            
+            const lastX = padding + (prices.length - 1) * pointSpacing;
+            const lastY = padding + drawHeight - ((lastPrice - minPrice) / priceRange) * drawHeight;
+            chartCtx.beginPath();
+            chartCtx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+            chartCtx.fillStyle = lastPrice >= firstPrice ? '#00ff88' : '#ff4466';
+            chartCtx.fill();
+        }
+
+        function drawYearChart() {
+            const width = yearChartCanvas.width;
+            const height = yearChartCanvas.height;
+            const padding = 25;
+            const rightPadding = 35; // Spazio per etichetta prezzo
+            
+            yearChartCtx.fillStyle = '#0a0a15';
+            yearChartCtx.fillRect(0, 0, width, height);
+            
+            // Usa il giorno corrente per calcolare la posizione
+            const currentDay = state.tradingDay;
+            if (currentDay < 1) return;
+            
+            const prices = state.yearPriceHistory;
+            if (prices.length < 2) return;
+            
+            // 52 settimane, posizione basata sul giorno corrente (1-365)
+            const TOTAL_WEEKS = 52;
+            const drawWidth = width - padding - rightPadding;
+            const drawHeight = height - padding * 2;
+            const candleSpacing = drawWidth / TOTAL_WEEKS;
+            const candleWidth = Math.max(3, candleSpacing * 0.65);
+            
+            // Calcola quanti tick per giorno (approssimativamente)
+            const ticksPerDay = Math.max(1, Math.floor(prices.length / currentDay));
+            
+            // Costruisci candele settimanali basate sui giorni
+            const weeklyCandles = [];
+            
+            for (let week = 0; week < TOTAL_WEEKS; week++) {
+                const startDay = week * 7 + 1;
+                const endDay = Math.min((week + 1) * 7, 365);
+                
+                // Questa settimana è già passata o in corso?
+                if (startDay > currentDay) break;
+                
+                // Raccogli i prezzi per questa settimana
+                const startTick = Math.floor((startDay - 1) * ticksPerDay);
+                const endTick = Math.min(Math.floor(Math.min(endDay, currentDay) * ticksPerDay), prices.length);
+                
+                if (startTick >= prices.length) break;
+                
+                const weekPrices = prices.slice(startTick, endTick);
+                if (weekPrices.length === 0) continue;
+                
+                weeklyCandles.push({
+                    week: week,
+                    open: weekPrices[0],
+                    close: weekPrices[weekPrices.length - 1],
+                    high: Math.max(...weekPrices),
+                    low: Math.min(...weekPrices)
+                });
+            }
+            
+            if (weeklyCandles.length === 0) return;
+            
+            // Trova min/max per scala
+            let allHighLow = [];
+            weeklyCandles.forEach(c => {
+                allHighLow.push(c.high, c.low);
+            });
+            const minPrice = Math.min(...allHighLow) * 0.95;
+            const maxPrice = Math.max(...allHighLow) * 1.05;
+            const priceRange = maxPrice - minPrice || 1;
+            
+            // Disegna le candele
+            weeklyCandles.forEach(candle => {
+                const x = padding + (candle.week * candleSpacing) + (candleSpacing / 2);
+                
+                const openY = padding + drawHeight - ((candle.open - minPrice) / priceRange) * drawHeight;
+                const closeY = padding + drawHeight - ((candle.close - minPrice) / priceRange) * drawHeight;
+                const highY = padding + drawHeight - ((candle.high - minPrice) / priceRange) * drawHeight;
+                const lowY = padding + drawHeight - ((candle.low - minPrice) / priceRange) * drawHeight;
+                
+                const isBullish = candle.close >= candle.open;
+                const color = isBullish ? '#00ff88' : '#ff4466';
+                
+                // Stoppino (wick)
+                yearChartCtx.strokeStyle = color;
+                yearChartCtx.lineWidth = 1;
+                yearChartCtx.beginPath();
+                yearChartCtx.moveTo(x, highY);
+                yearChartCtx.lineTo(x, lowY);
+                yearChartCtx.stroke();
+                
+                // Corpo candela
+                const bodyTop = Math.min(openY, closeY);
+                const bodyHeight = Math.max(2, Math.abs(closeY - openY));
+                
+                yearChartCtx.fillStyle = color;
+                yearChartCtx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+            });
+            
+            // Marker transazioni
+            state.transactions.forEach(tx => {
+                const weekNum = Math.floor((tx.day - 1) / 7);
+                if (weekNum < TOTAL_WEEKS) {
+                    const x = padding + (weekNum * candleSpacing) + (candleSpacing / 2);
+                    const y = padding + drawHeight - ((tx.price - minPrice) / priceRange) * drawHeight;
+                    
+                    yearChartCtx.fillStyle = tx.type === 'buy' ? '#00ff88' : '#ff4466';
+                    yearChartCtx.beginPath();
+                    if (tx.type === 'buy') {
+                        yearChartCtx.moveTo(x, y - 6);
+                        yearChartCtx.lineTo(x - 3, y - 1);
+                        yearChartCtx.lineTo(x + 3, y - 1);
+                    } else {
+                        yearChartCtx.moveTo(x, y + 6);
+                        yearChartCtx.lineTo(x - 3, y + 1);
+                        yearChartCtx.lineTo(x + 3, y + 1);
+                    }
+                    yearChartCtx.closePath();
+                    yearChartCtx.fill();
+                }
+            });
+            
+            // Linea prezzo corrente
+            const lastPrice = prices[prices.length - 1];
+            const currentY = padding + drawHeight - ((lastPrice - minPrice) / priceRange) * drawHeight;
+            
+            yearChartCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            yearChartCtx.lineWidth = 1;
+            yearChartCtx.setLineDash([2, 2]);
+            yearChartCtx.beginPath();
+            yearChartCtx.moveTo(padding, currentY);
+            yearChartCtx.lineTo(width - rightPadding, currentY);
+            yearChartCtx.stroke();
+            yearChartCtx.setLineDash([]);
+            
+            // Etichetta prezzo
+            yearChartCtx.fillStyle = '#fff';
+            yearChartCtx.font = '10px VT323';
+            yearChartCtx.textAlign = 'left';
+            yearChartCtx.fillText(`€${lastPrice.toFixed(0)}`, width - rightPadding + 2, currentY + 3);
+        }
+
+        // ============================================
+        // UI
+        // ============================================
+        function updateUI() {
+            const portfolioValue = state.cash + (state.shares * state.currentPrice);
+            const profitLoss = portfolioValue - state.initialCash;
+            const profitPercent = (profitLoss / state.initialCash) * 100;
+            const quarterPL = portfolioValue - state.quarterStartPortfolio;
+            
+            const priceEl = document.getElementById('currentPrice');
+            priceEl.textContent = `€${state.currentPrice.toFixed(2)}`;
+            priceEl.className = 'stock-price ' + (state.priceHistory.length > 1 && state.currentPrice >= state.priceHistory[state.priceHistory.length - 2] ? 'price-up' : 'price-down');
+            
+            document.getElementById('cash').textContent = `€${state.cash.toFixed(2)}`;
+            document.getElementById('shares').textContent = state.shares;
+            document.getElementById('portfolio').textContent = `€${portfolioValue.toFixed(2)}`;
+            
+            const plEl = document.getElementById('profitLoss');
+            plEl.textContent = `${profitLoss >= 0 ? '+' : ''}€${profitLoss.toFixed(0)} (${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%)`;
+            plEl.className = 'stat-value ' + (profitLoss >= 0 ? 'profit' : 'loss');
+            
+            const quarterPLEl = document.getElementById('quarterPL');
+            quarterPLEl.textContent = `${quarterPL >= 0 ? '+' : ''}€${quarterPL.toFixed(0)}`;
+            quarterPLEl.className = 'stat-value ' + (quarterPL >= 0 ? 'profit' : 'loss');
+            
+            // Last operation
+            const lastOpEl = document.getElementById('lastOp');
+            if (state.lastOperation) {
+                const op = state.lastOperation;
+                lastOpEl.textContent = `${op.pl >= 0 ? '+' : ''}€${op.pl.toFixed(0)}`;
+                lastOpEl.className = 'stat-value ' + (op.pl >= 0 ? 'profit' : 'loss');
+            }
+            
+            updateMood(profitPercent);
+            updateActivePercentValue();
+            
+            document.getElementById('buyBtn').disabled = state.cash < state.currentPrice;
+            document.getElementById('sellBtn').disabled = state.shares <= 0;
+        }
+
+        function updateMood(profitPercent) {
+            let mood, moodText;
+            if (profitPercent > 20) { mood = 'ecstatic'; moodText = 'U MAD BRO? 🚀'; }
+            else if (profitPercent > 10) { mood = 'happy'; moodText = 'Stonks! 📈'; }
+            else if (profitPercent > 0) { mood = 'happy'; moodText = 'Feels good man'; }
+            else if (profitPercent > -5) { mood = 'neutral'; moodText = 'Cool story bro...'; }
+            else if (profitPercent > -15) { mood = 'worried'; moodText = 'Not stonks 😰'; }
+            else if (profitPercent > -30) { mood = 'sad'; moodText = 'I know that feel 😢'; }
+            else { mood = 'devastated'; moodText = 'FFFUUUUU!!! 💀'; }
+            
+            const shouldCry = mood === 'sad' || mood === 'devastated';
+            if (shouldCry && !state.tearsActive) { state.tearsActive = true; initTears(); }
+            else if (!shouldCry) state.tearsActive = false;
+            
+            state.currentMood = mood;
+            document.getElementById('moodText').textContent = moodText;
+            
+            // 🎵 Aggiorna musica di sottofondo
+            updateBgmMood(profitPercent);
+        }
+
+        function showMessage(text, type = 'info') {
+            const msgEl = document.getElementById('message');
+            const colors = { 'buy': '#00ff88', 'sell': '#ffcc00', 'error': '#ff4466', 'info': '#88aaff' };
+            msgEl.style.color = colors[type] || colors.info;
+            msgEl.textContent = text;
+        }
+
+        // ============================================
+        // PERCENT BUTTONS
+        // ============================================
+        function updateActivePercentValue() {
+            if (!state.activePercentBtn) return;
+            
+            const btn = state.activePercentBtn;
+            const action = btn.dataset.action;
+            const percent = btn.dataset.percent;
+            
+            let value = 0;
+            
+            if (action === 'max') {
+                value = Math.floor(state.cash / state.currentPrice);
+            } else if (action === 'all') {
+                value = state.shares;
+            } else if (percent) {
+                // Use cash for percentage calculation
+                const maxBuyable = Math.floor(state.cash / state.currentPrice);
+                value = Math.floor(maxBuyable * (parseInt(percent) / 100));
+            }
+            
+            document.getElementById('quantity').value = Math.max(0, value);
+        }
+
+        function setActivePercentBtn(btn) {
+            document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.activePercentBtn = btn;
+            updateActivePercentValue();
+        }
+
+        // ============================================
+        // TRADING
+        // ============================================
+        function buy() {
+            if (state.gameOver || !state.gameStarted) return;
+            initAudio(); // Inizializza audio al primo click
+            
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            const cost = quantity * state.currentPrice;
+            
+            if (cost > state.cash || quantity <= 0) {
+                showMessage(`Max ${Math.floor(state.cash / state.currentPrice)}!`, 'error');
+                playErrorSound();
+                return;
+            }
+            
+            // Track average buy price
+            const totalCost = state.avgBuyPrice * state.totalBought + cost;
+            state.totalBought += quantity;
+            state.avgBuyPrice = totalCost / state.totalBought;
+            
+            state.cash -= cost;
+            state.shares += quantity;
+            
+            state.transactions.push({
+                day: state.tradingDay,
+                price: state.currentPrice,
+                type: 'buy',
+                qty: quantity
+            });
+            
+            state.lastOperation = { type: 'buy', qty: quantity, price: state.currentPrice, pl: 0 };
+            
+            playChaChingSound(); // 🔊 Cha-ching!
+            showTransactionPopup('buy', quantity, state.currentPrice, cost);
+            showMessage(`+${quantity} @ €${state.currentPrice.toFixed(2)}`, 'buy');
+            updateUI();
+        }
+
+        function sell() {
+            if (state.gameOver || !state.gameStarted) return;
+            initAudio(); // Inizializza audio al primo click
+            
+            const quantity = Math.min(parseInt(document.getElementById('quantity').value) || 1, state.shares);
+            
+            if (quantity <= 0) {
+                showMessage('Nessuna azione!', 'error');
+                playErrorSound();
+                return;
+            }
+            
+            const revenue = quantity * state.currentPrice;
+            const costBasis = quantity * state.avgBuyPrice;
+            const pl = revenue - costBasis;
+            
+            state.cash += revenue;
+            state.shares -= quantity;
+            
+            if (state.shares === 0) {
+                state.avgBuyPrice = 0;
+                state.totalBought = 0;
+            }
+            
+            state.transactions.push({
+                day: state.tradingDay,
+                price: state.currentPrice,
+                type: 'sell',
+                qty: quantity
+            });
+            
+            state.lastOperation = { type: 'sell', qty: quantity, price: state.currentPrice, pl: pl };
+            
+            // Suono in base al profitto/perdita
+            if (pl >= 0) {
+                playCoinSound(); // 💰 Monete!
+            } else {
+                playLossSound(); // 📉 Triste
+            }
+            
+            showTransactionPopup('sell', quantity, state.currentPrice, revenue);
+            showMessage(`-${quantity} @ €${state.currentPrice.toFixed(2)}`, 'sell');
+            updateUI();
+        }
+
+        // ============================================
+        // GAME OVER
+        // ============================================
+        function endGame() {
+            state.gameOver = true;
+            stopBgm(); // Ferma la musica di sottofondo
+            
+            const portfolioValue = state.cash + (state.shares * state.currentPrice);
+            const totalPL = portfolioValue - state.initialCash;
+            const returnPercent = (totalPL / state.initialCash) * 100;
+            
+            let rank, rankText;
+            if (returnPercent > 100) { rank = '🚀👑'; rankText = 'LEGGENDA'; }
+            else if (returnPercent > 50) { rank = '🤑💎'; rankText = 'DIAMOND'; }
+            else if (returnPercent > 20) { rank = '📈🏆'; rankText = 'PRO'; }
+            else if (returnPercent > 0) { rank = '👍💰'; rankText = 'OK'; }
+            else if (returnPercent > -20) { rank = '😅📉'; rankText = 'MEH'; }
+            else if (returnPercent > -50) { rank = '😭💸'; rankText = 'PAPER'; }
+            else { rank = '🤡💀'; rankText = 'REKT'; }
+            
+            const isProfit = totalPL >= 0;
+            
+            // Nuovo pannello dentro character-box
+            document.getElementById('goRankEmoji').textContent = rank;
+            document.getElementById('goRankText').textContent = rankText;
+            
+            const scoreEl = document.getElementById('goScore');
+            scoreEl.textContent = `€${portfolioValue.toFixed(0)}`;
+            scoreEl.className = 'go-score ' + (isProfit ? '' : 'loss');
+            
+            const returnEl = document.getElementById('goReturn');
+            returnEl.textContent = `${returnPercent >= 0 ? '+' : ''}${returnPercent.toFixed(1)}%`;
+            returnEl.className = isProfit ? 'profit' : 'loss';
+            
+            // Mostra il pannello
+            document.getElementById('gameOverPanel').classList.add('active');
+            
+            // 🎵 Suoni finali
+            if (isProfit) {
+                playVictoryFanfare(); // 🎉 Fanfare epica!
+                startConfetti();
+            } else {
+                playSadTrombone(); // 😢 Wah wah wah wahhh
+            }
+        }
+        
+        function drawFinalTrollFace(ctx, cx, cy, isProfit) {
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            ctx.beginPath();
+            ctx.moveTo(cx - 38, cy - 8);
+            ctx.quadraticCurveTo(cx - 42, cy - 28, cx - 26, cy - 38);
+            ctx.quadraticCurveTo(cx, cy - 46, cx + 14, cy - 38);
+            ctx.quadraticCurveTo(cx + 38, cy - 24, cx + 42, cy);
+            ctx.quadraticCurveTo(cx + 38, cy + 24, cx + 20, cy + 33);
+            ctx.quadraticCurveTo(cx, cy + 42, cx - 20, cy + 31);
+            ctx.quadraticCurveTo(cx - 38, cy + 20, cx - 38, cy - 8);
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fill();
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            if (isProfit) {
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx - 14, cy - 14, 6, 0.6 * Math.PI, 0.1 * Math.PI, true);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(cx + 14, cy - 16, 6, 0.9 * Math.PI, 0.4 * Math.PI, true);
+                ctx.stroke();
+                
+                ctx.font = 'bold 9px Arial';
+                ctx.fillStyle = '#228B22';
+                ctx.textAlign = 'center';
+                ctx.fillText('€', cx - 14, cy - 11);
+                ctx.fillText('€', cx + 14, cy - 13);
+                
+                ctx.beginPath();
+                ctx.moveTo(cx - 22, cy + 11);
+                ctx.quadraticCurveTo(cx, cy + 26, cx + 24, cy + 9);
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = '#cc0000';
+                ctx.lineWidth = 2;
+                for (let eye of [-14, 14]) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx + eye - 5, cy - 19);
+                    ctx.lineTo(cx + eye + 5, cy - 9);
+                    ctx.moveTo(cx + eye + 5, cy - 19);
+                    ctx.lineTo(cx + eye - 5, cy - 9);
+                    ctx.stroke();
+                }
+                
+                ctx.beginPath();
+                ctx.arc(cx, cy + 26, 11, 1.2 * Math.PI, 1.8 * Math.PI);
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+        
+        // ============================================
+        // CONFETTI
+        // ============================================
+        let confetti = [];
+        let confettiActive = false;
+        
+        function startConfetti() {
+            confettiActive = true;
+            confetti = [];
+            for (let i = 0; i < 120; i++) {
+                confetti.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+                    size: 4 + Math.random() * 7,
+                    speedY: 2 + Math.random() * 3,
+                    speedX: (Math.random() - 0.5) * 3,
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.15,
+                    color: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffcc00'][Math.floor(Math.random() * 7)]
+                });
+            }
+            animateConfetti();
+        }
+        
+        function animateConfetti() {
+            if (!confettiActive) return;
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            let stillActive = false;
+            confetti.forEach(c => {
+                c.y += c.speedY;
+                c.x += c.speedX;
+                c.rotation += c.rotationSpeed;
+                if (c.y < confettiCanvas.height + 50) {
+                    stillActive = true;
+                    confettiCtx.save();
+                    confettiCtx.translate(c.x, c.y);
+                    confettiCtx.rotate(c.rotation);
+                    confettiCtx.fillStyle = c.color;
+                    confettiCtx.fillRect(-c.size / 2, -c.size / 4, c.size, c.size / 2);
+                    confettiCtx.restore();
+                }
+            });
+            if (stillActive) requestAnimationFrame(animateConfetti);
+            else confettiActive = false;
+        }
+        
+        function restartGame() {
+            state.cash = 10000;
+            state.shares = 0;
+            state.priceHistory = [100];
+            state.yearPriceHistory = [100];
+            state.currentPrice = 100;
+            state.currentMood = 'neutral';
+            state.tradingDay = 1;
+            state.currentDate = new Date(2024, 0, 1);
+            state.currentMonth = 0;
+            state.currentQuarter = 0;
+            state.quarterStartPortfolio = 10000;
+            state.quarterlyReports = [];
+            state.transactions = [];
+            state.lastOperation = null;
+            state.avgBuyPrice = 0;
+            state.totalBought = 0;
+            state.gameOver = false;
+            state.isPaused = false;
+            state.pausedTime = 0;
+            state.pauseStartTime = 0;
+            state.meanPrice = 100;
+            state.trendStrength = 0;
+            state.tearsActive = false;
+            state.activePercentBtn = null;
+            
+            // Reset audio
+            currentMoodMusic = null;
+            stopBgm();
+            
+            document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
+            document.getElementById('gameOverPanel').classList.remove('active'); // Nuovo pannello
+            document.getElementById('pauseBtn').textContent = '⏸';
+            document.getElementById('pauseBtn').classList.remove('paused');
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiActive = false;
+            
+            document.getElementById('lastOp').textContent = '-';
+            document.getElementById('lastOp').className = 'stat-value';
+            
+            // Riavvia il gioco
+            state.gameStartTime = Date.now();
+            state.gameStarted = true;
+            
+            renderReports();
+            updateUI();
+            updateCalendar();
+            
+            // Riavvia musica
+            setTimeout(() => playBgm('neutral'), 300);
+        }
+
+        // ============================================
+        // PAUSE SYSTEM
+        // ============================================
+        function togglePause() {
+            if (state.gameOver) return;
+            
+            const btn = document.getElementById('pauseBtn');
+            
+            if (state.isPaused) {
+                // Riprendi
+                state.pausedTime += Date.now() - state.pauseStartTime;
+                state.isPaused = false;
+                btn.textContent = '⏸';
+                btn.classList.remove('paused');
+            } else {
+                // Pausa
+                state.pauseStartTime = Date.now();
+                state.isPaused = true;
+                btn.textContent = '▶';
+                btn.classList.add('paused');
+            }
+        }
+
+        function toggleAudio() {
+            const btn = document.getElementById('audioBtn');
+            audioEnabled = !audioEnabled;
+            
+            if (audioEnabled) {
+                btn.textContent = '🔊';
+                btn.classList.remove('muted');
+            } else {
+                btn.textContent = '🔇';
+                btn.classList.add('muted');
+                stopBgm();
+            }
+        }
+
+        // ============================================
+        // GAME LOOP
+        // ============================================
+        let lastUpdate = 0;
+        let lastCharUpdate = 0;
+
+        function gameLoop(timestamp) {
+            // Solo se il gioco è iniziato e non è in pausa/finito
+            if (state.gameStarted && !state.gameOver && !state.isPaused) {
+                // Chart update - 30% più lento (208ms invece di 160ms)
+                if (timestamp - lastUpdate >= 208) {
+                    generateNextPrice();
+                    state.priceHistory.push(state.currentPrice);
+                    if (state.priceHistory.length > 80) state.priceHistory.shift();
+                    
+                    // Year history - si costruisce progressivamente insieme al grafico principale
+                    state.yearPriceHistory.push(state.currentPrice);
+                    
+                    drawChart();
+                    drawYearChart(); // Aggiorna insieme al grafico principale
+                    updateUI();
+                    updateCalendar();
+                    lastUpdate = timestamp;
+                }
+            }
+            
+            // Animazione personaggio sempre attiva
+            if (timestamp - lastCharUpdate >= 33) {
+                if (state.tearsActive) updateTears();
+                drawTrollFace(state.currentMood);
+                lastCharUpdate = timestamp;
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ============================================
+        // START GAME & QUIT
+        // ============================================
+        function startGame() {
+            // Inizializza audio (deve essere fatto con interazione utente)
+            initAudio();
+            
+            // Suono di avvio
+            if (audioCtx && audioEnabled) {
+                playTone(523, 0.1, 'square', 0.15, 0);
+                playTone(659, 0.1, 'square', 0.15, 0.1);
+                playTone(784, 0.15, 'square', 0.18, 0.2);
+            }
+            
+            // Nascondi schermata start
+            document.getElementById('startScreen').classList.add('hidden');
+            
+            // Inizia il gioco
+            state.gameStarted = true;
+            state.gameStartTime = Date.now();
+            
+            // Avvia musica di sottofondo
+            setTimeout(() => {
+                playBgm('neutral');
+            }, 500);
+        }
+
+        function quitGame() {
+            if (!state.gameStarted || state.gameOver) return;
+            
+            // Ferma musica
+            stopBgm();
+            
+            // Reset stato
+            state.cash = 10000;
+            state.shares = 0;
+            state.priceHistory = [100];
+            state.yearPriceHistory = [100];
+            state.currentPrice = 100;
+            state.currentMood = 'neutral';
+            state.tradingDay = 1;
+            state.currentDate = new Date(2024, 0, 1);
+            state.currentMonth = 0;
+            state.currentQuarter = 0;
+            state.quarterStartPortfolio = 10000;
+            state.quarterlyReports = [];
+            state.transactions = [];
+            state.lastOperation = null;
+            state.avgBuyPrice = 0;
+            state.totalBought = 0;
+            state.meanPrice = 100;
+            state.trendStrength = 0;
+            state.tearsActive = false;
+            state.activePercentBtn = null;
+            state.isPaused = false;
+            state.pausedTime = 0;
+            state.gameStarted = false;
+            state.gameOver = false;
+            
+            // Reset UI
+            document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
+            document.getElementById('pauseBtn').textContent = '⏸';
+            document.getElementById('pauseBtn').classList.remove('paused');
+            document.getElementById('lastOp').textContent = '-';
+            document.getElementById('lastOp').className = 'stat-value';
+            
+            // Mostra schermata start
+            document.getElementById('startScreen').classList.remove('hidden');
+            
+            // Aggiorna grafici
+            renderReports();
+            drawChart();
+            drawYearChart();
+            updateUI();
+        }
+
+        function resetGameState() {
+            state.cash = 10000;
+            state.shares = 0;
+            state.priceHistory = [100];
+            state.yearPriceHistory = [100];
+            state.currentPrice = 100;
+            state.currentMood = 'neutral';
+            state.tradingDay = 1;
+            state.currentDate = new Date(2024, 0, 1);
+            state.currentMonth = 0;
+            state.currentQuarter = 0;
+            state.quarterStartPortfolio = 10000;
+            state.quarterlyReports = [];
+            state.transactions = [];
+            state.lastOperation = null;
+            state.avgBuyPrice = 0;
+            state.totalBought = 0;
+            state.gameOver = false;
+            state.gameStarted = false;
+            state.isPaused = false;
+            state.pausedTime = 0;
+            state.pauseStartTime = 0;
+            state.meanPrice = 100;
+            state.trendStrength = 0;
+            state.tearsActive = false;
+            state.activePercentBtn = null;
+            
+            document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
+            document.getElementById('pauseBtn').textContent = '⏸';
+            document.getElementById('pauseBtn').classList.remove('paused');
+            document.getElementById('lastOp').textContent = '-';
+            document.getElementById('lastOp').className = 'stat-value';
+            
+            renderReports();
+            drawChart();
+            drawYearChart();
+            updateUI();
+        }
+
+        // ============================================
+        // EVENTS
+        // ============================================
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('buyBtn').addEventListener('click', buy);
+        document.getElementById('sellBtn').addEventListener('click', sell);
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('quitBtn').addEventListener('click', quitGame);
+
+        document.querySelectorAll('.btn-percent').forEach(btn => {
+            btn.addEventListener('click', () => setActivePercentBtn(btn));
+        });
+
+        document.getElementById('quantity').addEventListener('input', () => {
+            document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
+            state.activePercentBtn = null;
+        });
+
+        document.getElementById('audioBtn').addEventListener('click', toggleAudio);
+
+        document.addEventListener('keydown', (e) => {
+            // Start con Enter o Spazio dalla schermata iniziale
+            if (!state.gameStarted && !state.gameOver) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    startGame();
+                    return;
+                }
+            }
+            
+            if (!state.gameStarted) return;
+            
+            if (e.key === 'b' || e.key === 'B') buy();
+            if (e.key === 's' || e.key === 'S') sell();
+            if (e.key === ' ' || e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                togglePause();
+            }
+            if (e.key === 'm' || e.key === 'M') toggleAudio();
+            if (e.key === 'q' || e.key === 'Q' || e.key === 'Escape') quitGame();
+        });
+
+        // ============================================
+        // INIT
+        // ============================================
+        function drawStartScreenCharacter() {
+            const canvas = document.getElementById('startCharCanvas');
+            const ctx = canvas.getContext('2d');
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Disegna troll face sorridente
+            ctx.save();
+            ctx.translate(cx, cy);
+            
+            // Testa
+            ctx.beginPath();
+            ctx.moveTo(-55, -10);
+            ctx.quadraticCurveTo(-60, -42, -38, -55);
+            ctx.quadraticCurveTo(-8, -66, 20, -55);
+            ctx.quadraticCurveTo(55, -38, 60, 0);
+            ctx.quadraticCurveTo(55, 35, 30, 50);
+            ctx.quadraticCurveTo(0, 60, -30, 47);
+            ctx.quadraticCurveTo(-55, 30, -55, -10);
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fill();
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Occhi (strizzati felici)
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(-22, -22, 8, 0.6 * Math.PI, 0.1 * Math.PI, true);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(22, -25, 8, 0.9 * Math.PI, 0.4 * Math.PI, true);
+            ctx.stroke();
+            
+            // Simbolo €
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#228B22';
+            ctx.textAlign = 'center';
+            ctx.fillText('€', -22, -18);
+            ctx.fillText('€', 22, -21);
+            
+            // Naso
+            ctx.beginPath();
+            ctx.moveTo(-5, -5);
+            ctx.lineTo(0, 8);
+            ctx.lineTo(6, 2);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
+            // Sorriso grande
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-35, 20);
+            ctx.quadraticCurveTo(-20, 15, -5, 22);
+            ctx.quadraticCurveTo(10, 28, 25, 18);
+            ctx.quadraticCurveTo(38, 12, 40, 18);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-35, 20);
+            ctx.quadraticCurveTo(-12, 42, 5, 36);
+            ctx.quadraticCurveTo(25, 30, 40, 18);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function init() {
+            state.priceHistory = [state.currentPrice];
+            state.yearPriceHistory = [state.currentPrice];
+            initTears();
+            
+            // Disegna personaggio nella schermata start
+            drawStartScreenCharacter();
+            
+            // Prepara UI di gioco
+            drawTrollFace('neutral');
+            drawChart();
+            drawYearChart();
+            updateUI();
+            renderReports();
+            
+            // Avvia game loop (ma il gioco non parte finché non premi START)
+            requestAnimationFrame(gameLoop);
+            showMessage('Premi START per iniziare!', 'info');
+        }
+
+        init();
+    </script>
+</body>
+</html>

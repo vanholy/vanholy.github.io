@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🍺 Homebrewing Hub - Guide & Strumenti per Birrai</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Stili specifici per la galleria artefatti */
+        .artifacts-gallery {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #fdf5e6 0%, #fff8dc 100%);
+            min-height: 100vh;
+        }
+        
+        .artifact-section {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .artifact-section:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .artifact-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .artifact-header:hover {
+            background: #e9ecef;
+        }
+        
+        .artifact-header-content {
+            flex: 1;
+        }
+        
+        .artifact-title {
+            margin: 0;
+            color: #333;
+            font-size: 1.3em;
+        }
+        
+        .artifact-description {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .artifact-toggle {
+            font-size: 1.5em;
+            color: #666;
+            transition: transform 0.3s ease;
+            user-select: none;
+        }
+        
+        .artifact-toggle.expanded {
+            transform: rotate(180deg);
+        }
+        
+        .artifact-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        
+        .artifact-content.expanded {
+            max-height: 1000px; /* Valore abbastanza grande per contenere l'iframe */
+        }
+        
+        .artifact-iframe {
+            width: 100%;
+            border: none;
+            display: block;
+        }
+        
+        .artifact-links {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+            text-align: right;
+        }
+        
+        .artifact-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 15px;
+            font-size: 0.9em;
+        }
+        
+        .artifact-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin: 40px 0;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #d4b062 0%, #8b4513 50%, #654321 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.3);
+        }
+        
+        .page-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        
+        .page-header p {
+            margin: 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .artifact-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+            font-size: 0.8em;
+        }
+        
+        .artifact-tag {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            border: 1px solid #ffeaa7;
+        }
+        
+        /* Stili per la sezione guide */
+        .guides-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f4e6 0%, #f5e6d3 100%);
+            border-radius: 15px;
+            border: 2px solid #d4b062;
+            box-shadow: 0 6px 20px rgba(212, 176, 98, 0.2);
+        }
+        
+        .guides-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .guides-header h2 {
+            color: #8b4513;
+            font-size: 2.2em;
+            margin: 0 0 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .guides-header p {
+            color: #654321;
+            font-size: 1.1em;
+            margin: 0;
+        }
+        
+        .guides-grid {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .guide-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid #f0e6d6;
+            position: relative;
+            overflow: hidden;
+            width: 280px;
+            flex-shrink: 0;
+        }
+        
+        .guide-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #d4b062, #8b4513);
+        }
+        
+        .guide-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #d4b062;
+        }
+        
+        .guide-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .guide-title {
+            color: #8b4513;
+            font-size: 1.3em;
+            margin: 0 0 12px 0;
+            font-weight: bold;
+        }
+        
+        .guide-description {
+            color: #666;
+            margin: 0 0 20px 0;
+            line-height: 1.6;
+        }
+        
+        .guide-stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .guide-stat {
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .guide-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #d4b062, #8b4513);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(139, 69, 19, 0.3);
+        }
+        
+        .guide-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.4);
+            text-decoration: none;
+        }
+        
+        .open-window-btn {
+            background: #28a745;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        .open-window-btn:hover {
+            background: #218838;
+        }
+        
+        .section-divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #d4b062, transparent);
+            margin: 50px 0;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="artifacts-gallery">
+        <div class="page-header">
+            <h1>🍺 Homebrewing Hub</h1>
+            <p>Guide tecniche complete e strumenti interattivi per l'homebrewing professionale</p>
+        </div>
+        
+        
+        <!-- Sezione Luppoli -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">🌿 Analisi Luppoli</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Strumenti avanzati per l'analisi e la comparazione dei profili aromatici</p>
+            </div>
+        </section>
+        
+        <!-- Artefatto 1: Profili Aromatici Luppoli -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🍺 Profili Aromatici dei Luppoli</h2>
+                    <p class="artifact-description">Grafico interattivo che visualizza i profili aromatici dei diversi tipi di luppolo utilizzati nella produzione della birra</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Chart.js</span>
+                        <span class="artifact-tag">Interattivo</span>
+                        <span class="artifact-tag">Birra</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./hop-aroma-profiles-chart.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./hop-aroma-profiles-chart.html" class="artifact-iframe" height="600"></iframe>
+                <div class="artifact-links">
+                    <a href="./hop-aroma-profiles-chart.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/hop-aroma-profiles-chart.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Artefatto 1b: Radar Chart Luppoli Avanzato -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">📊 Grafici Radar Luppoli - Sistema Avanzato</h2>
+                    <p class="artifact-description">Sistema completo per l'analisi dei profili aromatici con 115+ varietà di luppoli, modalità confronto sovrapposto e guida tecnica integrata per homebrewing</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Radar Chart</span>
+                        <span class="artifact-tag">Canvas</span>
+                        <span class="artifact-tag">115+ Varietà</span>
+                        <span class="artifact-tag">Brewfather</span>
+                        <span class="artifact-tag">Overlay Mode</span>
+                        <span class="artifact-tag">Ricerca Avanzata</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./hop-radar-chart.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./hop-radar-chart.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./hop-radar-chart.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/hop-radar-chart.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Guida ai Luppoli -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🌿 Guida Completa ai Luppoli</h2>
+                    <p class="artifact-description">115+ varietà di luppoli da tutto il mondo organizzate per categorie e stili birrari, con informazioni complete per homebrewer esperti</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">115+ Varietà</span>
+                        <span class="artifact-tag">Brewfather</span>
+                        <span class="artifact-tag">IBU & Dosaggi</span>
+                        <span class="artifact-tag">Cryo Hops</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./guida-luppoli.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./guida-luppoli.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./guida-luppoli.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/guida-luppoli.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+        
+        <!-- Sezione Malti -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">🌾 Analisi Malti</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Database completo e strumenti avanzati per la selezione e analisi dei malti</p>
+            </div>
+        </section>
+
+        <!-- Artefatto 4: Esploratore Malti -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🌾 Esploratore Malti per Homebrewing</h2>
+                    <p class="artifact-description">Database completo e interattivo per malti con ricerca avanzata, costruttore ricette, convertitori e compatibilità Brewfather</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Database</span>
+                        <span class="artifact-tag">Ricerca Avanzata</span>
+                        <span class="artifact-tag">Recipe Builder</span>
+                        <span class="artifact-tag">Brewfather</span>
+                        <span class="artifact-tag">Convertitori</span>
+                        <span class="artifact-tag">200+ Malti</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./malt-explorer.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./malt-explorer.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./malt-explorer.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/malt-explorer.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Guida ai Malti -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🌾 Guida Completa ai Malti</h2>
+                    <p class="artifact-description">Guida tecnica completa per oltre 200 malti dai principali maltatori mondiali, con specifiche per Brewfather e ottimizzazione per attrezzatura casalinga</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">200+ Malti</span>
+                        <span class="artifact-tag">Brewfather</span>
+                        <span class="artifact-tag">Parametri Tecnici</span>
+                        <span class="artifact-tag">Homebrewing</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./guida-malti.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./guida-malti.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./guida-malti.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/guida-malti.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+        
+        <!-- Sezione Analisi Acque -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">💧 Analisi Acque</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Strumenti completi per l'analisi delle acque birrarie e comparazione con acque commerciali</p>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 1: Tabella Completa Acque Minerali Italiane -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🍺 Acque Minerali Italiane per Homebrewing</h2>
+                    <p class="artifact-description">Analisi completa 2024-2025 di 21 acque minerali italiane con valutazione per stili birrari, filtri avanzati e sistema di scoring</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">21 Acque</span>
+                        <span class="artifact-tag">Tabella Interattiva</span>
+                        <span class="artifact-tag">Filtri Avanzati</span>
+                        <span class="artifact-tag">Scoring</span>
+                        <span class="artifact-tag">Stili Birrari</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./acque-minerali-homebrewing-tabella.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./acque-minerali-homebrewing-tabella.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./acque-minerali-homebrewing-tabella.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/acque-minerali-homebrewing-tabella.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 2: Confronto Acque Bergamasche vs Supermercato -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🛒 Confronto Acque Bergamasche vs Supermercato</h2>
+                    <p class="artifact-description">Analisi comparativa dettagliata tra le acque locali bergamasche e quelle disponibili nei supermercati italiani, con valutazioni economiche e qualitative</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Confronto Dettagliato</span>
+                        <span class="artifact-tag">Analisi Economica</span>
+                        <span class="artifact-tag">Bergamo vs Italia</span>
+                        <span class="artifact-tag">Brewing Quality</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./water_comparison_italian_supermarket.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./water_comparison_italian_supermarket.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./water_comparison_italian_supermarket.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/water_comparison_italian_supermarket.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 3: Profili delle Acque Bergamasche -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">💧 Profili delle Acque Bergamasche</h2>
+                    <p class="artifact-description">Analisi dettagliata dei profili minerali di 12 diverse tipologie di acque locali per la produzione birraria</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Radar Chart</span>
+                        <span class="artifact-tag">Minerali</span>
+                        <span class="artifact-tag">Acque Locali</span>
+                        <span class="artifact-tag">12 Tipologie</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./profili_completi_12_acque.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./profili_completi_12_acque.html" class="artifact-iframe" height="650"></iframe>
+                <div class="artifact-links">
+                    <a href="./profili_completi_12_acque.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/profili_completi_12_acque.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 4: Confronto Interattivo Acque Bergamasche -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">⚖️ Confronto Interattivo delle Acque Bergamasche</h2>
+                    <p class="artifact-description">Tool interattivo per confrontare side-by-side i profili minerali delle diverse acque birrarie locali con visualizzazioni comparative</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Comparativo</span>
+                        <span class="artifact-tag">Dashboard</span>
+                        <span class="artifact-tag">Interattivo</span>
+                        <span class="artifact-tag">Side-by-side</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./confronto_completo_12_acque.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./confronto_completo_12_acque.html" class="artifact-iframe" height="700"></iframe>
+                <div class="artifact-links">
+                    <a href="./confronto_completo_12_acque.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/confronto_completo_12_acque.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Artefatto Acque 5: Parametri Chimici Completi Bergamo -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🧪 Parametri Chimici Completi - Bergamo</h2>
+                    <p class="artifact-description">Tabella completa ordinabile con tutti i 215 comuni bergamaschi e 18 parametri chimici dell'acqua. Include ricerca avanzata, indicatori di conformità ai limiti e dati ufficiali 2024</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">215 Comuni</span>
+                        <span class="artifact-tag">18 Parametri Chimici</span>
+                        <span class="artifact-tag">Tabella Ordinabile</span>
+                        <span class="artifact-tag">Indicatori Limiti</span>
+                        <span class="artifact-tag">Ricerca Filtri</span>
+                        <span class="artifact-tag">Dati Ufficiali 2024</span>
+                        <span class="artifact-tag">3.870 Dati Totali</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./parametri-chimici-completi-bergamo.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./parametri-chimici-completi-bergamo.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./parametri-chimici-completi-bergamo.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/parametri-chimici-completi-bergamo.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+        
+        <!-- Sezione Pulizia e Sanificazione -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">🧽 Pulizia e Sanificazione</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Guida completa per la pulizia professionale delle attrezzature birrarie</p>
+            </div>
+        </section>
+
+        <!-- Artefatto Pulizia: Guida Completa Pulizia e Sanificazione -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🧴 Pulizia e Sanificazione Homebrewing - Guida Completa</h2>
+                    <p class="artifact-description">Guida tecnica completa per pulizia professionale delle attrezzature birrarie con confronti prodotti economici vs professionali, sequenze operative e calcolatori costi</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">Pulizia Professionale</span>
+                        <span class="artifact-tag">Sanificazione</span>
+                        <span class="artifact-tag">Prodotti Economici</span>
+                        <span class="artifact-tag">Prodotti Professionali</span>
+                        <span class="artifact-tag">Confronto Costi</span>
+                        <span class="artifact-tag">Sequenze Operative</span>
+                        <span class="artifact-tag">Sicurezza</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./homebrewing_cleaning_website.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./homebrewing_cleaning_website.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./homebrewing_cleaning_website.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/homebrewing_cleaning_website.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+        
+        <!-- Sezione Ricette -->
+        <section>
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 style="color: #8b4513; font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">📝 Ricette</h2>
+                <p style="color: #654321; font-size: 1.1em; margin: 0;">Collezioni complete di ricette homebrewing testate e ottimizzate</p>
+            </div>
+        </section>
+
+        <!-- Artefatto Ricette: 15 Migliori Ricette Homebrewing 2025 -->
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🍺 Le 15 Migliori Ricette Homebrewing 2025</h2>
+                    <p class="artifact-description">Collezione completa ordinata per gradazione crescente (4.5-10.5% ABV) con note tecniche avanzate, solo lieviti secchi e 100% alta fermentazione</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">15 Stili BJCP</span>
+                        <span class="artifact-tag">4.5-10.5% ABV</span>
+                        <span class="artifact-tag">Lieviti Secchi</span>
+                        <span class="artifact-tag">Note Tecniche</span>
+                        <span class="artifact-tag">Alta Fermentazione</span>
+                        <span class="artifact-tag">Brewfather</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="open-window-btn" onclick="event.stopPropagation(); window.open('./ricette-birra-html.html', '_blank')">🔗 Apri</button>
+                    <div class="artifact-toggle">▼</div>
+                </div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./ricette-birra-html.html" class="artifact-iframe" height="800"></iframe>
+                <div class="artifact-links">
+                    <a href="./ricette-birra-html.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="https://github.com/vanholye/vanholye.github.io/blob/main/ricette-birra-html.html" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+
+        
+        <!-- Template per futuri artefatti -->
+        <!-- 
+        <section class="artifact-section">
+            <div class="artifact-header" onclick="toggleArtifact(this)">
+                <div class="artifact-header-content">
+                    <h2 class="artifact-title">🚀 Nome del Prossimo Artefatto</h2>
+                    <p class="artifact-description">Descrizione del prossimo artefatto che aggiungerai</p>
+                    <div class="artifact-meta">
+                        <span class="artifact-tag">React</span>
+                        <span class="artifact-tag">3D</span>
+                        <span class="artifact-tag">Altro-tag</span>
+                    </div>
+                </div>
+                <div class="artifact-toggle">▼</div>
+            </div>
+            <div class="artifact-content">
+                <iframe src="./path-to-artifact.html" class="artifact-iframe" height="500"></iframe>
+                <div class="artifact-links">
+                    <a href="./path-to-artifact.html" target="_blank">Apri in nuova finestra</a>
+                    <a href="#" target="_blank">Codice sorgente</a>
+                </div>
+            </div>
+        </section>
+        -->
+        
+        <footer style="text-align: center; margin-top: 60px; padding: 40px 20px; border-top: 3px solid #d4b062; background: linear-gradient(135deg, #f8f4e6 0%, #f5e6d3 100%); border-radius: 12px;">
+            <p style="color: #8b4513; margin: 0; font-weight: 500;">
+                🍺 Guide & Strumenti creati con <a href="https://claude.ai" target="_blank" style="color: #8b4513; font-weight: bold;">Claude AI</a> • 
+                <a href="https://github.com/vanholye" target="_blank" style="color: #8b4513; font-weight: bold;">GitHub</a> • 
+                <a href="mailto:higgorjjanimal@yahoo.it" style="color: #8b4513; font-weight: bold;">Contatti</a>
+            </p>
+            <p style="color: #654321; margin: 10px 0 0 0; font-size: 0.9em;">
+                Per homebrewer appassionati - Dalla teoria alla pratica
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function toggleArtifact(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.artifact-toggle');
+            
+            // Toggle classes
+            content.classList.toggle('expanded');
+            toggle.classList.toggle('expanded');
+            
+            // Optional: Close other open artifacts (accordion behavior)
+            // Uncomment the lines below if you want only one artifact open at a time
+            /*
+            const allContents = document.querySelectorAll('.artifact-content');
+            const allToggles = document.querySelectorAll('.artifact-toggle');
+            
+            allContents.forEach((otherContent, index) => {
+                if (otherContent !== content && otherContent.classList.contains('expanded')) {
+                    otherContent.classList.remove('expanded');
+                    allToggles[index].classList.remove('expanded');
+                }
+            });
+            */
+        }
+    </script>
+</body>
+</html>

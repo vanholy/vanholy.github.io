@@ -24,7 +24,9 @@
       "WebFetch(domain:www.uniacque.bg.it)",
       "Bash(touch:*)",
       "Bash(start water_quality_demo.html)",
-      "Bash(start parametri-chimici-completi-bergamo.html)"
+      "Bash(start parametri-chimici-completi-bergamo.html)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

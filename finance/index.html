@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💹 Finance Tools - Matrix Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: #000;
+            color: #00ff00;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Matrix Rain Effect */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Back Button */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            color: #00ff00;
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transform: translateX(-5px);
+        }
+
+        header {
+            text-align: center;
+            margin: 80px 0 60px 0;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #00ff00;
+            text-shadow:
+                0 0 10px #00ff00,
+                0 0 20px #00ff00,
+                0 0 30px #00ff00,
+                0 0 40px #00cc00;
+            margin-bottom: 15px;
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                text-shadow:
+                    0 0 10px #00ff00,
+                    0 0 20px #00ff00,
+                    0 0 30px #00ff00,
+                    0 0 40px #00cc00;
+            }
+            50% {
+                text-shadow:
+                    0 0 20px #00ff00,
+                    0 0 30px #00ff00,
+                    0 0 40px #00ff00,
+                    0 0 50px #00cc00,
+                    0 0 60px #00cc00;
+            }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #00cc00;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .terminal-line {
+            color: #00ff00;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Apps Grid */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .app-card {
+            position: relative;
+            background: rgba(0, 255, 0, 0.02);
+            border: 2px solid #00ff00;
+            border-radius: 0;
+            padding: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow:
+                0 0 20px rgba(0, 255, 0, 0.1),
+                inset 0 0 20px rgba(0, 255, 0, 0.05);
+        }
+
+        .app-card:hover {
+            border-color: #00ff00;
+            box-shadow:
+                0 0 40px rgba(0, 255, 0, 0.3),
+                inset 0 0 30px rgba(0, 255, 0, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .app-card:hover::before {
+            left: 100%;
+        }
+
+        .app-header {
+            background: rgba(0, 255, 0, 0.05);
+            padding: 20px 25px;
+            border-bottom: 2px solid #00ff00;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .app-header:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .app-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .app-description {
+            font-size: 0.95rem;
+            color: #00cc00;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .app-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .app-tag {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .app-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+
+        .app-content.expanded {
+            max-height: 1000px;
+        }
+
+        .app-iframe {
+            width: 100%;
+            border: none;
+            display: block;
+            background: #000;
+        }
+
+        .app-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: rgba(0, 255, 0, 0.05);
+            border-top: 1px solid #00ff00;
+        }
+
+        .app-btn {
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: #000;
+            background: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        .app-btn:hover {
+            background: transparent;
+            color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .app-toggle {
+            font-size: 1.2rem;
+            color: #00ff00;
+            transition: transform 0.3s ease;
+            user-select: none;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .app-toggle.expanded {
+            transform: rotate(180deg);
+        }
+
+        /* Scanline Effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 0, 0.03) 2px,
+                rgba(0, 255, 0, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 999;
+            animation: scanlineMove 8s linear infinite;
+        }
+
+        @keyframes scanlineMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 40px 20px;
+            border-top: 2px solid #00ff00;
+            color: #00cc00;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #00ff00;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        footer a:hover {
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        @media (max-width: 968px) {
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .app-title {
+                font-size: 1.4rem;
+            }
+        }
+
+        /* CRT Effect */
+        .crt::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: rgba(18, 16, 16, 0.1);
+            opacity: 0;
+            z-index: 2;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.27861; }
+            5% { opacity: 0.34769; }
+            10% { opacity: 0.23604; }
+            15% { opacity: 0.90626; }
+            20% { opacity: 0.18128; }
+            25% { opacity: 0.83891; }
+            30% { opacity: 0.65583; }
+            35% { opacity: 0.67807; }
+            40% { opacity: 0.26559; }
+            45% { opacity: 0.84693; }
+            50% { opacity: 0.96019; }
+            55% { opacity: 0.08594; }
+            60% { opacity: 0.20313; }
+            65% { opacity: 0.71988; }
+            70% { opacity: 0.53455; }
+            75% { opacity: 0.37288; }
+            80% { opacity: 0.71428; }
+            85% { opacity: 0.70419; }
+            90% { opacity: 0.7003; }
+            95% { opacity: 0.36108; }
+            100% { opacity: 0.24387; }
+        }
+    </style>
+</head>
+<body class="crt">
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Scanline Effect -->
+    <div class="scanline"></div>
+
+    <!-- Back Button -->
+    <a href="../" class="back-button">
+        <span>←</span>
+        <span>Home</span>
+    </a>
+
+    <div class="container">
+        <header>
+            <h1>💹 FINANCE TOOLS</h1>
+            <p class="subtitle">ADVANCED FINANCIAL SIMULATION SUITE</p>
+            <p class="terminal-line">&gt; system.initialized █</p>
+        </header>
+
+        <div class="apps-grid">
+            <!-- Simulatore Finanziario -->
+            <div class="app-card">
+                <div class="app-header" onclick="toggleApp(this)">
+                    <h2 class="app-title">📊 SIMULATORE FINANZIARIO AI</h2>
+                    <p class="app-description">
+                        Sistema avanzato di simulazione patrimoniale con intelligenza artificiale integrata.
+                        Proiezioni dettagliate, analisi scenari di mercato e ottimizzazione asset allocation dinamica.
+                    </p>
+                    <div class="app-tags">
+                        <span class="app-tag">AI Powered</span>
+                        <span class="app-tag">Claude API</span>
+                        <span class="app-tag">Chart.js</span>
+                        <span class="app-tag">Portfolio</span>
+                        <span class="app-tag">Pension Fund</span>
+                        <span class="app-tag">Market Scenarios</span>
+                    </div>
+                </div>
+                <div class="app-content">
+                    <iframe src="simulatore_finanziario_finale.html" class="app-iframe" height="800"></iframe>
+                    <div class="app-actions">
+                        <button class="app-btn" onclick="event.stopPropagation(); window.open('simulatore_finanziario_finale.html', '_blank')">
+                            🚀 LAUNCH APP
+                        </button>
+                        <div class="app-toggle">▼</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cicciopalla Trader -->
+            <div class="app-card">
+                <div class="app-header" onclick="toggleApp(this)">
+                    <h2 class="app-title">🎮 CICCIOPALLA TRADER</h2>
+                    <p class="app-description">
+                        Trading game interattivo 8-bit style. Simula un anno di trading con €10,000 iniziali.
+                        Musica dinamica, effetti sonori, grafici real-time e report trimestrali dettagliati.
+                    </p>
+                    <div class="app-tags">
+                        <span class="app-tag">Trading Game</span>
+                        <span class="app-tag">8-bit Style</span>
+                        <span class="app-tag">Canvas</span>
+                        <span class="app-tag">Web Audio</span>
+                        <span class="app-tag">Real-time</span>
+                        <span class="app-tag">Retro</span>
+                    </div>
+                </div>
+                <div class="app-content">
+                    <iframe src="cicciopalla-trader.html" class="app-iframe" height="800"></iframe>
+                    <div class="app-actions">
+                        <button class="app-btn" onclick="event.stopPropagation(); window.open('cicciopalla-trader.html', '_blank')">
+                            🕹️ PLAY GAME
+                        </button>
+                        <div class="app-toggle">▼</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &gt; Powered by <a href="https://claude.ai" target="_blank">Claude AI</a> |
+                <a href="https://github.com/vanholye" target="_blank">GitHub Repository</a> |
+                <a href="mailto:higgorjjanimal@yahoo.it">Contact</a>
+            </p>
+            <p style="margin-top: 10px;">
+                &gt; © 2025 VanHoly Finance Tools - Advanced Financial Simulations █
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Matrix Rain Effect
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?€¥£¢$';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * -100;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff00';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Toggle App Expansion
+        function toggleApp(header) {
+            const card = header.parentElement;
+            const content = card.querySelector('.app-content');
+            const toggle = card.querySelector('.app-toggle');
+
+            content.classList.toggle('expanded');
+            toggle.classList.toggle('expanded');
+        }
+    </script>
+</body>
+</html>

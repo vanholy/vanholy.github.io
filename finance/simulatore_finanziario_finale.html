@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Finanziario con AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(160deg, #0f0f1a 0%, #1a1a2e 40%, #16213e 100%);
+            min-height: 100vh;
+            padding: 25px 15px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #e8d5b7, #f5e6d3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.95rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+
+        .left-panel, .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .ai-footer {
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 260px 1fr 260px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .center-panel {
+                grid-column: span 2;
+                order: -1;
+            }
+            .ai-footer {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .center-panel {
+                grid-column: span 1;
+            }
+            .ai-footer {
+                grid-column: span 1;
+            }
+        }
+
+        /* Market Sentiment Buttons */
+        .market-section {
+            background: linear-gradient(135deg, rgba(255,217,61,0.08), rgba(255,159,67,0.08));
+            border-color: rgba(255,217,61,0.2);
+        }
+
+        .market-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .market-btn {
+            flex: 1;
+            padding: 12px 8px;
+            background: rgba(255,255,255,0.06);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .market-btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .market-emoji {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .market-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .market-btn.bull.active {
+            background: linear-gradient(135deg, rgba(78,205,196,0.2), rgba(107,203,119,0.2));
+            border-color: #4ecdc4;
+            box-shadow: 0 4px 15px rgba(78,205,196,0.3);
+        }
+
+        .market-btn.bull.active .market-label {
+            color: #4ecdc4;
+        }
+
+        .market-btn.neutral.active {
+            background: linear-gradient(135deg, rgba(255,217,61,0.2), rgba(255,159,67,0.2));
+            border-color: #ffd93d;
+            box-shadow: 0 4px 15px rgba(255,217,61,0.3);
+        }
+
+        .market-btn.neutral.active .market-label {
+            color: #ffd93d;
+        }
+
+        .market-btn.bear.active {
+            background: linear-gradient(135deg, rgba(255,107,107,0.2), rgba(238,90,90,0.2));
+            border-color: #ff6b6b;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+        }
+
+        .market-btn.bear.active .market-label {
+            color: #ff6b6b;
+        }
+
+        .market-info {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .market-info strong {
+            color: #ffd93d;
+        }
+
+        .market-info.bull strong {
+            color: #4ecdc4;
+        }
+
+        .market-info.bear strong {
+            color: #ff6b6b;
+        }
+
+        /* Lifestyle Section */
+        .lifestyle-section {
+            background: linear-gradient(135deg, rgba(255,107,107,0.08), rgba(165,94,234,0.08));
+            border-color: rgba(255,107,107,0.2);
+        }
+
+        .lifestyle-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .lifestyle-btn {
+            flex: 1;
+            padding: 10px 6px;
+            background: rgba(255,255,255,0.06);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .lifestyle-btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .lifestyle-emoji {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .lifestyle-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .lifestyle-btn.unhealthy.active {
+            background: linear-gradient(135deg, rgba(255,107,107,0.2), rgba(238,90,90,0.2));
+            border-color: #ff6b6b;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+        }
+
+        .lifestyle-btn.unhealthy.active .lifestyle-label {
+            color: #ff6b6b;
+        }
+
+        .lifestyle-btn.normal.active {
+            background: linear-gradient(135deg, rgba(165,94,234,0.2), rgba(102,126,234,0.2));
+            border-color: #a55eea;
+            box-shadow: 0 4px 15px rgba(165,94,234,0.3);
+        }
+
+        .lifestyle-btn.normal.active .lifestyle-label {
+            color: #a55eea;
+        }
+
+        .lifestyle-btn.healthy.active {
+            background: linear-gradient(135deg, rgba(78,205,196,0.2), rgba(107,203,119,0.2));
+            border-color: #4ecdc4;
+            box-shadow: 0 4px 15px rgba(78,205,196,0.3);
+        }
+
+        .lifestyle-btn.healthy.active .lifestyle-label {
+            color: #4ecdc4;
+        }
+
+        .lifestyle-info {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-section {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .control-section.highlight {
+            background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(102,126,234,0.1));
+            border-color: rgba(78,205,196,0.3);
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .icon {
+            font-size: 1rem;
+        }
+
+        /* Quick Setup */
+        .quick-setup {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .age-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .age-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .age-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4ecdc4;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .age-label {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .apply-preset-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .apply-preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3);
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .input-label span:first-child {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .input-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .input-value.green { color: #4ecdc4; }
+        .input-value.blue { color: #667eea; }
+        .input-value.gold { color: #ffd93d; }
+        .input-value.red { color: #ff6b6b; }
+        .input-value.orange { color: #ff9f43; }
+        .input-value.purple { color: #a55eea; }
+
+        /* Sliders */
+        .slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(78, 205, 196, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .slider.blue::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .slider.gold::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #ffd93d, #ff9f43);
+            box-shadow: 0 2px 8px rgba(255, 217, 61, 0.4);
+        }
+
+        .slider.red::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+        }
+
+        .slider.orange::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #ff9f43, #ff7f50);
+            box-shadow: 0 2px 8px rgba(255, 159, 67, 0.4);
+        }
+
+        .slider.purple::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #a55eea, #8854d0);
+            box-shadow: 0 2px 8px rgba(165, 94, 234, 0.4);
+        }
+
+        /* Number inputs */
+        .number-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .number-input:focus {
+            border-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
+        }
+
+        /* Dual input row */
+        .dual-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .mini-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .mini-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .mini-input {
+            padding: 6px 8px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            outline: none;
+            width: 100%;
+        }
+
+        .mini-input:focus {
+            border-color: #4ecdc4;
+        }
+
+        /* Allocation Bar */
+        .allocation-bar {
+            height: 10px;
+            border-radius: 5px;
+            display: flex;
+            overflow: hidden;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        .allocation-segment {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .segment-stocks { background: linear-gradient(90deg, #4ecdc4, #44a08d); }
+        .segment-bonds { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .segment-emergency { background: linear-gradient(90deg, #ff9f43, #ff7f50); }
+
+        /* Time selector */
+        .time-selector {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .time-btn {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-btn:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .time-btn.active {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border-color: transparent;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Charts Area */
+        .charts-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chart-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 380px;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .legend-line {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* Bottom section */
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 700px) {
+            .bottom-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pie-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pie-chart-wrapper {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            margin-bottom: 15px;
+        }
+
+        .pie-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .pie-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .pie-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .pie-legend-text {
+            flex: 1;
+        }
+
+        .pie-legend-value {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .result-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .result-value.green { color: #4ecdc4; }
+        .result-value.purple { color: #a55eea; }
+        .result-value.red { color: #ff6b6b; }
+        .result-value.gold { color: #ffd93d; }
+        .result-value.orange { color: #ff9f43; }
+        .result-value.blue { color: #667eea; }
+
+        .result-detail {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 3px;
+        }
+
+        /* AI Footer */
+        .ai-footer {
+            background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(165,94,234,0.1));
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .ai-footer-content {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .ai-footer .section-title {
+            margin-bottom: 0;
+            white-space: nowrap;
+            padding-top: 8px;
+        }
+
+        .ai-footer .question-input {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+        }
+
+        .ai-footer .ask-claude-btn {
+            white-space: nowrap;
+        }
+
+        .ai-footer .ai-response {
+            flex-basis: 100%;
+            min-height: 80px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .ai-section {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-section.claude {
+            background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(165,94,234,0.1));
+            border-color: rgba(102,126,234,0.3);
+        }
+
+        .ask-claude-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .ask-claude-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .ask-claude-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .ai-response {
+            flex: 1;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .ai-response::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ai-response::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+
+        .ai-response::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        .ai-placeholder {
+            color: rgba(255,255,255,0.4);
+            font-style: italic;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .ai-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 40px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Custom question input */
+        .question-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            margin-bottom: 12px;
+            resize: none;
+        }
+
+        .question-input::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .question-input:focus {
+            border-color: #667eea;
+        }
+
+        /* Preset info */
+        .preset-info {
+            background: rgba(78,205,196,0.1);
+            border: 1px solid rgba(78,205,196,0.2);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .preset-info strong {
+            color: #4ecdc4;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Markdown-like formatting for AI response */
+        .ai-response p {
+            margin-bottom: 12px;
+        }
+
+        .ai-response strong {
+            color: #4ecdc4;
+        }
+
+        .ai-response ul, .ai-response ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .ai-response li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎛️ Simulatore Finanziario con AI</h1>
+            <p>Imposta età e patrimonio per preset ottimali, oppure personalizza ogni parametro</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- LEFT PANEL -->
+            <div class="left-panel">
+                <!-- Market Sentiment -->
+                <div class="control-section market-section">
+                    <div class="section-title"><span class="icon">📈</span> Scenario di Mercato</div>
+                    <div class="market-buttons">
+                        <button class="market-btn bull" id="marketBull" title="Mercato Toro - Forte crescita">
+                            <span class="market-emoji">😄</span>
+                            <span class="market-label">Toro</span>
+                        </button>
+                        <button class="market-btn neutral active" id="marketNeutral" title="Mercato Normale - Crescita media">
+                            <span class="market-emoji">😐</span>
+                            <span class="market-label">Normale</span>
+                        </button>
+                        <button class="market-btn bear" id="marketBear" title="Mercato Orso - Crescita debole">
+                            <span class="market-emoji">😟</span>
+                            <span class="market-label">Orso</span>
+                        </button>
+                    </div>
+                    <div class="market-info" id="marketInfo">
+                        <strong>📊 Scenario Normale:</strong> Rendimenti storici medi. Azioni ~7%, obbligazioni ~3%.
+                    </div>
+                </div>
+
+                <!-- Lifestyle -->
+                <div class="control-section lifestyle-section">
+                    <div class="section-title"><span class="icon">❤️</span> Stile di Vita</div>
+                    <div class="lifestyle-buttons">
+                        <button class="lifestyle-btn unhealthy" id="lifestyleUnhealthy" title="Sregolato">
+                            <span class="lifestyle-emoji">🍔</span>
+                            <span class="lifestyle-label">Sregolato</span>
+                        </button>
+                        <button class="lifestyle-btn normal" id="lifestyleNormal" title="Tranquillo">
+                            <span class="lifestyle-emoji">🧘</span>
+                            <span class="lifestyle-label">Tranquillo</span>
+                        </button>
+                        <button class="lifestyle-btn healthy" id="lifestyleHealthy" title="Salutare">
+                            <span class="lifestyle-emoji">🏃</span>
+                            <span class="lifestyle-label">Salutare</span>
+                        </button>
+                    </div>
+                    <div class="lifestyle-info" id="lifestyleInfo">
+                        Seleziona uno stile di vita per visualizzare l'aspettativa di vita sul grafico.
+                    </div>
+                </div>
+
+                <!-- Patrimonio & Età -->
+                <div class="control-section highlight">
+                    <div class="section-title"><span class="icon">💰</span> Patrimonio & Età</div>
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>Patrimonio da investire</span>
+                        </div>
+                        <input type="number" class="number-input" id="initialCapital" value="100000" step="1000">
+                    </div>
+                    
+                    <div class="age-selector">
+                        <div class="age-display">
+                            <div>
+                                <div class="age-value" id="ageValue">35</div>
+                                <div class="age-label">anni</div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.8rem; color: rgba(255,255,255,0.5);">
+                                Pensione tra <span id="yearsToRetirement" style="color: #4ecdc4; font-weight: 600;">32</span> anni
+                            </div>
+                        </div>
+                        <input type="range" class="slider" id="ageSlider" min="0" max="90" step="1" value="35">
+                    </div>
+                    
+                    <div class="preset-info" id="presetInfo">
+                        <strong>Profilo Crescita (35 anni):</strong><br>
+                        Orizzonte lungo fino alla pensione. Alta esposizione azionaria per massimizzare la crescita.
+                    </div>
+                </div>
+
+                <!-- Time & Inflation -->
+                <div class="control-section">
+                    <div class="section-title"><span class="icon">⏱️</span> Tempo & Inflazione</div>
+                    
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>Inflazione stimata</span>
+                            <span class="input-value purple" id="inflationValue">2%</span>
+                        </div>
+                        <input type="range" class="slider purple" id="inflationSlider" min="0" max="8" step="0.5" value="2">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-label"><span>Orizzonte temporale</span></div>
+                        <div class="time-selector">
+                            <button class="time-btn" data-years="10">10</button>
+                            <button class="time-btn" data-years="20">20</button>
+                            <button class="time-btn active" data-years="30">30</button>
+                            <button class="time-btn" data-years="40">40</button>
+                            <button class="time-btn" data-years="50">50</button>
+                        </div>
+                        <div class="time-selector" style="margin-top: 8px;">
+                            <button class="time-btn" data-years="60">60</button>
+                            <button class="time-btn" data-years="70">70</button>
+                            <button class="time-btn" data-years="80">80</button>
+                            <button class="time-btn" data-years="90">90</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER PANEL -->
+            <div class="center-panel">
+                <!-- Main Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">📈 Proiezione Patrimoniale</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #4ecdc4;"></div>
+                            <span>Nominale</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #a55eea;"></div>
+                            <span>Reale (inflazione)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #ff6b6b;"></div>
+                            <span>Fondo Pensione</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #ffd93d;"></div>
+                            <span>Totale</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #ff9f43;"></div>
+                            <span>Totale Reale</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results below chart -->
+                <div class="chart-card">
+                    <div class="chart-title" style="margin-bottom: 15px; font-size: 1rem;">📋 Risultati</div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Portafoglio</div>
+                            <div class="result-value green" id="resultPortfolio">€0</div>
+                            <div class="result-detail" id="resultPortfolioDetail"></div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Valore Reale</div>
+                            <div class="result-value purple" id="resultReal">€0</div>
+                            <div class="result-detail">netto inflazione</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Pensione</div>
+                            <div class="result-value red" id="resultPension">€0</div>
+                            <div class="result-detail" id="resultPensionDetail"></div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Totale</div>
+                            <div class="result-value gold" id="resultTotal">€0</div>
+                            <div class="result-detail">patrimonio finale</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Totale Reale</div>
+                            <div class="result-value orange" id="resultTotalReal">€0</div>
+                            <div class="result-detail">netto inflazione</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Prelevato</div>
+                            <div class="result-value blue" id="resultWithdrawn">€0</div>
+                            <div class="result-detail" id="resultWithdrawnDetail"></div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Guadagno</div>
+                            <div class="result-value green" id="resultGain">€0</div>
+                            <div class="result-detail">rendimento</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="right-panel">
+                <!-- Allocation Pie -->
+                <div class="chart-card">
+                    <div class="chart-title" style="text-align: center; margin-bottom: 12px; font-size: 1rem;">🥧 Allocazione</div>
+                    <div class="pie-container">
+                        <div class="pie-chart-wrapper">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                        <div class="pie-legend" id="pieLegend"></div>
+                    </div>
+                </div>
+
+                <!-- Asset Allocation -->
+                <div class="control-section">
+                    <div class="section-title"><span class="icon">📊</span> Asset Allocation</div>
+                    
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>🟢 Azioni</span>
+                            <span class="input-value green" id="stocksValue">62%</span>
+                        </div>
+                        <input type="range" class="slider" id="stocksSlider" min="0" max="100" value="62">
+                        <div class="dual-row">
+                            <div class="mini-input-group">
+                                <span class="mini-label">Rend. %</span>
+                                <input type="number" class="mini-input" id="stocksReturn" value="7" step="0.5">
+                            </div>
+                            <div class="mini-input-group">
+                                <span class="mini-label">Importo</span>
+                                <input type="text" class="mini-input" id="stocksAmount" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>🔵 Obbligazioni</span>
+                            <span class="input-value blue" id="bondsValue">28%</span>
+                        </div>
+                        <input type="range" class="slider blue" id="bondsSlider" min="0" max="100" value="28">
+                        <div class="dual-row">
+                            <div class="mini-input-group">
+                                <span class="mini-label">Rend. %</span>
+                                <input type="number" class="mini-input" id="bondsReturn" value="3" step="0.5">
+                            </div>
+                            <div class="mini-input-group">
+                                <span class="mini-label">Importo</span>
+                                <input type="text" class="mini-input" id="bondsAmount" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>🟠 Liquidità</span>
+                            <span class="input-value orange" id="emergencyValue">10%</span>
+                        </div>
+                        <input type="text" class="mini-input" id="emergencyAmount" readonly style="margin-top: 5px;">
+                    </div>
+
+                    <div class="allocation-bar">
+                        <div class="allocation-segment segment-stocks" id="barStocks"></div>
+                        <div class="allocation-segment segment-bonds" id="barBonds"></div>
+                        <div class="allocation-segment segment-emergency" id="barEmergency"></div>
+                    </div>
+                    
+                    <button class="apply-preset-btn" id="applyPreset" style="margin-top: 15px;">
+                        <span>✨</span> Applica Preset Ottimale
+                    </button>
+                </div>
+
+                <!-- Pension & Withdrawal -->
+                <div class="control-section">
+                    <div class="section-title"><span class="icon">🏦</span> Pensione & Prelievi</div>
+                    
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>Versamento/anno</span>
+                            <span class="input-value red" id="pensionContribValue">€5.000</span>
+                        </div>
+                        <input type="range" class="slider red" id="pensionContribSlider" min="0" max="15000" step="500" value="5000">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>Rendimento pensione</span>
+                            <span class="input-value red" id="pensionReturnValue">5%</span>
+                        </div>
+                        <input type="range" class="slider red" id="pensionReturnSlider" min="1" max="10" step="0.5" value="5">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-label">
+                            <span>Prelievo annuale</span>
+                            <span class="input-value gold" id="withdrawalValue">€0</span>
+                        </div>
+                        <input type="range" class="slider gold" id="withdrawalSlider" min="0" max="20000" step="500" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI FOOTER -->
+            <div class="ai-footer">
+                <div class="ai-footer-content">
+                    <div class="section-title"><span class="icon">🤖</span> Chiedi a Claude</div>
+                    <textarea class="question-input" id="userQuestion" rows="2" placeholder="Scrivi una domanda (opzionale)..."></textarea>
+                    <button class="ask-claude-btn" id="askClaude">
+                        <span>💬</span> Analizza con Claude
+                    </button>
+                    <div class="ai-response" id="aiResponse">
+                        <div class="ai-placeholder">
+                            Clicca "Analizza con Claude" per ricevere un'analisi personalizzata del tuo piano finanziario.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            ⚠️ Simulazione a scopo illustrativo. I rendimenti passati non garantiscono risultati futuri. Non costituisce consulenza finanziaria professionale. Consulta un esperto per decisioni importanti.
+        </div>
+    </div>
+
+    <script>
+        // State
+        let state = {
+            initialCapital: 100000,
+            age: 35,
+            stocksPercent: 62,
+            bondsPercent: 28,
+            stocksReturn: 7,
+            bondsReturn: 3,
+            pensionContrib: 5000,
+            pensionReturn: 5,
+            withdrawal: 0,
+            inflation: 2,
+            years: 30,
+            marketSentiment: 'neutral', // 'bull', 'neutral', 'bear'
+            lifestyle: null // null, 'unhealthy', 'normal', 'healthy'
+        };
+
+        // Lifestyle configurations
+        const lifestyleConfig = {
+            unhealthy: {
+                lifeExpectancy: 72,
+                description: '⚠️ <strong>Stile Sregolato:</strong> Aspettativa di vita ~72 anni. Maggiori spese sanitarie.'
+            },
+            normal: {
+                lifeExpectancy: 83,
+                description: '😌 <strong>Stile Tranquillo:</strong> Aspettativa di vita ~83 anni. Media italiana standard.'
+            },
+            healthy: {
+                lifeExpectancy: 92,
+                description: '💪 <strong>Stile Salutare:</strong> Aspettativa di vita ~92 anni. Più anni di accumulo.'
+            }
+        };
+
+        // Market scenarios configuration
+        const marketScenarios = {
+            bull: {
+                name: 'Toro',
+                emoji: '😄',
+                stocksReturnBase: 10,
+                bondsReturnBase: 4.5,
+                pensionReturnBase: 7,
+                inflationBase: 2.5,
+                description: '🚀 <strong>Mercato Toro:</strong> Economia in forte espansione. Azioni rendono ~10%, obbligazioni ~4.5%. Ottimo per portafogli aggressivi.',
+                infoClass: 'bull'
+            },
+            neutral: {
+                name: 'Normale',
+                emoji: '😐',
+                stocksReturnBase: 7,
+                bondsReturnBase: 3,
+                pensionReturnBase: 5,
+                inflationBase: 2,
+                description: '📊 <strong>Scenario Normale:</strong> Rendimenti storici medi. Azioni ~7%, obbligazioni ~3%. Base di riferimento standard.',
+                infoClass: ''
+            },
+            bear: {
+                name: 'Orso',
+                emoji: '😟',
+                // Bear market returns vary by time horizon
+                getStocksReturn: function(years) {
+                    // Short term (0-5 years): very low or negative
+                    // Medium term (5-10 years): low but positive
+                    // Long term (10+ years): positive but below average
+                    if (years <= 5) return 2;
+                    if (years <= 10) return 4;
+                    return 5; // Long term still positive
+                },
+                bondsReturnBase: 2.5, // Bonds often do okay in bear markets
+                pensionReturnBase: 3.5,
+                inflationBase: 1.5, // Often lower inflation in recession
+                getDescription: function(years) {
+                    if (years <= 5) {
+                        return '📉 <strong>Mercato Orso (breve termine):</strong> Economia in difficoltà. Azioni ~2%, obbligazioni ~2.5%. Considera di aumentare la liquidità.';
+                    } else if (years <= 10) {
+                        return '📉 <strong>Mercato Orso (medio termine):</strong> Recupero graduale atteso. Azioni ~4%, obbligazioni ~2.5%. Il tempo gioca a tuo favore.';
+                    } else {
+                        return '📉 <strong>Mercato Orso (lungo termine):</strong> Storicamente i mercati recuperano. Azioni ~5%, obbligazioni ~2.5%. Mantieni la rotta! 💪';
+                    }
+                },
+                infoClass: 'bear'
+            }
+        };
+
+        // Charts
+        let lineChart, pieChart;
+
+        // DOM Elements
+        const elements = {
+            initialCapital: document.getElementById('initialCapital'),
+            ageSlider: document.getElementById('ageSlider'),
+            ageValue: document.getElementById('ageValue'),
+            yearsToRetirement: document.getElementById('yearsToRetirement'),
+            presetInfo: document.getElementById('presetInfo'),
+            applyPreset: document.getElementById('applyPreset'),
+            stocksSlider: document.getElementById('stocksSlider'),
+            stocksValue: document.getElementById('stocksValue'),
+            stocksReturn: document.getElementById('stocksReturn'),
+            stocksAmount: document.getElementById('stocksAmount'),
+            bondsSlider: document.getElementById('bondsSlider'),
+            bondsValue: document.getElementById('bondsValue'),
+            bondsReturn: document.getElementById('bondsReturn'),
+            bondsAmount: document.getElementById('bondsAmount'),
+            emergencyValue: document.getElementById('emergencyValue'),
+            emergencyAmount: document.getElementById('emergencyAmount'),
+            barStocks: document.getElementById('barStocks'),
+            barBonds: document.getElementById('barBonds'),
+            barEmergency: document.getElementById('barEmergency'),
+            pensionContribSlider: document.getElementById('pensionContribSlider'),
+            pensionContribValue: document.getElementById('pensionContribValue'),
+            pensionReturnSlider: document.getElementById('pensionReturnSlider'),
+            pensionReturnValue: document.getElementById('pensionReturnValue'),
+            withdrawalSlider: document.getElementById('withdrawalSlider'),
+            withdrawalValue: document.getElementById('withdrawalValue'),
+            inflationSlider: document.getElementById('inflationSlider'),
+            inflationValue: document.getElementById('inflationValue'),
+            timeBtns: document.querySelectorAll('.time-btn'),
+            pieLegend: document.getElementById('pieLegend'),
+            resultPortfolio: document.getElementById('resultPortfolio'),
+            resultPortfolioDetail: document.getElementById('resultPortfolioDetail'),
+            resultReal: document.getElementById('resultReal'),
+            resultPension: document.getElementById('resultPension'),
+            resultPensionDetail: document.getElementById('resultPensionDetail'),
+            resultTotal: document.getElementById('resultTotal'),
+            resultTotalReal: document.getElementById('resultTotalReal'),
+            resultWithdrawn: document.getElementById('resultWithdrawn'),
+            resultWithdrawnDetail: document.getElementById('resultWithdrawnDetail'),
+            resultGain: document.getElementById('resultGain'),
+            askClaude: document.getElementById('askClaude'),
+            userQuestion: document.getElementById('userQuestion'),
+            aiResponse: document.getElementById('aiResponse'),
+            marketBull: document.getElementById('marketBull'),
+            marketNeutral: document.getElementById('marketNeutral'),
+            marketBear: document.getElementById('marketBear'),
+            marketInfo: document.getElementById('marketInfo'),
+            lifestyleUnhealthy: document.getElementById('lifestyleUnhealthy'),
+            lifestyleNormal: document.getElementById('lifestyleNormal'),
+            lifestyleHealthy: document.getElementById('lifestyleHealthy'),
+            lifestyleInfo: document.getElementById('lifestyleInfo')
+        };
+
+        // Apply market sentiment to parameters
+        function applyMarketSentiment(sentiment) {
+            state.marketSentiment = sentiment;
+            const scenario = marketScenarios[sentiment];
+            
+            // Update button states
+            elements.marketBull.classList.remove('active');
+            elements.marketNeutral.classList.remove('active');
+            elements.marketBear.classList.remove('active');
+            
+            if (sentiment === 'bull') {
+                elements.marketBull.classList.add('active');
+                state.stocksReturn = scenario.stocksReturnBase;
+                state.bondsReturn = scenario.bondsReturnBase;
+                state.pensionReturn = scenario.pensionReturnBase;
+                state.inflation = scenario.inflationBase;
+                elements.marketInfo.innerHTML = scenario.description;
+                elements.marketInfo.className = 'market-info bull';
+            } else if (sentiment === 'neutral') {
+                elements.marketNeutral.classList.add('active');
+                state.stocksReturn = scenario.stocksReturnBase;
+                state.bondsReturn = scenario.bondsReturnBase;
+                state.pensionReturn = scenario.pensionReturnBase;
+                state.inflation = scenario.inflationBase;
+                elements.marketInfo.innerHTML = scenario.description;
+                elements.marketInfo.className = 'market-info';
+            } else if (sentiment === 'bear') {
+                elements.marketBear.classList.add('active');
+                state.stocksReturn = scenario.getStocksReturn(state.years);
+                state.bondsReturn = scenario.bondsReturnBase;
+                state.pensionReturn = scenario.pensionReturnBase;
+                state.inflation = scenario.inflationBase;
+                elements.marketInfo.innerHTML = scenario.getDescription(state.years);
+                elements.marketInfo.className = 'market-info bear';
+            }
+            
+            // Update UI inputs
+            elements.stocksReturn.value = state.stocksReturn;
+            elements.bondsReturn.value = state.bondsReturn;
+            elements.pensionReturnSlider.value = state.pensionReturn;
+            elements.pensionReturnValue.textContent = state.pensionReturn + '%';
+            elements.inflationSlider.value = state.inflation;
+            elements.inflationValue.textContent = state.inflation + '%';
+            
+            updateAll();
+        }
+
+        // Update bear market returns when time horizon changes
+        function updateBearReturnsIfNeeded() {
+            if (state.marketSentiment === 'bear') {
+                const scenario = marketScenarios.bear;
+                state.stocksReturn = scenario.getStocksReturn(state.years);
+                elements.stocksReturn.value = state.stocksReturn;
+                elements.marketInfo.innerHTML = scenario.getDescription(state.years);
+            }
+        }
+
+        // Get life expectancy based on lifestyle
+        function getLifeExpectancy() {
+            if (state.lifestyle && lifestyleConfig[state.lifestyle]) {
+                return lifestyleConfig[state.lifestyle].lifeExpectancy;
+            }
+            return null; // No lifestyle selected
+        }
+
+        // Apply lifestyle selection
+        function applyLifestyle(lifestyle) {
+            // Toggle if same lifestyle clicked
+            if (state.lifestyle === lifestyle) {
+                state.lifestyle = null;
+                elements.lifestyleUnhealthy.classList.remove('active');
+                elements.lifestyleNormal.classList.remove('active');
+                elements.lifestyleHealthy.classList.remove('active');
+                elements.lifestyleInfo.innerHTML = 'Seleziona uno stile di vita per visualizzare l\'aspettativa di vita sul grafico.';
+            } else {
+                state.lifestyle = lifestyle;
+                elements.lifestyleUnhealthy.classList.remove('active');
+                elements.lifestyleNormal.classList.remove('active');
+                elements.lifestyleHealthy.classList.remove('active');
+                
+                if (lifestyle === 'unhealthy') {
+                    elements.lifestyleUnhealthy.classList.add('active');
+                } else if (lifestyle === 'normal') {
+                    elements.lifestyleNormal.classList.add('active');
+                } else if (lifestyle === 'healthy') {
+                    elements.lifestyleHealthy.classList.add('active');
+                }
+                
+                elements.lifestyleInfo.innerHTML = lifestyleConfig[lifestyle].description;
+            }
+            
+            updateAll();
+        }
+
+        // Format currency
+        function formatCurrency(value) {
+            return '€' + Math.round(value).toLocaleString('it-IT');
+        }
+
+        // Get optimal preset based on age
+        function getPresetForAge(age) {
+            const retirementAge = 67;
+            const yearsToRetirement = Math.max(0, retirementAge - age);
+            
+            let preset = {
+                stocksPercent: 0,
+                bondsPercent: 0,
+                emergencyPercent: 0,
+                stocksReturn: 7,
+                bondsReturn: 3,
+                pensionContrib: 0,
+                pensionReturn: 5,
+                withdrawal: 0,
+                years: yearsToRetirement,
+                profile: '',
+                description: ''
+            };
+
+            if (age <= 5) {
+                // Bambino - fondo per il futuro
+                preset.stocksPercent = 90;
+                preset.bondsPercent = 5;
+                preset.emergencyPercent = 5;
+                preset.pensionContrib = 0;
+                preset.years = Math.min(30, 25 - age);
+                preset.profile = 'Fondo Futuro (0-5 anni)';
+                preset.description = 'Orizzonte lunghissimo. Massima esposizione azionaria per sfruttare la crescita composta nel tempo.';
+            } else if (age <= 15) {
+                // Adolescente
+                preset.stocksPercent = 85;
+                preset.bondsPercent = 10;
+                preset.emergencyPercent = 5;
+                preset.pensionContrib = 0;
+                preset.years = Math.min(30, 30 - age);
+                preset.profile = 'Crescita Giovane (6-15 anni)';
+                preset.description = 'Orizzonte molto lungo. Alta esposizione azionaria con piccola componente obbligazionaria per stabilità.';
+            } else if (age <= 25) {
+                // Giovane adulto
+                preset.stocksPercent = 85;
+                preset.bondsPercent = 10;
+                preset.emergencyPercent = 5;
+                preset.pensionContrib = 3000;
+                preset.years = yearsToRetirement > 0 ? yearsToRetirement : 30;
+                preset.profile = 'Giovane Investitore (16-25 anni)';
+                preset.description = 'Inizio carriera. Massimizzare crescita con alta % azionaria. Iniziare contributi pensione per beneficio fiscale.';
+            } else if (age <= 35) {
+                // Adulto in carriera
+                preset.stocksPercent = 80;
+                preset.bondsPercent = 15;
+                preset.emergencyPercent = 5;
+                preset.pensionContrib = 5000;
+                preset.years = yearsToRetirement;
+                preset.profile = 'Crescita Aggressiva (26-35 anni)';
+                preset.description = 'Fase di accumulo. Ancora molto tempo per recuperare eventuali ribassi. Aumentare contributi pensione.';
+            } else if (age <= 45) {
+                // Mezza carriera
+                preset.stocksPercent = 70;
+                preset.bondsPercent = 22;
+                preset.emergencyPercent = 8;
+                preset.pensionContrib = 5000;
+                preset.years = yearsToRetirement;
+                preset.profile = 'Bilanciato Crescita (36-45 anni)';
+                preset.description = 'Equilibrio tra crescita e protezione. Orizzonte ancora lungo ma iniziare a diversificare.';
+            } else if (age <= 55) {
+                // Pre-pensione
+                preset.stocksPercent = 60;
+                preset.bondsPercent = 30;
+                preset.emergencyPercent = 10;
+                preset.pensionContrib = 5000;
+                preset.years = yearsToRetirement;
+                preset.profile = 'Bilanciato (46-55 anni)';
+                preset.description = 'Ridurre gradualmente il rischio. Mantenere crescita ma aumentare stabilità. Massimizzare contributi pensione.';
+            } else if (age <= 62) {
+                // Vicino pensione
+                preset.stocksPercent = 45;
+                preset.bondsPercent = 40;
+                preset.emergencyPercent = 15;
+                preset.pensionContrib = 5000;
+                preset.years = yearsToRetirement > 0 ? yearsToRetirement : 5;
+                preset.profile = 'Conservativo Crescita (56-62 anni)';
+                preset.description = 'Protezione del capitale prioritaria. Ridurre volatilità in vista della pensione.';
+            } else if (age <= 70) {
+                // Pensionato giovane
+                preset.stocksPercent = 35;
+                preset.bondsPercent = 45;
+                preset.emergencyPercent = 20;
+                preset.pensionContrib = 0;
+                preset.withdrawal = 3000;
+                preset.years = 20;
+                preset.profile = 'Rendita Stabile (63-70 anni)';
+                preset.description = 'Fase di decumulo iniziata. Focus su reddito stabile e preservazione capitale. Prelievi moderati sostenibili.';
+            } else if (age <= 80) {
+                // Pensionato
+                preset.stocksPercent = 25;
+                preset.bondsPercent = 50;
+                preset.emergencyPercent = 25;
+                preset.pensionContrib = 0;
+                preset.withdrawal = 5000;
+                preset.years = 15;
+                preset.profile = 'Conservativo Rendita (71-80 anni)';
+                preset.description = 'Massima sicurezza. Obbligazioni e liquidità predominanti. Prelievi per integrare pensione.';
+            } else {
+                // Ultra anziano
+                preset.stocksPercent = 15;
+                preset.bondsPercent = 50;
+                preset.emergencyPercent = 35;
+                preset.pensionContrib = 0;
+                preset.withdrawal = 6000;
+                preset.years = 10;
+                preset.profile = 'Ultra Conservativo (81+ anni)';
+                preset.description = 'Preservazione assoluta. Alta liquidità per spese impreviste. Minima esposizione azionaria.';
+            }
+
+            return preset;
+        }
+
+        // Update preset info display
+        function updatePresetInfo(age) {
+            const preset = getPresetForAge(age);
+            const retirementAge = 67;
+            const yearsToRetirement = Math.max(0, retirementAge - age);
+            
+            elements.yearsToRetirement.textContent = yearsToRetirement > 0 ? yearsToRetirement : 'pensione';
+            elements.presetInfo.innerHTML = `<strong>${preset.profile}:</strong><br>${preset.description}`;
+        }
+
+        // Apply preset
+        function applyPreset() {
+            const preset = getPresetForAge(state.age);
+            
+            state.stocksPercent = preset.stocksPercent;
+            state.bondsPercent = preset.bondsPercent;
+            state.stocksReturn = preset.stocksReturn;
+            state.bondsReturn = preset.bondsReturn;
+            state.pensionContrib = preset.pensionContrib;
+            state.pensionReturn = preset.pensionReturn;
+            state.withdrawal = preset.withdrawal;
+            state.years = preset.years || 10;
+
+            // Update UI
+            elements.stocksSlider.value = state.stocksPercent;
+            elements.bondsSlider.value = state.bondsPercent;
+            elements.stocksReturn.value = state.stocksReturn;
+            elements.bondsReturn.value = state.bondsReturn;
+            elements.pensionContribSlider.value = state.pensionContrib;
+            elements.pensionContribValue.textContent = formatCurrency(state.pensionContrib);
+            elements.pensionReturnSlider.value = state.pensionReturn;
+            elements.pensionReturnValue.textContent = state.pensionReturn + '%';
+            elements.withdrawalSlider.value = state.withdrawal;
+            elements.withdrawalValue.textContent = formatCurrency(state.withdrawal);
+
+            // Update time buttons
+            elements.timeBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.dataset.years) === state.years) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Check if we need to add a custom time button
+            const existingYears = Array.from(elements.timeBtns).map(btn => parseInt(btn.dataset.years));
+            if (!existingYears.includes(state.years)) {
+                // Find closest and activate it
+                const closest = existingYears.reduce((prev, curr) => 
+                    Math.abs(curr - state.years) < Math.abs(prev - state.years) ? curr : prev
+                );
+                elements.timeBtns.forEach(btn => {
+                    if (parseInt(btn.dataset.years) === closest) {
+                        btn.classList.add('active');
+                    }
+                });
+                state.years = closest;
+            }
+
+            updateAll();
+        }
+
+        // Calculate weighted portfolio return
+        function getPortfolioReturn() {
+            const totalInvested = state.stocksPercent + state.bondsPercent;
+            if (totalInvested === 0) return 0;
+            
+            const stocksWeight = state.stocksPercent / totalInvested;
+            const bondsWeight = state.bondsPercent / totalInvested;
+            
+            return (stocksWeight * state.stocksReturn + bondsWeight * state.bondsReturn) / 100;
+        }
+
+        // Calculate projection
+        function calculateProjection() {
+            const portfolioReturn = getPortfolioReturn();
+            const pensionReturn = state.pensionReturn / 100;
+            const inflationRate = state.inflation / 100;
+            
+            const emergencyPercent = 100 - state.stocksPercent - state.bondsPercent;
+            const investedCapital = state.initialCapital * (state.stocksPercent + state.bondsPercent) / 100;
+            const emergencyCapital = state.initialCapital * emergencyPercent / 100;
+            
+            // Retirement parameters
+            const retirementAge = 67;
+            const lifeExpectancy = getLifeExpectancy() || 85; // Use lifestyle or default 85 for annuity
+            
+            const data = {
+                labels: [],
+                portfolioNominal: [],
+                portfolioReal: [],
+                pension: [],
+                total: [],
+                totalReal: []
+            };
+            
+            let portfolio = investedCapital;
+            let pensionAccumulated = 0;
+            let totalWithdrawn = 0;
+            let pensionAnnuity = 0;
+            let pensionDisplayValue = 0;
+            
+            for (let year = 0; year <= state.years; year++) {
+                const currentYear = new Date().getFullYear() + year;
+                const currentAge = state.age + year;
+                data.labels.push(currentYear);
+                
+                const nominalValue = portfolio + emergencyCapital;
+                const realValue = nominalValue / Math.pow(1 + inflationRate, year);
+                
+                // Pension logic: accumulation until 67, then annuity
+                if (currentAge < retirementAge) {
+                    // Accumulation phase
+                    pensionDisplayValue = pensionAccumulated;
+                } else if (currentAge === retirementAge && pensionAccumulated > 0 && pensionAnnuity === 0) {
+                    // Convert to annuity at retirement
+                    const yearsInRetirement = lifeExpectancy - retirementAge;
+                    const retirementReturn = Math.max(0.02, pensionReturn * 0.6);
+                    pensionAnnuity = pensionAccumulated * retirementReturn / (1 - Math.pow(1 + retirementReturn, -yearsInRetirement));
+                    pensionDisplayValue = pensionAccumulated;
+                } else if (currentAge > retirementAge && pensionAnnuity > 0) {
+                    // Decumulation phase - show remaining capital value
+                    const remainingYears = Math.max(0, lifeExpectancy - currentAge);
+                    const retirementReturn = Math.max(0.02, pensionReturn * 0.6);
+                    if (remainingYears > 0) {
+                        pensionDisplayValue = pensionAnnuity * (1 - Math.pow(1 + retirementReturn, -remainingYears)) / retirementReturn;
+                    } else {
+                        pensionDisplayValue = 0;
+                    }
+                }
+                
+                const totalNominal = nominalValue + pensionDisplayValue;
+                const totalRealValue = totalNominal / Math.pow(1 + inflationRate, year);
+                
+                data.portfolioNominal.push(Math.round(nominalValue));
+                data.portfolioReal.push(Math.round(realValue));
+                data.pension.push(Math.round(pensionDisplayValue));
+                data.total.push(Math.round(totalNominal));
+                data.totalReal.push(Math.round(totalRealValue));
+                
+                if (year < state.years) {
+                    portfolio = Math.max(0, portfolio - state.withdrawal);
+                    totalWithdrawn += state.withdrawal;
+                    portfolio = portfolio * (1 + portfolioReturn);
+                    
+                    // Only accumulate pension contributions until retirement
+                    if (currentAge < retirementAge) {
+                        pensionAccumulated = (pensionAccumulated + state.pensionContrib) * (1 + pensionReturn);
+                    }
+                }
+            }
+            
+            return { data, totalWithdrawn, emergencyCapital, pensionAnnuity };
+        }
+
+        // Update allocation display
+        function updateAllocation() {
+            const emergency = 100 - state.stocksPercent - state.bondsPercent;
+            
+            elements.stocksValue.textContent = state.stocksPercent + '%';
+            elements.bondsValue.textContent = state.bondsPercent + '%';
+            elements.emergencyValue.textContent = emergency + '%';
+            
+            const stocksAmt = state.initialCapital * state.stocksPercent / 100;
+            const bondsAmt = state.initialCapital * state.bondsPercent / 100;
+            const emergencyAmt = state.initialCapital * emergency / 100;
+            
+            elements.stocksAmount.value = formatCurrency(stocksAmt);
+            elements.bondsAmount.value = formatCurrency(bondsAmt);
+            elements.emergencyAmount.value = formatCurrency(emergencyAmt);
+            
+            elements.barStocks.style.width = state.stocksPercent + '%';
+            elements.barBonds.style.width = state.bondsPercent + '%';
+            elements.barEmergency.style.width = emergency + '%';
+        }
+
+        // Update pie chart legend
+        function updatePieLegend() {
+            const emergency = 100 - state.stocksPercent - state.bondsPercent;
+            const stocksAmt = state.initialCapital * state.stocksPercent / 100;
+            const bondsAmt = state.initialCapital * state.bondsPercent / 100;
+            const emergencyAmt = state.initialCapital * emergency / 100;
+            
+            let html = '';
+            
+            if (state.stocksPercent > 0) {
+                html += `<div class="pie-legend-item">
+                    <div class="pie-legend-color" style="background: #4ecdc4;"></div>
+                    <span class="pie-legend-text">Azioni ${state.stocksPercent}%</span>
+                    <span class="pie-legend-value" style="color: #4ecdc4;">${formatCurrency(stocksAmt)}</span>
+                </div>`;
+            }
+            
+            if (state.bondsPercent > 0) {
+                html += `<div class="pie-legend-item">
+                    <div class="pie-legend-color" style="background: #667eea;"></div>
+                    <span class="pie-legend-text">Bond ${state.bondsPercent}%</span>
+                    <span class="pie-legend-value" style="color: #667eea;">${formatCurrency(bondsAmt)}</span>
+                </div>`;
+            }
+            
+            if (emergency > 0) {
+                html += `<div class="pie-legend-item">
+                    <div class="pie-legend-color" style="background: #ff9f43;"></div>
+                    <span class="pie-legend-text">Liquid. ${emergency}%</span>
+                    <span class="pie-legend-value" style="color: #ff9f43;">${formatCurrency(emergencyAmt)}</span>
+                </div>`;
+            }
+            
+            elements.pieLegend.innerHTML = html;
+        }
+
+        // Update results
+        function updateResults(projection) {
+            const lastIdx = state.years;
+            const finalPortfolio = projection.data.portfolioNominal[lastIdx];
+            const finalReal = projection.data.portfolioReal[lastIdx];
+            const finalPension = projection.data.pension[lastIdx];
+            const finalTotal = projection.data.total[lastIdx];
+            const finalTotalReal = projection.data.totalReal[lastIdx];
+            
+            // Calculate years of contributions (until retirement or end of projection)
+            const retirementAge = 67;
+            const yearsOfContrib = Math.min(state.years, Math.max(0, retirementAge - state.age));
+            const totalContribPension = state.pensionContrib * yearsOfContrib;
+            
+            const gain = finalTotal - state.initialCapital + projection.totalWithdrawn - totalContribPension;
+            
+            elements.resultPortfolio.textContent = formatCurrency(finalPortfolio);
+            elements.resultPortfolioDetail.textContent = `da ${formatCurrency(state.initialCapital)}`;
+            elements.resultReal.textContent = formatCurrency(finalReal);
+            elements.resultPension.textContent = formatCurrency(finalPension);
+            
+            // Show pension detail - either contribution total or annuity info
+            const currentFinalAge = state.age + state.years;
+            if (currentFinalAge >= retirementAge && projection.pensionAnnuity > 0) {
+                elements.resultPensionDetail.textContent = `rendita ${formatCurrency(projection.pensionAnnuity)}/anno`;
+            } else {
+                elements.resultPensionDetail.textContent = `vers. ${formatCurrency(totalContribPension)}`;
+            }
+            
+            elements.resultTotal.textContent = formatCurrency(finalTotal);
+            elements.resultTotalReal.textContent = formatCurrency(finalTotalReal);
+            elements.resultWithdrawn.textContent = formatCurrency(projection.totalWithdrawn);
+            elements.resultWithdrawnDetail.textContent = `in ${state.years} anni`;
+            elements.resultGain.textContent = formatCurrency(gain);
+        }
+
+        // Create/Update Line Chart
+        function updateLineChart(projection) {
+            const chartCtx = document.getElementById('lineChart').getContext('2d');
+            
+            if (lineChart) {
+                lineChart.destroy();
+            }
+            
+            // Get life expectancy from lifestyle (null if not selected)
+            const lifeExpectancy = getLifeExpectancy();
+            const currentYear = new Date().getFullYear();
+            const deathYear = lifeExpectancy ? currentYear + (lifeExpectancy - state.age) : null;
+            
+            // Find death index in our data (only if lifestyle is selected)
+            const deathIndex = (lifeExpectancy && deathYear) ? 
+                projection.data.labels.findIndex(year => year >= deathYear) : -1;
+            
+            // Create datasets with fade effect after death and death marker
+            function createFadedDataset(data, r, g, b, label, fill = false, dashed = false) {
+                const pointColors = data.map((_, idx) => {
+                    // Death marker = black
+                    if (deathIndex !== -1 && idx === deathIndex) {
+                        return '#000000';
+                    }
+                    if (deathIndex === -1 || idx < deathIndex) {
+                        return `rgb(${r},${g},${b})`;
+                    } else {
+                        const fadeProgress = (idx - deathIndex) / Math.max(1, data.length - deathIndex);
+                        const opacity = Math.max(0.15, 1 - fadeProgress * 0.85);
+                        return `rgba(${r},${g},${b},${opacity})`;
+                    }
+                });
+                
+                const pointBorderColors = data.map((_, idx) => {
+                    // Death marker = red border
+                    if (deathIndex !== -1 && idx === deathIndex) {
+                        return '#ff6b6b';
+                    }
+                    return pointColors[idx];
+                });
+                
+                const pointSizes = data.map((_, idx) => {
+                    // Death marker slightly bigger
+                    if (deathIndex !== -1 && idx === deathIndex) {
+                        return 6;
+                    }
+                    if (deathIndex === -1 || idx < deathIndex) return 3;
+                    const fadeProgress = (idx - deathIndex) / Math.max(1, data.length - deathIndex);
+                    return Math.max(1, 3 * (1 - fadeProgress));
+                });
+                
+                const pointBorderWidths = data.map((_, idx) => {
+                    if (deathIndex !== -1 && idx === deathIndex) {
+                        return 2;
+                    }
+                    return 0;
+                });
+                
+                return {
+                    label: label,
+                    data: data,
+                    segment: {
+                        borderColor: function(ctx) {
+                            if (!ctx || ctx.p1DataIndex === undefined) return `rgb(${r},${g},${b})`;
+                            const idx = ctx.p1DataIndex;
+                            if (deathIndex === -1 || idx < deathIndex) return `rgb(${r},${g},${b})`;
+                            const fadeProgress = (idx - deathIndex) / Math.max(1, data.length - deathIndex);
+                            const opacity = Math.max(0.15, 1 - fadeProgress * 0.85);
+                            return `rgba(${r},${g},${b},${opacity})`;
+                        }
+                    },
+                    borderColor: `rgb(${r},${g},${b})`,
+                    backgroundColor: fill ? `rgba(${r},${g},${b},0.1)` : 'transparent',
+                    borderWidth: 2.5,
+                    borderDash: dashed ? [6, 3] : [],
+                    fill: fill,
+                    tension: 0.3,
+                    pointRadius: pointSizes,
+                    pointBackgroundColor: pointColors,
+                    pointBorderColor: pointBorderColors,
+                    pointBorderWidth: pointBorderWidths
+                };
+            }
+            
+            // Datasets array
+            const datasets = [
+                createFadedDataset(projection.data.portfolioNominal, 78, 205, 196, 'Portafoglio Nominale', true),
+                createFadedDataset(projection.data.portfolioReal, 165, 94, 234, 'Portafoglio Reale', false),
+                createFadedDataset(projection.data.pension, 255, 107, 107, 'Fondo Pensione', false),
+                createFadedDataset(projection.data.total, 255, 217, 61, 'Totale Nominale', false, true),
+                createFadedDataset(projection.data.totalReal, 255, 159, 67, 'Totale Reale', false, true)
+            ];
+            
+            lineChart = new Chart(chartCtx, {
+                type: 'line',
+                data: {
+                    labels: projection.data.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 30
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 26, 46, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: 'rgba(255,255,255,0.8)',
+                            padding: 10,
+                            callbacks: {
+                                title: function(context) {
+                                    const year = context[0].label;
+                                    const idx = projection.data.labels.indexOf(parseInt(year));
+                                    const age = state.age + idx;
+                                    const isDeathYear = deathIndex !== -1 && idx === deathIndex;
+                                    const afterDeath = age >= lifeExpectancy ? ' ⚰️' : '';
+                                    return isDeathYear ? `💀 ${year} (${age} anni) - ASPETTATIVA DI VITA` : `${year} (${age} anni)${afterDeath}`;
+                                },
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { 
+                                color: 'rgba(255,255,255,0.5)', 
+                                maxTicksLimit: 10,
+                                callback: function(value, index) {
+                                    const year = projection.data.labels[index];
+                                    const age = state.age + index;
+                                    return year + '\n(' + age + 'a)';
+                                }
+                            }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.5)',
+                                callback: function(value) {
+                                    if (value >= 1000000) return '€' + (value / 1000000).toFixed(1) + 'M';
+                                    return '€' + (value / 1000).toFixed(0) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create/Update Pie Chart
+        function updatePieChart() {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            const emergency = 100 - state.stocksPercent - state.bondsPercent;
+            
+            const data = [];
+            const colors = [];
+            
+            if (state.stocksPercent > 0) {
+                data.push(state.stocksPercent);
+                colors.push('#4ecdc4');
+            }
+            if (state.bondsPercent > 0) {
+                data.push(state.bondsPercent);
+                colors.push('#667eea');
+            }
+            if (emergency > 0) {
+                data.push(emergency);
+                colors.push('#ff9f43');
+            }
+            
+            if (pieChart) pieChart.destroy();
+            
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        hoverOffset: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '60%',
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                }
+            });
+        }
+
+        // Master update function
+        function updateAll() {
+            updateAllocation();
+            updatePieLegend();
+            updatePieChart();
+            const projection = calculateProjection();
+            updateLineChart(projection);
+            updateResults(projection);
+        }
+
+        // Ask Claude
+        async function askClaude() {
+            const userQuestion = elements.userQuestion.value.trim();
+            const emergency = 100 - state.stocksPercent - state.bondsPercent;
+            const preset = getPresetForAge(state.age);
+            const projection = calculateProjection();
+            const finalTotal = projection.data.total[state.years];
+            const finalReal = projection.data.portfolioReal[state.years];
+
+            const prompt = `Sei un consulente finanziario esperto. Analizza questo piano di investimento e fornisci consigli personalizzati in italiano. Sii conciso ma completo.
+
+PROFILO INVESTITORE:
+- Età: ${state.age} anni
+- Profilo suggerito per età: ${preset.profile}
+- Anni alla pensione (67 anni): ${Math.max(0, 67 - state.age)}
+
+SCENARIO DI MERCATO SELEZIONATO: ${state.marketSentiment === 'bull' ? '😄 TORO (ottimista)' : state.marketSentiment === 'bear' ? '😟 ORSO (pessimista)' : '😐 NORMALE (neutro)'}
+
+PATRIMONIO E ALLOCAZIONE:
+- Capitale iniziale: €${state.initialCapital.toLocaleString()}
+- Azioni: ${state.stocksPercent}% (€${Math.round(state.initialCapital * state.stocksPercent / 100).toLocaleString()}) - rendimento atteso ${state.stocksReturn}%
+- Obbligazioni: ${state.bondsPercent}% (€${Math.round(state.initialCapital * state.bondsPercent / 100).toLocaleString()}) - rendimento atteso ${state.bondsReturn}%
+- Liquidità: ${emergency}% (€${Math.round(state.initialCapital * emergency / 100).toLocaleString()})
+
+PIANO PENSIONISTICO:
+- Versamento annuale fondo pensione: €${state.pensionContrib.toLocaleString()}
+- Rendimento atteso pensione: ${state.pensionReturn}%
+
+ALTRI PARAMETRI:
+- Prelievo annuale desiderato: €${state.withdrawal.toLocaleString()}
+- Inflazione stimata: ${state.inflation}%
+- Orizzonte temporale: ${state.years} anni
+
+PROIEZIONE FINALE (${state.years} anni):
+- Patrimonio totale nominale: €${finalTotal.toLocaleString()}
+- Valore reale (inflazione): €${finalReal.toLocaleString()}
+- Totale prelevato: €${projection.totalWithdrawn.toLocaleString()}
+
+${userQuestion ? `DOMANDA SPECIFICA DELL'UTENTE: ${userQuestion}` : 'Fornisci un\'analisi generale del piano con punti di forza, rischi e suggerimenti di ottimizzazione. Considera lo scenario di mercato selezionato nel dare i tuoi consigli.'}
+
+Rispondi in modo strutturato con sezioni chiare. Usa emoji per i titoli delle sezioni. Sii pratico e actionable.`;
+
+            elements.askClaude.disabled = true;
+            elements.askClaude.innerHTML = '<span>⏳</span> Analisi in corso...';
+            elements.aiResponse.innerHTML = `
+                <div class="ai-loading">
+                    <div class="loading-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <span>Claude sta analizzando...</span>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1500,
+                        messages: [
+                            { role: 'user', content: prompt }
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.content && data.content[0] && data.content[0].text) {
+                    // Format the response with basic markdown-like styling
+                    let formattedResponse = data.content[0].text
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/\n/g, '<br>');
+                    
+                    elements.aiResponse.innerHTML = `<p>${formattedResponse}</p>`;
+                } else {
+                    throw new Error('Risposta non valida');
+                }
+            } catch (error) {
+                elements.aiResponse.innerHTML = `
+                    <div style="color: #ff6b6b; text-align: center; padding: 20px;">
+                        ⚠️ Errore nella comunicazione con Claude.<br>
+                        <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">${error.message}</span>
+                    </div>
+                `;
+            }
+
+            elements.askClaude.disabled = false;
+            elements.askClaude.innerHTML = '<span>💬</span> Analizza con Claude';
+        }
+
+        // Event Listeners
+        elements.initialCapital.addEventListener('input', function() {
+            state.initialCapital = parseFloat(this.value) || 0;
+            updateAll();
+        });
+
+        elements.ageSlider.addEventListener('input', function() {
+            state.age = parseInt(this.value);
+            elements.ageValue.textContent = state.age;
+            updatePresetInfo(state.age);
+        });
+
+        elements.applyPreset.addEventListener('click', applyPreset);
+
+        elements.stocksSlider.addEventListener('input', function() {
+            const newValue = parseInt(this.value);
+            const maxAllowed = 100 - state.bondsPercent;
+            state.stocksPercent = Math.min(newValue, maxAllowed);
+            this.value = state.stocksPercent;
+            updateAll();
+        });
+
+        elements.bondsSlider.addEventListener('input', function() {
+            const newValue = parseInt(this.value);
+            const maxAllowed = 100 - state.stocksPercent;
+            state.bondsPercent = Math.min(newValue, maxAllowed);
+            this.value = state.bondsPercent;
+            updateAll();
+        });
+
+        elements.stocksReturn.addEventListener('input', function() {
+            state.stocksReturn = parseFloat(this.value) || 0;
+            updateAll();
+        });
+
+        elements.bondsReturn.addEventListener('input', function() {
+            state.bondsReturn = parseFloat(this.value) || 0;
+            updateAll();
+        });
+
+        elements.pensionContribSlider.addEventListener('input', function() {
+            state.pensionContrib = parseInt(this.value);
+            elements.pensionContribValue.textContent = formatCurrency(state.pensionContrib);
+            updateAll();
+        });
+
+        elements.pensionReturnSlider.addEventListener('input', function() {
+            state.pensionReturn = parseFloat(this.value);
+            elements.pensionReturnValue.textContent = state.pensionReturn + '%';
+            updateAll();
+        });
+
+        elements.withdrawalSlider.addEventListener('input', function() {
+            state.withdrawal = parseInt(this.value);
+            elements.withdrawalValue.textContent = formatCurrency(state.withdrawal);
+            updateAll();
+        });
+
+        elements.inflationSlider.addEventListener('input', function() {
+            state.inflation = parseFloat(this.value);
+            elements.inflationValue.textContent = state.inflation + '%';
+            updateAll();
+        });
+
+        elements.timeBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                elements.timeBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                state.years = parseInt(this.dataset.years);
+                updateBearReturnsIfNeeded();
+                updateAll();
+            });
+        });
+
+        // Market sentiment buttons
+        elements.marketBull.addEventListener('click', () => applyMarketSentiment('bull'));
+        elements.marketNeutral.addEventListener('click', () => applyMarketSentiment('neutral'));
+        elements.marketBear.addEventListener('click', () => applyMarketSentiment('bear'));
+
+        // Lifestyle buttons
+        elements.lifestyleUnhealthy.addEventListener('click', () => applyLifestyle('unhealthy'));
+        elements.lifestyleNormal.addEventListener('click', () => applyLifestyle('normal'));
+        elements.lifestyleHealthy.addEventListener('click', () => applyLifestyle('healthy'));
+
+        elements.askClaude.addEventListener('click', askClaude);
+
+        // Initialize
+        updatePresetInfo(state.age);
+        applyPreset();
+    </script>
+</body>
+</html>
