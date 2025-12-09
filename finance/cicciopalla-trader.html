@@ -988,6 +988,7 @@
             currentPrice: 100,
             currentMood: 'neutral',
             currentSprite: null,
+            selectedSprites: {}, // Sprite selezionati per questa partita (uno per ogni mood)
             gameStartTime: Date.now(),
             tradingDay: 1,
             currentDate: new Date(2024, 0, 1),
@@ -1052,6 +1053,19 @@
             if (!group || group.length === 0) return null;
             const randomIndex = Math.floor(Math.random() * group.length);
             return group[randomIndex];
+        }
+
+        // Seleziona un set random di sprite per la partita (uno per ogni mood)
+        function selectSpritesForGame() {
+            const moods = ['ecstatic', 'happy', 'neutral', 'worried', 'sad', 'devastated'];
+            state.selectedSprites = {};
+
+            moods.forEach(mood => {
+                state.selectedSprites[mood] = getRandomSprite(mood);
+            });
+
+            // Imposta lo sprite corrente in base al mood attuale
+            state.currentSprite = state.selectedSprites[state.currentMood];
         }
 
         // Precarica tutti gli sprite all'avvio
@@ -1373,7 +1387,7 @@
 
             // Inizializza sprite se non esiste
             if (!state.currentSprite) {
-                state.currentSprite = getRandomSprite(state.currentMood);
+                state.currentSprite = state.selectedSprites[state.currentMood];
             }
 
             const sprite = state.currentSprite;
@@ -1828,7 +1842,7 @@
             // Cambia sprite SOLO se il mood è cambiato
             if (mood !== state.currentMood) {
                 state.currentMood = mood;
-                state.currentSprite = getRandomSprite(mood);
+                state.currentSprite = state.selectedSprites[mood];
             }
 
             document.getElementById('moodText').textContent = moodText;
@@ -2204,9 +2218,12 @@
         // START GAME & QUIT
         // ============================================
         function startGame() {
+            // Seleziona un nuovo set di sprite per questa partita
+            selectSpritesForGame();
+
             // Inizializza audio (deve essere fatto con interazione utente)
             initAudio();
-            
+
             // Suono di avvio
             if (audioCtx && audioEnabled) {
                 playTone(523, 0.1, 'square', 0.15, 0);
@@ -2229,10 +2246,13 @@
 
         function quitGame() {
             if (!state.gameStarted || state.gameOver) return;
-            
+
             // Ferma musica
             stopBgm();
-            
+
+            // Seleziona un nuovo set di sprite per la prossima partita
+            selectSpritesForGame();
+
             // Reset stato
             state.cash = 10000;
             state.shares = 0;
@@ -2389,6 +2409,9 @@
         function init() {
             state.priceHistory = [state.currentPrice];
             state.yearPriceHistory = [state.currentPrice];
+
+            // Seleziona set iniziale di sprite
+            selectSpritesForGame();
 
             // Disegna personaggio nella schermata start
             drawStartScreenCharacter();
