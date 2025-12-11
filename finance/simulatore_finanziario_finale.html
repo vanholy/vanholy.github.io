@@ -590,6 +590,7 @@
         .chart-container {
             position: relative;
             height: 380px;
+            cursor: pointer;
         }
 
         .chart-container canvas {
@@ -1085,7 +1086,15 @@
 
                 <!-- Results below chart -->
                 <div class="chart-card">
-                    <div class="chart-title" style="margin-bottom: 15px; font-size: 1rem;">📋 Risultati</div>
+                    <div class="results-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div class="chart-title" style="font-size: 1rem; margin: 0;">📋 Risultati</div>
+                        <div id="selectedYearInfo" style="font-size: 0.85rem; color: #4ecdc4; font-weight: 600;">
+                            Anno <span id="selectedYear">2055</span> (<span id="selectedAge">65</span> anni)
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom: 12px; text-align: center;">
+                        💡 Clicca sul grafico per vedere i risultati di un anno specifico
+                    </div>
                     <div class="results-grid">
                         <div class="result-card">
                             <div class="result-label">Portafoglio</div>
@@ -1265,7 +1274,8 @@
             inflation: 2,
             years: 30,
             marketSentiment: 'neutral', // 'bull', 'neutral', 'bear'
-            lifestyle: null // null, 'unhealthy', 'normal', 'healthy'
+            lifestyle: null, // null, 'unhealthy', 'normal', 'healthy'
+            selectedYearIndex: null // null = last year, or specific index
         };
 
         // Lifestyle configurations
@@ -1336,6 +1346,7 @@
 
         // Charts
         let lineChart, pieChart;
+        let currentProjection = null;
 
         // DOM Elements
         const elements = {
@@ -1388,7 +1399,9 @@
             lifestyleUnhealthy: document.getElementById('lifestyleUnhealthy'),
             lifestyleNormal: document.getElementById('lifestyleNormal'),
             lifestyleHealthy: document.getElementById('lifestyleHealthy'),
-            lifestyleInfo: document.getElementById('lifestyleInfo')
+            lifestyleInfo: document.getElementById('lifestyleInfo'),
+            selectedYear: document.getElementById('selectedYear'),
+            selectedAge: document.getElementById('selectedAge')
         };
 
         // Apply market sentiment to parameters
@@ -1819,20 +1832,35 @@
         }
 
         // Update results
-        function updateResults(projection) {
-            const lastIdx = state.years;
-            const finalPortfolio = projection.data.portfolioNominal[lastIdx];
-            const finalReal = projection.data.portfolioReal[lastIdx];
-            const finalPension = projection.data.pension[lastIdx];
-            const finalTotal = projection.data.total[lastIdx];
-            const finalTotalReal = projection.data.totalReal[lastIdx];
+        function updateResults(projection, yearIndex = null) {
+            // Use selected year or default to last year
+            const idx = yearIndex !== null ? yearIndex : 
+                       (state.selectedYearIndex !== null ? state.selectedYearIndex : state.years);
             
-            // Calculate years of contributions (until retirement or end of projection)
+            // Clamp index to valid range
+            const viewIdx = Math.min(idx, state.years);
+            
+            const finalPortfolio = projection.data.portfolioNominal[viewIdx];
+            const finalReal = projection.data.portfolioReal[viewIdx];
+            const finalPension = projection.data.pension[viewIdx];
+            const finalTotal = projection.data.total[viewIdx];
+            const finalTotalReal = projection.data.totalReal[viewIdx];
+            
+            // Calculate years of contributions up to this point
             const retirementAge = 67;
-            const yearsOfContrib = Math.min(state.years, Math.max(0, retirementAge - state.age));
+            const yearsOfContrib = Math.min(viewIdx, Math.max(0, retirementAge - state.age));
             const totalContribPension = state.pensionContrib * yearsOfContrib;
             
-            const gain = finalTotal - state.initialCapital + projection.totalWithdrawn - totalContribPension;
+            // Calculate withdrawn up to this point
+            const withdrawnUpToView = state.withdrawal * viewIdx;
+            
+            const gain = finalTotal - state.initialCapital + withdrawnUpToView - totalContribPension;
+            
+            // Update year display
+            const selectedYear = projection.data.labels[viewIdx];
+            const selectedAge = state.age + viewIdx;
+            elements.selectedYear.textContent = selectedYear;
+            elements.selectedAge.textContent = selectedAge;
             
             elements.resultPortfolio.textContent = formatCurrency(finalPortfolio);
             elements.resultPortfolioDetail.textContent = `da ${formatCurrency(state.initialCapital)}`;
@@ -1840,7 +1868,7 @@
             elements.resultPension.textContent = formatCurrency(finalPension);
             
             // Show pension detail - either contribution total or annuity info
-            const currentFinalAge = state.age + state.years;
+            const currentFinalAge = state.age + viewIdx;
             if (currentFinalAge >= retirementAge && projection.pensionAnnuity > 0) {
                 elements.resultPensionDetail.textContent = `rendita ${formatCurrency(projection.pensionAnnuity)}/anno`;
             } else {
@@ -1849,8 +1877,8 @@
             
             elements.resultTotal.textContent = formatCurrency(finalTotal);
             elements.resultTotalReal.textContent = formatCurrency(finalTotalReal);
-            elements.resultWithdrawn.textContent = formatCurrency(projection.totalWithdrawn);
-            elements.resultWithdrawnDetail.textContent = `in ${state.years} anni`;
+            elements.resultWithdrawn.textContent = formatCurrency(withdrawnUpToView);
+            elements.resultWithdrawnDetail.textContent = `in ${viewIdx} anni`;
             elements.resultGain.textContent = formatCurrency(gain);
         }
 
@@ -1965,6 +1993,13 @@
                         intersect: false,
                         mode: 'index'
                     },
+                    onClick: function(event, elements) {
+                        if (elements && elements.length > 0) {
+                            const clickedIndex = elements[0].index;
+                            state.selectedYearIndex = clickedIndex;
+                            updateResults(currentProjection, clickedIndex);
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -2062,9 +2097,19 @@
             updateAllocation();
             updatePieLegend();
             updatePieChart();
-            const projection = calculateProjection();
-            updateLineChart(projection);
-            updateResults(projection);
+            currentProjection = calculateProjection();
+            updateLineChart(currentProjection);
+            
+            // Reset selected year if it exceeds new years range
+            if (state.selectedYearIndex !== null && state.selectedYearIndex > state.years) {
+                state.selectedYearIndex = state.years;
+            }
+            // Default to last year if nothing selected
+            if (state.selectedYearIndex === null) {
+                state.selectedYearIndex = state.years;
+            }
+            
+            updateResults(currentProjection);
         }
 
         // Ask Claude
@@ -2072,7 +2117,7 @@
             const userQuestion = elements.userQuestion.value.trim();
             const emergency = 100 - state.stocksPercent - state.bondsPercent;
             const preset = getPresetForAge(state.age);
-            const projection = calculateProjection();
+            const projection = currentProjection || calculateProjection();
             const finalTotal = projection.data.total[state.years];
             const finalReal = projection.data.portfolioReal[state.years];
 
