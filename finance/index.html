@@ -280,6 +280,37 @@
             transform: rotate(180deg);
         }
 
+        /* Open Window Button - Matrix Style */
+        .open-window-btn {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        .open-window-btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .app-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
         /* Scanline Effect */
         .scanline {
             position: fixed;
@@ -688,6 +719,9 @@
                         <span class="app-tag">Pension Fund</span>
                         <span class="app-tag">Market Scenarios</span>
                     </div>
+                    <div class="app-header-controls">
+                        <button class="open-window-btn" onclick="event.stopPropagation(); window.open('simulatore_finanziario_finale.html', '_blank')">🔗 Apri</button>
+                    </div>
                 </div>
                 <div class="app-content">
                     <iframe src="simulatore_finanziario_finale.html" class="app-iframe" height="800"></iframe>
@@ -716,6 +750,9 @@
                         <span class="app-tag">Real-time</span>
                         <span class="app-tag">Retro</span>
                     </div>
+                    <div class="app-header-controls">
+                        <button class="open-window-btn" onclick="event.stopPropagation(); window.open('cicciopalla-trader.html', '_blank')">🔗 Apri</button>
+                    </div>
                 </div>
                 <div class="app-content">
                     <iframe src="cicciopalla-trader.html" class="app-iframe" height="800"></iframe>
@@ -743,6 +780,9 @@
                         <span class="app-tag">Projections</span>
                         <span class="app-tag">Calculator</span>
                         <span class="app-tag">Retirement</span>
+                    </div>
+                    <div class="app-header-controls">
+                        <button class="open-window-btn" onclick="event.stopPropagation(); window.open('calcolatore_fondo_pensione.html', '_blank')">🔗 Apri</button>
                     </div>
                 </div>
                 <div class="app-content">
