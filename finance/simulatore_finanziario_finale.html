@@ -1129,7 +1129,7 @@
                         <div class="result-card">
                             <div class="result-label">Guadagno</div>
                             <div class="result-value green" id="resultGain">€0</div>
-                            <div class="result-detail">rendimento</div>
+                            <div class="result-detail" id="resultGainDetail">rendimento</div>
                         </div>
                     </div>
                 </div>
@@ -1389,6 +1389,7 @@
             resultWithdrawn: document.getElementById('resultWithdrawn'),
             resultWithdrawnDetail: document.getElementById('resultWithdrawnDetail'),
             resultGain: document.getElementById('resultGain'),
+            resultGainDetail: document.getElementById('resultGainDetail'),
             askClaude: document.getElementById('askClaude'),
             userQuestion: document.getElementById('userQuestion'),
             aiResponse: document.getElementById('aiResponse'),
@@ -1880,6 +1881,10 @@
             elements.resultWithdrawn.textContent = formatCurrency(withdrawnUpToView);
             elements.resultWithdrawnDetail.textContent = `in ${viewIdx} anni`;
             elements.resultGain.textContent = formatCurrency(gain);
+
+            // Calculate and display total return percentage
+            const totalReturnPercent = state.initialCapital > 0 ? (gain / state.initialCapital * 100) : 0;
+            elements.resultGainDetail.textContent = `rendimento ${totalReturnPercent >= 0 ? '+' : ''}${totalReturnPercent.toFixed(1)}%`;
         }
 
         // Create/Update Line Chart
