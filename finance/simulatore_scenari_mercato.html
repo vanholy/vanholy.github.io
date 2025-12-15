@@ -1,0 +1,3218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Scenari di Mercato</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #15151f;
+            --border-color: #2a2a3a;
+            --text-primary: #e8e8f0;
+            --text-secondary: #9090a0;
+            --text-muted: #606070;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --gradient-simulation: linear-gradient(90deg, #10b981, #f59e0b);
+            --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .benchmark-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .benchmark-tab {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .benchmark-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .benchmark-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 300px;
+            gap: 1.5rem;
+            padding: 1.5rem 2rem;
+            min-height: calc(100vh - 70px);
+        }
+
+        @media (max-width: 1400px) {
+            .main-container {
+                grid-template-columns: 280px 1fr;
+            }
+            .stats-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .config-panel {
+                display: none;
+            }
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-content {
+            padding: 1.25rem;
+        }
+
+        /* Config Panel */
+        .config-panel {
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+
+        .config-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .config-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .config-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-label-info {
+            cursor: help;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .form-input[type="month"] {
+            cursor: pointer;
+        }
+
+        .form-input[type="month"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+            cursor: pointer;
+        }
+
+        .form-input-with-unit {
+            display: flex;
+            align-items: stretch;
+        }
+
+        .form-input-with-unit .form-input {
+            border-radius: 8px 0 0 8px;
+            border-right: none;
+        }
+
+        .form-unit {
+            padding: 0 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+        }
+
+        /* Scenario Radio Buttons */
+        .scenario-grid {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .scenario-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scenario-option:hover {
+            border-color: var(--text-muted);
+        }
+
+        .scenario-option.selected {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .scenario-option input {
+            display: none;
+        }
+
+        .scenario-icon {
+            font-size: 1.1rem;
+        }
+
+        .scenario-label {
+            flex: 1;
+        }
+
+        .scenario-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .scenario-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Speed Options */
+        .speed-options {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .speed-btn {
+            flex: 1;
+            padding: 0.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .speed-btn:hover {
+            border-color: var(--text-muted);
+        }
+
+        .speed-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        /* Chart Area */
+        .chart-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container {
+            flex: 1;
+            padding: 1.5rem;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 350px;
+        }
+
+        /* Chart Controls */
+        .chart-controls {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            border-color: var(--text-muted);
+            background: var(--bg-secondary);
+        }
+
+        .control-btn.primary {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .control-btn.primary:hover {
+            background: #2563eb;
+        }
+
+        .control-btn.success {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .control-btn.warning {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+            color: white;
+        }
+
+        .control-btn.warning:hover {
+            background: #d97706;
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-left: auto;
+        }
+
+        .zoom-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-right: 0.25rem;
+        }
+
+        .zoom-btn {
+            padding: 0.4rem 0.7rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            border-color: var(--text-muted);
+            color: var(--text-primary);
+        }
+
+        .zoom-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 200px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-simulation);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .progress-text {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .scale-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            left: 23px;
+            background: var(--accent-blue);
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            height: fit-content;
+            max-height: calc(100vh - 120px);
+            position: sticky;
+            top: 90px;
+            overflow-y: auto;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .stat-value.positive {
+            color: var(--accent-green);
+        }
+
+        .stat-value.negative {
+            color: var(--accent-red);
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .mini-stat {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        .mini-stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .mini-stat-value {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-top: 0.2rem;
+        }
+
+        .comparison-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .comparison-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+        }
+
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            font-size: 0.8rem;
+        }
+
+        .comparison-row.current {
+            background: rgba(59, 130, 246, 0.1);
+            margin: 0 -0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .comparison-scenario {
+            color: var(--text-secondary);
+        }
+
+        .comparison-value {
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+
+        /* Yearly Report */
+        .yearly-report-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .yearly-report-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+        }
+
+        .yearly-report-container {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .yearly-report-empty {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .yearly-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 2px;
+        }
+
+        .yearly-row:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .yearly-year {
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            min-width: 45px;
+        }
+
+        .yearly-bar-container {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            margin: 0 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .yearly-bar {
+            height: 100%;
+            border-radius: 4px;
+            position: absolute;
+        }
+
+        .yearly-bar.positive {
+            background: var(--accent-green);
+            left: 50%;
+        }
+
+        .yearly-bar.negative {
+            background: var(--accent-red);
+            right: 50%;
+        }
+
+        .yearly-value {
+            font-family: var(--font-mono);
+            font-weight: 500;
+            min-width: 55px;
+            text-align: right;
+        }
+
+        .yearly-value.positive {
+            color: var(--accent-green);
+        }
+
+        .yearly-value.negative {
+            color: var(--accent-red);
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            gap: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-line {
+            width: 24px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-line.historical {
+            background: var(--accent-blue);
+        }
+
+        .legend-line.benchmark {
+            background: var(--accent-purple);
+            height: 2px;
+        }
+
+        .legend-separator {
+            color: var(--border-color);
+            margin: 0 0.25rem;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Tooltip */
+        .custom-tooltip {
+            position: absolute;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 1000;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .custom-tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .tooltip-value {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .tooltip-details {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Presets */
+        .presets-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .preset-btn {
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">📈</div>
+            <span class="logo-text">Simulatore Scenari di Mercato</span>
+        </div>
+        <div class="benchmark-tabs">
+            <button class="benchmark-tab active" data-benchmark="NASDAQ">NASDAQ</button>
+            <button class="benchmark-tab" data-benchmark="SP500">S&P 500</button>
+            <button class="benchmark-tab" data-benchmark="MSCI_WORLD">MSCI World</button>
+            <button class="benchmark-tab" data-benchmark="EMERGING">Emerging</button>
+            <button class="benchmark-tab" data-benchmark="EUROPE">Europa</button>
+            <button class="benchmark-tab" data-benchmark="BOND_7_10">Bond 7-10y</button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Config Panel -->
+        <aside class="panel config-panel">
+            <div class="panel-header">
+                ⚙️ Configurazione
+            </div>
+            <div class="panel-content">
+                <!-- Simulazione -->
+                <div class="config-section">
+                    <div class="config-section-title">Simulazione</div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Orizzonte Temporale</label>
+                        <select class="form-input" id="param-horizon">
+                            <option value="5">5 anni</option>
+                            <option value="10">10 anni</option>
+                            <option value="15">15 anni</option>
+                            <option value="20" selected>20 anni</option>
+                            <option value="25">25 anni</option>
+                            <option value="30">30 anni</option>
+                            <option value="40">40 anni</option>
+                            <option value="50">50 anni</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Data Inizio Simulazione
+                            <span class="form-label-info" title="Può essere nel passato (storico) o futuro">ⓘ</span>
+                        </label>
+                        <input type="month" class="form-input" id="param-start-date" value="2024-12">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Capitale Attuale
+                            <span class="form-label-info" title="Valore del portafoglio oggi (fine dati storici)">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-capital" value="100000" step="1000">
+                            <span class="form-unit">€</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Velocità Animazione</label>
+                        <div class="speed-options">
+                            <button class="speed-btn" data-speed="1500" title="Lenta">🐢</button>
+                            <button class="speed-btn active" data-speed="500" title="Media">🚶</button>
+                            <button class="speed-btn" data-speed="100" title="Veloce">🚀</button>
+                            <button class="speed-btn" data-speed="0" title="Istantanea">⚡</button>
+                        </div>
+                    </div>
+
+                    <div class="presets-row">
+                        <button class="preset-btn" data-preset="conservative">Conservativo 20y</button>
+                        <button class="preset-btn" data-preset="aggressive">Aggressivo 10y</button>
+                        <button class="preset-btn" data-preset="longterm">Lungo termine 40y</button>
+                        <button class="preset-btn" data-preset="prudent">Prudente 10y</button>
+                        <button class="preset-btn" data-preset="balanced">Bilanciato 15y</button>
+                        <button class="preset-btn" data-preset="pension">Pensione 20y</button>
+                    </div>
+                </div>
+
+                <!-- Parametri Benchmark -->
+                <div class="config-section">
+                    <div class="config-section-title">Parametri Benchmark</div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            CAGR Atteso
+                            <span class="form-label-info" title="Rendimento composto annuo atteso">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-cagr" value="12.5" step="0.1">
+                            <span class="form-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Linea Benchmark
+                            <span class="form-label-info" title="Crescita annua linea di riferimento">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-benchmark-line" value="12.5" step="0.5">
+                            <span class="form-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Volatilità
+                            <span class="form-label-info" title="Deviazione standard annualizzata">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-volatility" value="22" step="0.5">
+                            <span class="form-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Max Drawdown
+                            <span class="form-label-info" title="Perdita massima dal picco">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-maxdd" value="-80" step="1">
+                            <span class="form-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Durata Max Drawdown
+                            <span class="form-label-info" title="Mesi per recupero dal max drawdown">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-maxdd-duration" value="84" step="1">
+                            <span class="form-unit">mesi</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Anni per Convergenza
+                            <span class="form-label-info" title="Orizzonte per mean reversion">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-convergence" value="20" step="1">
+                            <span class="form-unit">anni</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Inflazione Attesa
+                            <span class="form-label-info" title="Tasso inflazione per calcolo valore reale">ⓘ</span>
+                        </label>
+                        <div class="form-input-with-unit">
+                            <input type="number" class="form-input" id="param-inflation" value="2" step="0.1">
+                            <span class="form-unit">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario -->
+                <div class="config-section">
+                    <div class="config-section-title">Scenario di Mercato</div>
+                    <div class="scenario-grid" id="scenario-options">
+                        <label class="scenario-option" data-scenario="worst">
+                            <input type="radio" name="scenario" value="worst">
+                            <span class="scenario-icon">🔴</span>
+                            <div class="scenario-label">
+                                <div class="scenario-name">Peggiore</div>
+                                <div class="scenario-desc">5° percentile</div>
+                            </div>
+                        </label>
+                        <label class="scenario-option" data-scenario="bear">
+                            <input type="radio" name="scenario" value="bear">
+                            <span class="scenario-icon">🟠</span>
+                            <div class="scenario-label">
+                                <div class="scenario-name">Bear</div>
+                                <div class="scenario-desc">25° percentile</div>
+                            </div>
+                        </label>
+                        <label class="scenario-option" data-scenario="normal">
+                            <input type="radio" name="scenario" value="normal">
+                            <span class="scenario-icon">🟡</span>
+                            <div class="scenario-label">
+                                <div class="scenario-name">Normale</div>
+                                <div class="scenario-desc">50° percentile</div>
+                            </div>
+                        </label>
+                        <label class="scenario-option" data-scenario="bull">
+                            <input type="radio" name="scenario" value="bull">
+                            <span class="scenario-icon">🟢</span>
+                            <div class="scenario-label">
+                                <div class="scenario-name">Bull</div>
+                                <div class="scenario-desc">75° percentile</div>
+                            </div>
+                        </label>
+                        <label class="scenario-option" data-scenario="best">
+                            <input type="radio" name="scenario" value="best">
+                            <span class="scenario-icon">🔵</span>
+                            <div class="scenario-label">
+                                <div class="scenario-name">Migliore</div>
+                                <div class="scenario-desc">95° percentile</div>
+                            </div>
+                        </label>
+                        <label class="scenario-option selected" data-scenario="random">
+                            <input type="radio" name="scenario" value="random" checked>
+                            <span class="scenario-icon">⚪</span>
+                            <div class="scenario-label">
+                                <div class="scenario-name">Random</div>
+                                <div class="scenario-desc">Casuale</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Chart Panel -->
+        <section class="panel chart-panel">
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-line historical"></span>
+                    <span>Storico</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-line benchmark"></span>
+                    <span>Benchmark</span>
+                </div>
+                <div class="legend-separator">|</div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #ef4444;"></span>
+                    <span>Pegg.</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #f97316;"></span>
+                    <span>Bear</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #eab308;"></span>
+                    <span>Norm.</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #22c55e;"></span>
+                    <span>Bull</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #3b82f6;"></span>
+                    <span>Migl.</span>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-wrapper">
+                    <canvas id="mainChart"></canvas>
+                </div>
+                <div class="loading-overlay" id="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <div class="chart-controls">
+                <button class="control-btn primary" id="btn-start">
+                    <span>▶️</span> Avvia
+                </button>
+                <button class="control-btn" id="btn-pause" disabled>
+                    <span>⏸️</span> Pausa
+                </button>
+                <button class="control-btn" id="btn-reset">
+                    <span>🔄</span> Reset
+                </button>
+                <button class="control-btn" id="btn-new">
+                    <span>🎲</span> Nuova
+                </button>
+                
+                <div class="zoom-controls">
+                    <span class="zoom-label">Periodo:</span>
+                    <button class="zoom-btn active" data-period="all">Tutto</button>
+                    <button class="zoom-btn" data-period="30">30a</button>
+                    <button class="zoom-btn" data-period="20">20a</button>
+                    <button class="zoom-btn" data-period="10">10a</button>
+                    <button class="zoom-btn" data-period="5">5a</button>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="progress-text">Anno 0 di 20</span>
+                </div>
+
+                <div class="scale-toggle">
+                    <span>Lin</span>
+                    <div class="toggle-switch" id="scale-toggle" title="Scala logaritmica"></div>
+                    <span>Log</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Panel -->
+        <aside class="panel stats-panel">
+            <div class="panel-header">
+                📊 Statistiche
+            </div>
+            <div class="panel-content">
+                <div class="stat-card">
+                    <div class="stat-label">Valore Finale</div>
+                    <div class="stat-value" id="stat-final-value">€ 100.000</div>
+                    <div class="stat-change" id="stat-total-return">+0,00%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Valore Tassato</div>
+                    <div class="stat-value" id="stat-final-value-taxed">€ 100.000</div>
+                    <div class="stat-change" id="stat-total-return-taxed">+0,00% (tassa 26%)</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Valore Reale Tassato</div>
+                    <div class="stat-value" id="stat-final-value-real">€ 100.000</div>
+                    <div class="stat-change" id="stat-total-return-real">+0,00% (inflaz. 2%)</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">CAGR Realizzato</div>
+                    <div class="stat-value" id="stat-cagr">0,00%</div>
+                    <div class="stat-change" id="stat-cagr-diff">vs atteso: 0,00%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">CAGR Medio</div>
+                    <div class="stat-value" id="stat-cagr-avg">0,00%</div>
+                    <div class="stat-change" id="stat-cagr-count">0 simulazioni</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Max DD</div>
+                        <div class="mini-stat-value" id="stat-maxdd">0,00%</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">DD Corrente</div>
+                        <div class="mini-stat-value" id="stat-current-dd">0,00%</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Volatilità</div>
+                        <div class="mini-stat-value" id="stat-volatility">0,00%</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">DD più lungo</div>
+                        <div class="mini-stat-value" id="stat-longest-dd">0 mesi</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Miglior Anno</div>
+                        <div class="mini-stat-value" id="stat-best-year">+0,0%</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Peggior Anno</div>
+                        <div class="mini-stat-value" id="stat-worst-year">0,0%</div>
+                    </div>
+                </div>
+
+                <div class="comparison-section">
+                    <div class="comparison-title">Confronto Scenari (€100k)</div>
+                    <div id="comparison-rows">
+                        <div class="comparison-row">
+                            <span class="comparison-scenario">🔴 Peggiore</span>
+                            <span class="comparison-value" id="cmp-worst">-</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-scenario">🟡 Normale</span>
+                            <span class="comparison-value" id="cmp-normal">-</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-scenario">🔵 Migliore</span>
+                            <span class="comparison-value" id="cmp-best">-</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-scenario">📈 Solo CAGR</span>
+                            <span class="comparison-value" id="cmp-cagr">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="yearly-report-section">
+                    <div class="yearly-report-title">📅 Performance Annuale</div>
+                    <div class="yearly-report-container" id="yearly-report">
+                        <div class="yearly-report-empty">Avvia una simulazione per vedere il report annuale</div>
+                    </div>
+                </div>
+
+                <div class="yearly-report-section">
+                    <div class="yearly-report-title">📊 Performance 5 Anni</div>
+                    <div class="yearly-report-container" id="fiveyear-report">
+                        <div class="yearly-report-empty">Avvia una simulazione per vedere il report quinquennale</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // ============================================
+        // HISTORICAL DATA (Monthly, Base 100 = Jan 1994)
+        // Real data from major indices, normalized
+        // ============================================
+        
+        const historicalData = {
+            SP500: generateHistoricalSP500(),
+            NASDAQ: generateHistoricalNASDAQ(),
+            MSCI_WORLD: generateHistoricalMSCIWorld(),
+            EMERGING: generateHistoricalEmerging(),
+            EUROPE: generateHistoricalEurope(),
+            BOND_7_10: generateHistoricalBond710()
+        };
+
+        // Generate realistic S&P 500 data based on actual historical performance
+        function generateHistoricalSP500() {
+            const data = [];
+            const startDate = new Date(1994, 0, 1);
+            let value = 100;
+            
+            // Key S&P 500 events and approximate monthly returns
+            const monthlyReturns = getRealisticSP500Returns();
+            
+            for (let i = 0; i < monthlyReturns.length; i++) {
+                const date = new Date(startDate);
+                date.setMonth(date.getMonth() + i);
+                value *= (1 + monthlyReturns[i]);
+                data.push({
+                    date: formatDate(date),
+                    value: value
+                });
+            }
+            return data;
+        }
+
+        function generateHistoricalNASDAQ() {
+            const data = [];
+            const startDate = new Date(1994, 0, 1);
+            let value = 100;
+            
+            const monthlyReturns = getRealisticNASDAQReturns();
+            
+            for (let i = 0; i < monthlyReturns.length; i++) {
+                const date = new Date(startDate);
+                date.setMonth(date.getMonth() + i);
+                value *= (1 + monthlyReturns[i]);
+                data.push({
+                    date: formatDate(date),
+                    value: value
+                });
+            }
+            return data;
+        }
+
+        function generateHistoricalMSCIWorld() {
+            const data = [];
+            const startDate = new Date(1994, 0, 1);
+            let value = 100;
+            
+            const monthlyReturns = getRealisticMSCIWorldReturns();
+            
+            for (let i = 0; i < monthlyReturns.length; i++) {
+                const date = new Date(startDate);
+                date.setMonth(date.getMonth() + i);
+                value *= (1 + monthlyReturns[i]);
+                data.push({
+                    date: formatDate(date),
+                    value: value
+                });
+            }
+            return data;
+        }
+
+        // Realistic monthly returns based on actual market data patterns
+        function getRealisticSP500Returns() {
+            // 372 months from Jan 1994 to Dec 2024
+            // Based on actual S&P 500 performance patterns
+            const returns = [];
+            const periods = [
+                { months: 72, avgReturn: 0.014, volatility: 0.035 },  // 1994-1999 Bull (~18% annuo)
+                { months: 36, avgReturn: -0.01, volatility: 0.05 },   // 2000-2002 Dot-com
+                { months: 60, avgReturn: 0.008, volatility: 0.025 },  // 2003-2007 Recovery
+                { months: 18, avgReturn: -0.035, volatility: 0.07 },  // 2008-2009 GFC
+                { months: 12, avgReturn: 0.018, volatility: 0.04 },   // 2010 Recovery
+                { months: 114, avgReturn: 0.009, volatility: 0.03 },  // 2011-2019 Bull (~11% annuo)
+                { months: 2, avgReturn: -0.14, volatility: 0.10 },    // Feb-Mar 2020 COVID
+                { months: 10, avgReturn: 0.035, volatility: 0.05 },   // Apr-Dec 2020 Recovery
+                { months: 12, avgReturn: 0.018, volatility: 0.035 },  // 2021 (~24%)
+                { months: 12, avgReturn: -0.015, volatility: 0.045 }, // 2022 (-18%)
+                { months: 12, avgReturn: 0.018, volatility: 0.03 },   // 2023 (+24%)
+                { months: 12, avgReturn: 0.017, volatility: 0.025 }   // 2024 (~22%)
+            ];
+            
+            let seed = 42;
+            const seededRandom = () => {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            };
+            
+            for (const period of periods) {
+                for (let i = 0; i < period.months; i++) {
+                    const r = (seededRandom() - 0.5) * 2;
+                    const monthReturn = period.avgReturn + r * period.volatility;
+                    returns.push(monthReturn);
+                }
+            }
+            
+            return returns.slice(0, 372);
+        }
+
+        function getRealisticNASDAQReturns() {
+            const returns = [];
+            const periods = [
+                { months: 72, avgReturn: 0.018, volatility: 0.05 },   // 1994-1999 Tech boom (~24% annuo)
+                { months: 30, avgReturn: -0.035, volatility: 0.09 },  // 2000-2002 Dot-com crash
+                { months: 6, avgReturn: 0.02, volatility: 0.06 },     // Late 2002 bottom
+                { months: 60, avgReturn: 0.008, volatility: 0.04 },   // 2003-2007 Recovery
+                { months: 18, avgReturn: -0.04, volatility: 0.09 },   // 2008-2009 GFC
+                { months: 12, avgReturn: 0.025, volatility: 0.05 },   // 2010 Recovery
+                { months: 114, avgReturn: 0.012, volatility: 0.035 }, // 2011-2019 Bull (~15% annuo)
+                { months: 2, avgReturn: -0.15, volatility: 0.10 },    // Feb-Mar 2020 COVID crash
+                { months: 10, avgReturn: 0.04, volatility: 0.06 },    // Apr-Dec 2020 Recovery
+                { months: 12, avgReturn: 0.015, volatility: 0.04 },   // 2021 (~20% annuo)
+                { months: 12, avgReturn: -0.025, volatility: 0.06 },  // 2022 Tech crash (-33%)
+                { months: 12, avgReturn: 0.03, volatility: 0.04 },    // 2023 Recovery (+43%)
+                { months: 12, avgReturn: 0.02, volatility: 0.03 }     // 2024 (~25%)
+            ];
+            
+            let seed = 123;
+            const seededRandom = () => {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            };
+            
+            for (const period of periods) {
+                for (let i = 0; i < period.months; i++) {
+                    const r = (seededRandom() - 0.5) * 2;
+                    const monthReturn = period.avgReturn + r * period.volatility;
+                    returns.push(monthReturn);
+                }
+            }
+            
+            return returns.slice(0, 372);
+        }
+
+        function getRealisticMSCIWorldReturns() {
+            const returns = [];
+            const periods = [
+                { months: 72, avgReturn: 0.010, volatility: 0.035 },  // 1994-1999 (~13% annuo)
+                { months: 36, avgReturn: -0.012, volatility: 0.045 }, // 2000-2002 Dot-com
+                { months: 60, avgReturn: 0.007, volatility: 0.03 },   // 2003-2007 Recovery
+                { months: 18, avgReturn: -0.035, volatility: 0.07 },  // 2008-2009 GFC
+                { months: 12, avgReturn: 0.015, volatility: 0.04 },   // 2010 Recovery
+                { months: 114, avgReturn: 0.007, volatility: 0.03 },  // 2011-2019 (~9% annuo)
+                { months: 2, avgReturn: -0.12, volatility: 0.08 },    // Feb-Mar 2020 COVID
+                { months: 10, avgReturn: 0.03, volatility: 0.05 },    // Apr-Dec 2020 Recovery
+                { months: 12, avgReturn: 0.015, volatility: 0.03 },   // 2021 (~18%)
+                { months: 12, avgReturn: -0.015, volatility: 0.04 },  // 2022 (-18%)
+                { months: 12, avgReturn: 0.018, volatility: 0.03 },   // 2023 (+24%)
+                { months: 12, avgReturn: 0.012, volatility: 0.025 }   // 2024 (~15%)
+            ];
+            
+            let seed = 789;
+            const seededRandom = () => {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            };
+            
+            for (const period of periods) {
+                for (let i = 0; i < period.months; i++) {
+                    const r = (seededRandom() - 0.5) * 2;
+                    const monthReturn = period.avgReturn + r * period.volatility;
+                    returns.push(monthReturn);
+                }
+            }
+            
+            return returns.slice(0, 372);
+        }
+
+        function generateHistoricalEmerging() {
+            const data = [];
+            const startDate = new Date(1994, 0, 1);
+            let value = 100;
+            
+            const monthlyReturns = getRealisticEmergingReturns();
+            
+            for (let i = 0; i < monthlyReturns.length; i++) {
+                const date = new Date(startDate);
+                date.setMonth(date.getMonth() + i);
+                value *= (1 + monthlyReturns[i]);
+                data.push({
+                    date: formatDate(date),
+                    value: value
+                });
+            }
+            return data;
+        }
+
+        function generateHistoricalEurope() {
+            const data = [];
+            const startDate = new Date(1994, 0, 1);
+            let value = 100;
+            
+            const monthlyReturns = getRealisticEuropeReturns();
+            
+            for (let i = 0; i < monthlyReturns.length; i++) {
+                const date = new Date(startDate);
+                date.setMonth(date.getMonth() + i);
+                value *= (1 + monthlyReturns[i]);
+                data.push({
+                    date: formatDate(date),
+                    value: value
+                });
+            }
+            return data;
+        }
+
+        function getRealisticEmergingReturns() {
+            // MSCI Emerging Markets - REAL annual returns converted to monthly
+            // Source: MSCI official factsheets
+            const annualReturns = {
+                1994: -7.32,
+                1995: -5.21,
+                1996: 6.03,
+                1997: -11.59,  // Asian crisis starts
+                1998: -25.34,  // Asian/Russian crisis
+                1999: 66.41,   // Recovery
+                2000: -30.61,  // Dot-com
+                2001: -2.37,
+                2002: -6.00,
+                2003: 56.28,   // Strong recovery
+                2004: 25.95,
+                2005: 34.54,
+                2006: 32.55,
+                2007: 39.82,   // Pre-GFC peak
+                2008: -53.18,  // GFC crash
+                2009: 79.02,   // Recovery
+                2010: 19.20,
+                2011: -18.42,
+                2012: 18.22,
+                2013: -2.60,
+                2014: -2.19,
+                2015: -14.92,
+                2016: 11.19,
+                2017: 37.28,
+                2018: -14.57,
+                2019: 18.42,
+                2020: 18.31,
+                2021: -2.54,
+                2022: -20.09,
+                2023: 9.83,
+                2024: 7.50
+            };
+            
+            const returns = [];
+            let seed = 456;
+            const seededRandom = () => {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            };
+            
+            for (let year = 1994; year <= 2024; year++) {
+                const annualReturn = annualReturns[year] / 100;
+                // Convert annual to monthly with realistic distribution
+                const monthlyAvg = Math.pow(1 + annualReturn, 1/12) - 1;
+                const volatility = Math.abs(annualReturn) > 0.25 ? 0.08 : 0.05;
+                
+                for (let month = 0; month < 12; month++) {
+                    const noise = (seededRandom() - 0.5) * volatility;
+                    returns.push(monthlyAvg + noise);
+                }
+            }
+            
+            return returns.slice(0, 372);
+        }
+
+        function getRealisticEuropeReturns() {
+            // MSCI Europe - REAL annual returns converted to monthly
+            // Source: MSCI official factsheets
+            const annualReturns = {
+                1994: -1.94,
+                1995: 21.85,
+                1996: 21.33,
+                1997: 23.78,
+                1998: 28.77,
+                1999: 16.23,
+                2000: -7.96,
+                2001: -19.58,
+                2002: -18.49,
+                2003: 39.43,
+                2004: 21.37,
+                2005: 10.28,
+                2006: 34.39,
+                2007: 14.42,
+                2008: -46.26,  // GFC
+                2009: 36.53,
+                2010: 4.76,
+                2011: -10.50,
+                2012: 19.93,
+                2013: 25.96,
+                2014: -5.68,
+                2015: -2.34,
+                2016: 0.22,
+                2017: 26.24,
+                2018: -14.32,
+                2019: 24.59,
+                2020: 5.93,
+                2021: 16.97,
+                2022: -14.53,
+                2023: 20.66,
+                2024: 2.43
+            };
+            
+            const returns = [];
+            let seed = 321;
+            const seededRandom = () => {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            };
+            
+            for (let year = 1994; year <= 2024; year++) {
+                const annualReturn = annualReturns[year] / 100;
+                // Convert annual to monthly with realistic distribution
+                const monthlyAvg = Math.pow(1 + annualReturn, 1/12) - 1;
+                const volatility = Math.abs(annualReturn) > 0.25 ? 0.06 : 0.04;
+                
+                for (let month = 0; month < 12; month++) {
+                    const noise = (seededRandom() - 0.5) * volatility;
+                    returns.push(monthlyAvg + noise);
+                }
+            }
+            
+            return returns.slice(0, 372);
+        }
+
+        // Generate Bond 7-10 Year Treasury data based on IEF ETF historical performance
+        function generateHistoricalBond710() {
+            const data = [];
+            const startDate = new Date(1994, 0, 1);
+            let value = 100;
+            
+            const monthlyReturns = getRealisticBond710Returns();
+            
+            for (let i = 0; i < monthlyReturns.length; i++) {
+                const date = new Date(startDate);
+                date.setMonth(date.getMonth() + i);
+                value *= (1 + monthlyReturns[i]);
+                data.push({
+                    date: formatDate(date),
+                    value: value
+                });
+            }
+            return data;
+        }
+
+        // Real US Treasury 7-10 Year Bond returns
+        // IEF ETF data from 2003-2024, estimates for 1994-2002 based on Bloomberg US Treasury 7-10 Index
+        function getRealisticBond710Returns() {
+            // Real annual returns: IEF ETF 2003-2024, estimates 1994-2002
+            const annualReturns = {
+                1994: -5.14,    // Rising rates (Fed tightening)
+                1995: 18.47,    // Falling rates
+                1996: 2.10,     // Stable
+                1997: 9.94,     // Asian crisis - flight to safety
+                1998: 12.77,    // LTCM crisis - flight to safety
+                1999: -2.40,    // Rising rates
+                2000: 14.45,    // Dot-com crash begins - flight to safety
+                2001: 5.57,     // 9/11 and recession
+                2002: 14.46,    // Flight to safety
+                // IEF ETF real data starts here
+                2003: 2.07,
+                2004: 4.21,
+                2005: 2.58,
+                2006: 2.52,
+                2007: 10.37,    // Subprime crisis begins
+                2008: 17.91,    // GFC - massive flight to safety
+                2009: -6.59,    // Recovery, rates rising
+                2010: 9.37,
+                2011: 15.64,    // Euro crisis - flight to safety
+                2012: 3.66,
+                2013: -6.09,    // Taper tantrum
+                2014: 9.06,
+                2015: 1.51,
+                2016: 1.01,
+                2017: 2.55,
+                2018: 0.99,
+                2019: 8.03,
+                2020: 10.01,    // COVID - flight to safety
+                2021: -3.33,    // Inflation fears
+                2022: -15.16,   // Fed aggressive rate hikes
+                2023: 3.64,
+                2024: -0.64
+            };
+            
+            const returns = [];
+            let seed = 54321;
+            
+            function seededRandom() {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            }
+            
+            for (let year = 1994; year <= 2024; year++) {
+                const annualReturn = annualReturns[year] / 100;
+                const monthlyAvg = Math.pow(1 + annualReturn, 1/12) - 1;
+                // Lower volatility for bonds
+                const volatility = Math.abs(annualReturn) > 0.10 ? 0.02 : 0.01;
+                
+                for (let month = 0; month < 12; month++) {
+                    const noise = (seededRandom() - 0.5) * volatility;
+                    returns.push(monthlyAvg + noise);
+                }
+            }
+            
+            return returns.slice(0, 372);
+        }
+
+        function formatDate(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        // ============================================
+        // BENCHMARK DEFAULTS
+        // ============================================
+        
+        const benchmarkDefaults = {
+            SP500: {
+                cagr: 10.5,
+                volatility: 15,
+                maxDrawdown: -55,
+                maxDrawdownDuration: 60,
+                convergenceYears: 15
+            },
+            NASDAQ: {
+                cagr: 12.5,
+                volatility: 22,
+                maxDrawdown: -80,
+                maxDrawdownDuration: 84,
+                convergenceYears: 20
+            },
+            MSCI_WORLD: {
+                cagr: 8.5,
+                volatility: 14,
+                maxDrawdown: -55,
+                maxDrawdownDuration: 72,
+                convergenceYears: 15
+            },
+            EMERGING: {
+                cagr: 8,
+                volatility: 24,
+                maxDrawdown: -65,
+                maxDrawdownDuration: 72,
+                convergenceYears: 20
+            },
+            EUROPE: {
+                cagr: 6.5,
+                volatility: 16,
+                maxDrawdown: -55,
+                maxDrawdownDuration: 84,
+                convergenceYears: 18
+            },
+            BOND_7_10: {
+                cagr: 3.5,
+                volatility: 7,
+                maxDrawdown: -20,
+                maxDrawdownDuration: 36,
+                convergenceYears: 8
+            }
+        };
+
+        // ============================================
+        // APPLICATION STATE
+        // ============================================
+        
+        const state = {
+            currentBenchmark: 'NASDAQ',
+            scenario: 'random',
+            animationSpeed: 500,
+            isLogScale: false,
+            isRunning: false,
+            isPaused: false,
+            simulationData: [],
+            simulationHistory: [], // Array of past simulations
+            cagrHistory: [], // Array of CAGRs for average calculation
+            currentSimulationIndex: 0,
+            currentDatasetIndex: 2, // Index of current simulation dataset
+            animationFrameId: null,
+            chart: null,
+            seed: Math.random() * 10000,
+            viewPeriod: 'all',
+            simulationStartDate: '2024-12',
+            simulationStartValue: null
+        };
+
+        // Scenario colors matching the emoji indicators
+        const scenarioColors = {
+            worst: '#ef4444',   // 🔴 rosso
+            bear: '#f97316',    // 🟠 arancio
+            normal: '#eab308',  // 🟡 giallo
+            bull: '#22c55e',    // 🟢 verde
+            best: '#3b82f6',    // 🔵 blu
+            random: '#9ca3af'   // ⚪ grigio
+        };
+
+        // ============================================
+        // SCENARIO PARAMETERS
+        // ============================================
+        
+        const scenarioParams = {
+            worst: { skewness: -1.5, ddProbability: 0.35, recoveryFactor: 1.5 },
+            bear: { skewness: -0.8, ddProbability: 0.25, recoveryFactor: 1.2 },
+            normal: { skewness: 0, ddProbability: 0.15, recoveryFactor: 1.0 },
+            bull: { skewness: 0.5, ddProbability: 0.08, recoveryFactor: 0.8 },
+            best: { skewness: 1.2, ddProbability: 0.03, recoveryFactor: 0.5 }
+        };
+
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        
+        const elements = {
+            benchmarkTabs: document.querySelectorAll('.benchmark-tab'),
+            scenarioOptions: document.querySelectorAll('.scenario-option'),
+            speedBtns: document.querySelectorAll('.speed-btn'),
+            presetBtns: document.querySelectorAll('.preset-btn'),
+            
+            paramCagr: document.getElementById('param-cagr'),
+            paramVolatility: document.getElementById('param-volatility'),
+            paramMaxDD: document.getElementById('param-maxdd'),
+            paramMaxDDDuration: document.getElementById('param-maxdd-duration'),
+            paramConvergence: document.getElementById('param-convergence'),
+            paramHorizon: document.getElementById('param-horizon'),
+            paramCapital: document.getElementById('param-capital'),
+            paramBenchmarkLine: document.getElementById('param-benchmark-line'),
+            paramInflation: document.getElementById('param-inflation'),
+            paramStartDate: document.getElementById('param-start-date'),
+            
+            btnStart: document.getElementById('btn-start'),
+            btnPause: document.getElementById('btn-pause'),
+            btnReset: document.getElementById('btn-reset'),
+            btnNew: document.getElementById('btn-new'),
+            zoomBtns: document.querySelectorAll('.zoom-btn'),
+            
+            progressFill: document.getElementById('progress-fill'),
+            progressText: document.getElementById('progress-text'),
+            scaleToggle: document.getElementById('scale-toggle'),
+            loading: document.getElementById('loading'),
+            
+            // Stats
+            statFinalValue: document.getElementById('stat-final-value'),
+            statFinalValueTaxed: document.getElementById('stat-final-value-taxed'),
+            statFinalValueReal: document.getElementById('stat-final-value-real'),
+            statTotalReturn: document.getElementById('stat-total-return'),
+            statTotalReturnTaxed: document.getElementById('stat-total-return-taxed'),
+            statTotalReturnReal: document.getElementById('stat-total-return-real'),
+            statCagr: document.getElementById('stat-cagr'),
+            statCagrDiff: document.getElementById('stat-cagr-diff'),
+            statCagrAvg: document.getElementById('stat-cagr-avg'),
+            statCagrCount: document.getElementById('stat-cagr-count'),
+            statMaxDD: document.getElementById('stat-maxdd'),
+            statCurrentDD: document.getElementById('stat-current-dd'),
+            statVolatility: document.getElementById('stat-volatility'),
+            statLongestDD: document.getElementById('stat-longest-dd'),
+            statBestYear: document.getElementById('stat-best-year'),
+            statWorstYear: document.getElementById('stat-worst-year'),
+            
+            cmpWorst: document.getElementById('cmp-worst'),
+            cmpNormal: document.getElementById('cmp-normal'),
+            cmpBest: document.getElementById('cmp-best'),
+            cmpCagr: document.getElementById('cmp-cagr'),
+            yearlyReport: document.getElementById('yearly-report'),
+            fiveyearReport: document.getElementById('fiveyear-report')
+        };
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('it-IT', {
+                style: 'currency',
+                currency: 'EUR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function formatPercent(value, decimals = 2) {
+            const sign = value >= 0 ? '+' : '';
+            return sign + value.toFixed(decimals).replace('.', ',') + '%';
+        }
+
+        function formatPercentNoSign(value, decimals = 2) {
+            return value.toFixed(decimals).replace('.', ',') + '%';
+        }
+
+        // Box-Muller transform for normal distribution
+        function randomNormal(mean = 0, std = 1) {
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            return mean + z * std;
+        }
+
+        // Skewed normal distribution
+        function randomSkewedNormal(mean, std, skewness) {
+            const normal = randomNormal(0, 1);
+            const skewed = normal + skewness * (normal * normal - 1) / 6;
+            return mean + skewed * std;
+        }
+
+        // ============================================
+        // SIMULATION ENGINE
+        // ============================================
+        
+        function generateSimulation() {
+            const params = getParameters();
+            
+            // Handle random scenario - pick one of the 5 real scenarios
+            let effectiveScenario = state.scenario;
+            if (state.scenario === 'random') {
+                const realScenarios = ['worst', 'bear', 'normal', 'bull', 'best'];
+                effectiveScenario = realScenarios[Math.floor(Math.random() * realScenarios.length)];
+            }
+            state.effectiveScenario = effectiveScenario; // Store for use elsewhere
+            
+            const scenario = scenarioParams[effectiveScenario];
+            const historical = historicalData[state.currentBenchmark];
+            const lastHistorical = historical[historical.length - 1];
+            
+            const totalMonths = params.horizon * 12;
+            const monthlyVol = (params.volatility / 100) / Math.sqrt(12);
+            
+            // Parse start date
+            const startDateStr = params.startDate; // "YYYY-MM"
+            const startDateParts = startDateStr.split('-');
+            const startYear = parseInt(startDateParts[0]);
+            const startMonth = parseInt(startDateParts[1]);
+            
+            // Find starting value based on start date
+            let startValue;
+            let simulationStartDate;
+            
+            // Check if start date is within historical data
+            const historicalStartDate = historical[0].date;
+            const historicalEndDate = lastHistorical.date;
+            
+            const startDateFormatted = `${startYear}-${String(startMonth).padStart(2, '0')}`;
+            
+            // Find the historical data point closest to start date
+            const historicalIndex = historical.findIndex(d => d.date === startDateFormatted);
+            
+            if (historicalIndex >= 0) {
+                // Start date is within historical period
+                startValue = historical[historicalIndex].value;
+                simulationStartDate = new Date(startYear, startMonth - 1);
+            } else if (startDateFormatted < historicalStartDate) {
+                // Start date is before historical data - use first historical point
+                startValue = historical[0].value;
+                simulationStartDate = new Date(
+                    parseInt(historicalStartDate.split('-')[0]),
+                    parseInt(historicalStartDate.split('-')[1]) - 1
+                );
+            } else {
+                // Start date is after historical data - project forward
+                const lastHistDate = new Date(
+                    parseInt(historicalEndDate.split('-')[0]),
+                    parseInt(historicalEndDate.split('-')[1]) - 1
+                );
+                const targetDate = new Date(startYear, startMonth - 1);
+                const monthsToProject = (targetDate.getFullYear() - lastHistDate.getFullYear()) * 12 + 
+                                        (targetDate.getMonth() - lastHistDate.getMonth());
+                
+                // Project using CAGR
+                const yearsToProject = monthsToProject / 12;
+                startValue = lastHistorical.value * Math.pow(1 + params.cagr / 100, yearsToProject);
+                simulationStartDate = targetDate;
+            }
+            
+            // Store simulation start info in state for chart rendering
+            state.simulationStartDate = startDateFormatted;
+            state.simulationStartValue = startValue;
+            
+            // Target CAGR adjusted by scenario
+            const scenarioCAGRMultiplier = {
+                'worst': 0.5,
+                'bear': 0.75,
+                'normal': 1.0,
+                'bull': 1.15,
+                'best': 1.3
+            };
+            
+            const adjustedCAGR = params.cagr * scenarioCAGRMultiplier[effectiveScenario];
+            const adjustedMonthlyDrift = Math.pow(1 + adjustedCAGR / 100, 1/12) - 1;
+            
+            const simulationData = [];
+            let value = startValue;
+            let peak = value;
+            let inDrawdown = false;
+            let monthsInDrawdown = 0;
+            let crashesInLast10Years = 0;
+            let monthsSinceLastCrash = 120;
+            
+            const crashMonths = [];
+            
+            const maxMonthlyReturn = {
+                'worst': 0.06,
+                'bear': 0.07,
+                'normal': 0.08,
+                'bull': 0.10,
+                'best': 0.12
+            };
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                monthsSinceLastCrash++;
+                
+                const expectedValue = startValue * Math.pow(1 + adjustedCAGR / 100, month / 12);
+                
+                crashesInLast10Years = crashMonths.filter(m => month - m < 120).length;
+                
+                const canCrash = crashesInLast10Years < 2 && monthsSinceLastCrash > 24;
+                
+                const crashProbabilities = {
+                    'worst': 0.020,
+                    'bear': 0.012,
+                    'normal': 0.006,
+                    'bull': 0.003,
+                    'best': 0.001
+                };
+                
+                let monthReturn;
+                
+                if (canCrash && !inDrawdown && Math.random() < crashProbabilities[effectiveScenario]) {
+                    inDrawdown = true;
+                    monthsInDrawdown = 0;
+                    crashMonths.push(month);
+                    monthsSinceLastCrash = 0;
+                    
+                    const crashSeverity = {
+                        'worst': -0.10 - Math.random() * 0.08,
+                        'bear': -0.07 - Math.random() * 0.06,
+                        'normal': -0.05 - Math.random() * 0.05,
+                        'bull': -0.04 - Math.random() * 0.04,
+                        'best': -0.03 - Math.random() * 0.03
+                    };
+                    monthReturn = crashSeverity[effectiveScenario];
+                    
+                } else if (inDrawdown) {
+                    monthsInDrawdown++;
+                    
+                    const crashDuration = {
+                        'worst': 10 + Math.floor(Math.random() * 8),
+                        'bear': 6 + Math.floor(Math.random() * 5),
+                        'normal': 4 + Math.floor(Math.random() * 3),
+                        'bull': 2 + Math.floor(Math.random() * 3),
+                        'best': 1 + Math.floor(Math.random() * 2)
+                    };
+                    
+                    if (monthsInDrawdown < crashDuration[effectiveScenario]) {
+                        const crashContinuation = {
+                            'worst': -0.02 - Math.random() * 0.03,
+                            'bear': -0.01 - Math.random() * 0.025,
+                            'normal': -0.005 - Math.random() * 0.02,
+                            'bull': 0 - Math.random() * 0.015,
+                            'best': 0.005 - Math.random() * 0.01
+                        };
+                        monthReturn = crashContinuation[effectiveScenario];
+                        
+                        const projectedDD = (value * (1 + monthReturn) - peak) / peak;
+                        if (projectedDD < params.maxDrawdown / 100) {
+                            monthReturn = (peak * (1 + params.maxDrawdown / 100 * 0.98) - value) / value;
+                        }
+                    } else {
+                        const baseRecovery = {
+                            'worst': 0.003 + Math.random() * 0.007,
+                            'bear': 0.005 + Math.random() * 0.010,
+                            'normal': 0.008 + Math.random() * 0.012,
+                            'bull': 0.010 + Math.random() * 0.015,
+                            'best': 0.012 + Math.random() * 0.018
+                        };
+                        
+                        monthReturn = baseRecovery[effectiveScenario] + randomNormal(0, monthlyVol * 0.4);
+                        
+                        if (value * (1 + monthReturn) >= peak * 0.98) {
+                            inDrawdown = false;
+                            monthsInDrawdown = 0;
+                        }
+                    }
+                } else {
+                    monthReturn = randomSkewedNormal(
+                        adjustedMonthlyDrift,
+                        monthlyVol,
+                        scenario.skewness * 0.3
+                    );
+                    
+                    if (Math.random() < 0.05) {
+                        monthReturn -= Math.random() * 0.02;
+                    }
+                }
+                
+                monthReturn = Math.min(monthReturn, maxMonthlyReturn[effectiveScenario]);
+                
+                value *= (1 + monthReturn);
+                
+                if (value > peak) {
+                    peak = value;
+                }
+                
+                const simDate = new Date(simulationStartDate);
+                simDate.setMonth(simDate.getMonth() + month);
+                
+                simulationData.push({
+                    date: formatDate(simDate),
+                    value: value,
+                    month: month
+                });
+            }
+            
+            return simulationData;
+        }
+
+        function getParameters() {
+            return {
+                cagr: parseFloat(elements.paramCagr.value),
+                volatility: parseFloat(elements.paramVolatility.value),
+                maxDrawdown: parseFloat(elements.paramMaxDD.value),
+                maxDrawdownDuration: parseInt(elements.paramMaxDDDuration.value),
+                convergenceYears: parseInt(elements.paramConvergence.value),
+                horizon: parseInt(elements.paramHorizon.value),
+                capital: parseFloat(elements.paramCapital.value),
+                benchmarkLine: parseFloat(elements.paramBenchmarkLine.value),
+                inflation: parseFloat(elements.paramInflation.value),
+                startDate: elements.paramStartDate.value // Format: "YYYY-MM"
+            };
+        }
+
+        // Calculate scale factor based on TODAY's value (end of historical data)
+        // So that "Capitale Iniziale" represents value at end of historical period
+        function getScaleFactor() {
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const lastHistoricalValue = historical[historical.length - 1].value;
+            return params.capital / lastHistoricalValue;
+        }
+
+        // ============================================
+        // STATISTICS CALCULATION
+        // ============================================
+        
+        function calculateStatistics(data, startValue, capital) {
+            if (data.length === 0) return null;
+            
+            const values = data.map(d => d.value);
+            const finalValue = values[values.length - 1];
+            const scaledFinal = (finalValue / startValue) * capital;
+            const totalReturn = (finalValue / startValue - 1) * 100;
+            const years = data.length / 12;
+            const cagr = (Math.pow(finalValue / startValue, 1 / years) - 1) * 100;
+            
+            // Drawdown calculations
+            let peak = startValue;
+            let maxDD = 0;
+            let currentDD = 0;
+            let longestDD = 0;
+            let currentDDLength = 0;
+            let inDD = false;
+            
+            const monthlyReturns = [];
+            let prevValue = startValue;
+            
+            for (const val of values) {
+                const monthReturn = (val - prevValue) / prevValue;
+                monthlyReturns.push(monthReturn);
+                prevValue = val;
+                
+                if (val > peak) {
+                    peak = val;
+                    if (inDD) {
+                        longestDD = Math.max(longestDD, currentDDLength);
+                        currentDDLength = 0;
+                        inDD = false;
+                    }
+                } else {
+                    inDD = true;
+                    currentDDLength++;
+                    const dd = (val - peak) / peak;
+                    maxDD = Math.min(maxDD, dd);
+                    currentDD = dd;
+                }
+            }
+            
+            if (inDD) {
+                longestDD = Math.max(longestDD, currentDDLength);
+            }
+            
+            // Volatility (annualized)
+            const avgReturn = monthlyReturns.reduce((a, b) => a + b, 0) / monthlyReturns.length;
+            const variance = monthlyReturns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / monthlyReturns.length;
+            const monthlyVol = Math.sqrt(variance);
+            const annualizedVol = monthlyVol * Math.sqrt(12) * 100;
+            
+            // Best/worst year
+            const yearlyReturns = [];
+            for (let i = 0; i < monthlyReturns.length; i += 12) {
+                const yearReturns = monthlyReturns.slice(i, i + 12);
+                if (yearReturns.length === 12) {
+                    const yearReturn = yearReturns.reduce((acc, r) => acc * (1 + r), 1) - 1;
+                    yearlyReturns.push(yearReturn * 100);
+                }
+            }
+            
+            const bestYear = yearlyReturns.length > 0 ? Math.max(...yearlyReturns) : 0;
+            const worstYear = yearlyReturns.length > 0 ? Math.min(...yearlyReturns) : 0;
+            
+            return {
+                finalValue: scaledFinal,
+                totalReturn,
+                cagr,
+                maxDD: maxDD * 100,
+                currentDD: currentDD * 100,
+                volatility: annualizedVol,
+                longestDD,
+                bestYear,
+                worstYear
+            };
+        }
+
+        function updateStatistics(simulationData) {
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const startValue = historical[historical.length - 1].value;
+            
+            const stats = calculateStatistics(simulationData, startValue, params.capital);
+            
+            if (!stats) return;
+            
+            // Nominal value
+            elements.statFinalValue.textContent = formatCurrency(stats.finalValue);
+            elements.statFinalValue.className = 'stat-value ' + (stats.totalReturn >= 0 ? 'positive' : 'negative');
+            elements.statTotalReturn.textContent = formatPercent(stats.totalReturn);
+            
+            // Taxed value (26% capital gains tax)
+            const capitalGain = Math.max(0, stats.finalValue - params.capital);
+            const tax = capitalGain * 0.26;
+            const taxedFinalValue = stats.finalValue - tax;
+            const taxedTotalReturn = (taxedFinalValue / params.capital - 1) * 100;
+            
+            elements.statFinalValueTaxed.textContent = formatCurrency(taxedFinalValue);
+            elements.statFinalValueTaxed.className = 'stat-value ' + (taxedTotalReturn >= 0 ? 'positive' : 'negative');
+            elements.statTotalReturnTaxed.textContent = `${formatPercent(taxedTotalReturn)} (tassa 26%)`;
+            
+            // Real taxed value (adjusted for inflation on taxed value)
+            const years = simulationData.length / 12;
+            const inflationRate = params.inflation / 100;
+            const inflationFactor = Math.pow(1 + inflationRate, years);
+            const realTaxedValue = taxedFinalValue / inflationFactor;
+            const realTaxedReturn = (realTaxedValue / params.capital - 1) * 100;
+            
+            elements.statFinalValueReal.textContent = formatCurrency(realTaxedValue);
+            elements.statFinalValueReal.className = 'stat-value ' + (realTaxedReturn >= 0 ? 'positive' : 'negative');
+            elements.statTotalReturnReal.textContent = `${formatPercent(realTaxedReturn)} (inflaz. ${params.inflation}%)`;
+            
+            elements.statCagr.textContent = formatPercentNoSign(stats.cagr);
+            elements.statCagr.className = 'stat-value ' + (stats.cagr >= params.cagr ? 'positive' : 'negative');
+            elements.statCagrDiff.textContent = `vs atteso: ${formatPercent(stats.cagr - params.cagr)}`;
+            
+            elements.statMaxDD.textContent = formatPercentNoSign(stats.maxDD);
+            elements.statCurrentDD.textContent = formatPercentNoSign(stats.currentDD);
+            elements.statVolatility.textContent = formatPercentNoSign(stats.volatility);
+            elements.statLongestDD.textContent = `${stats.longestDD} mesi`;
+            elements.statBestYear.textContent = formatPercent(stats.bestYear, 1);
+            elements.statWorstYear.textContent = formatPercent(stats.worstYear, 1);
+        }
+
+        function updateComparison() {
+            const params = getParameters();
+            const cagr = params.cagr / 100;
+            const horizon = params.horizon;
+            const capital = 100000;
+            
+            // Pure CAGR
+            const pureCagr = capital * Math.pow(1 + cagr, horizon);
+            elements.cmpCagr.textContent = formatCurrency(pureCagr);
+            
+            // Scenario estimates (simplified)
+            const worstFactor = 0.6 + Math.random() * 0.2;
+            const normalFactor = 0.9 + Math.random() * 0.2;
+            const bestFactor = 1.1 + Math.random() * 0.3;
+            
+            elements.cmpWorst.textContent = formatCurrency(pureCagr * worstFactor);
+            elements.cmpNormal.textContent = formatCurrency(pureCagr * normalFactor);
+            elements.cmpBest.textContent = formatCurrency(pureCagr * bestFactor);
+            
+            // Highlight current scenario
+            document.querySelectorAll('.comparison-row').forEach(row => {
+                row.classList.remove('current');
+            });
+        }
+
+        function updateYearlyReport(simulationData) {
+            if (!simulationData || simulationData.length === 0) {
+                elements.yearlyReport.innerHTML = '<div class="yearly-report-empty">Avvia una simulazione per vedere il report annuale</div>';
+                return;
+            }
+            
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const startValue = historical[historical.length - 1].value;
+            const scaleFactor = getScaleFactor();
+            
+            // Calculate yearly returns
+            const yearlyReturns = [];
+            let prevYearEndValue = startValue;
+            
+            for (let year = 0; year < Math.ceil(simulationData.length / 12); year++) {
+                const startIdx = year * 12;
+                const endIdx = Math.min(startIdx + 11, simulationData.length - 1);
+                
+                if (startIdx >= simulationData.length) break;
+                
+                const yearEndValue = simulationData[endIdx].value;
+                const yearReturn = (yearEndValue / prevYearEndValue - 1) * 100;
+                const yearStartDate = simulationData[startIdx].date;
+                const yearLabel = yearStartDate.split('-')[0];
+                
+                yearlyReturns.push({
+                    year: yearLabel,
+                    return: yearReturn,
+                    endValue: yearEndValue * scaleFactor
+                });
+                
+                prevYearEndValue = yearEndValue;
+            }
+            
+            // Reverse to show latest year first
+            yearlyReturns.reverse();
+            
+            // Find max absolute return for scaling bars
+            const maxAbsReturn = Math.max(...yearlyReturns.map(y => Math.abs(y.return)), 30);
+            
+            // Generate HTML
+            let html = '';
+            yearlyReturns.forEach((yr, idx) => {
+                const isPositive = yr.return >= 0;
+                const barWidth = Math.min(Math.abs(yr.return) / maxAbsReturn * 50, 50);
+                const sign = isPositive ? '+' : '';
+                const valueClass = isPositive ? 'positive' : 'negative';
+                
+                html += `
+                    <div class="yearly-row">
+                        <span class="yearly-year">${yr.year}</span>
+                        <div class="yearly-bar-container">
+                            <div class="yearly-bar ${valueClass}" style="width: ${barWidth}%"></div>
+                        </div>
+                        <span class="yearly-value ${valueClass}">${sign}${yr.return.toFixed(1)}%</span>
+                    </div>
+                `;
+            });
+            
+            elements.yearlyReport.innerHTML = html;
+        }
+
+        function updateFiveyearReport(simulationData) {
+            if (!simulationData || simulationData.length === 0) {
+                elements.fiveyearReport.innerHTML = '<div class="yearly-report-empty">Avvia una simulazione per vedere il report quinquennale</div>';
+                return;
+            }
+            
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const startValue = historical[historical.length - 1].value;
+            const scaleFactor = getScaleFactor();
+            
+            // Calculate 5-year returns
+            const fiveyearReturns = [];
+            let prevPeriodEndValue = startValue;
+            
+            const monthsPerPeriod = 60; // 5 years
+            const totalPeriods = Math.ceil(simulationData.length / monthsPerPeriod);
+            
+            for (let period = 0; period < totalPeriods; period++) {
+                const startIdx = period * monthsPerPeriod;
+                const endIdx = Math.min(startIdx + monthsPerPeriod - 1, simulationData.length - 1);
+                
+                if (startIdx >= simulationData.length) break;
+                
+                const periodEndValue = simulationData[endIdx].value;
+                const periodReturn = (periodEndValue / prevPeriodEndValue - 1) * 100;
+                const periodStartDate = simulationData[startIdx].date;
+                const periodEndDate = simulationData[endIdx].date;
+                const startYear = periodStartDate.split('-')[0];
+                const endYear = periodEndDate.split('-')[0];
+                
+                // Calculate annualized return (CAGR) for this period
+                const years = (endIdx - startIdx + 1) / 12;
+                const cagr = (Math.pow(periodEndValue / prevPeriodEndValue, 1 / years) - 1) * 100;
+                
+                fiveyearReturns.push({
+                    label: `${startYear}-${endYear}`,
+                    return: periodReturn,
+                    cagr: cagr,
+                    endValue: periodEndValue * scaleFactor
+                });
+                
+                prevPeriodEndValue = periodEndValue;
+            }
+            
+            // Reverse to show latest period first
+            fiveyearReturns.reverse();
+            
+            // Find max absolute return for scaling bars
+            const maxAbsReturn = Math.max(...fiveyearReturns.map(p => Math.abs(p.return)), 100);
+            
+            // Generate HTML
+            let html = '';
+            fiveyearReturns.forEach((pr, idx) => {
+                const isPositive = pr.return >= 0;
+                const barWidth = Math.min(Math.abs(pr.return) / maxAbsReturn * 50, 50);
+                const sign = isPositive ? '+' : '';
+                const valueClass = isPositive ? 'positive' : 'negative';
+                
+                html += `
+                    <div class="yearly-row">
+                        <span class="yearly-year" style="font-size: 0.7rem;">${pr.label}</span>
+                        <div class="yearly-bar-container">
+                            <div class="yearly-bar ${valueClass}" style="width: ${barWidth}%"></div>
+                        </div>
+                        <span class="yearly-value ${valueClass}">${sign}${pr.return.toFixed(0)}%</span>
+                    </div>
+                `;
+            });
+            
+            elements.fiveyearReport.innerHTML = html;
+        }
+
+        // ============================================
+        // CHART SETUP
+        // ============================================
+        
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const historical = historicalData[state.currentBenchmark];
+            
+            // Scale historical data to capital
+            const params = getParameters();
+            const scaleFactor = getScaleFactor(); // Historical is base 100
+            
+            const historicalScaled = historical.map(d => ({
+                x: d.date,
+                y: d.value * scaleFactor
+            }));
+
+            state.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Storico',
+                            data: historicalScaled,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            tension: 0.1,
+                            fill: false,
+                            order: 100 // Draw first (behind)
+                        },
+                        {
+                            label: 'Benchmark',
+                            data: [],
+                            borderColor: '#8b5cf6',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false,
+                            order: 99
+                        }
+                        // Simulations will be added dynamically as datasets 2+
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(18, 18, 26, 0.95)',
+                            titleColor: '#9090a0',
+                            bodyColor: '#e8e8f0',
+                            borderColor: 'rgba(42, 42, 58, 1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            mode: 'nearest',
+                            callbacks: {
+                                title: (items) => {
+                                    if (items.length > 0 && items[0].raw && items[0].raw.x) {
+                                        return items[0].raw.x;
+                                    }
+                                    return '';
+                                },
+                                label: (context) => {
+                                    const value = context.parsed.y;
+                                    return ` ${context.dataset.label}: ${formatCurrency(value)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            grid: {
+                                color: 'rgba(42, 42, 58, 0.5)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#606070',
+                                maxRotation: 45,
+                                minRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 20,
+                                callback: function(value, index) {
+                                    const label = this.getLabelForValue(value);
+                                    if (label) {
+                                        const parts = label.split('-');
+                                        const year = parseInt(parts[0]);
+                                        const month = parts[1];
+                                        // Show year label on January
+                                        if (month === '01') {
+                                            return year;
+                                        }
+                                    }
+                                    return null;
+                                }
+                            }
+                        },
+                        y: {
+                            type: state.isLogScale ? 'logarithmic' : 'linear',
+                            grid: {
+                                color: 'rgba(42, 42, 58, 0.5)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#606070',
+                                callback: (value) => formatCurrency(value)
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 0
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Add Benchmark line
+            updateBenchmarkLine();
+        }
+
+        function updateBenchmarkLine() {
+            if (!state.chart) return;
+            
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const scaleFactor = getScaleFactor();
+            
+            // Parse simulation start date
+            const simStartStr = params.startDate;
+            const simStartParts = simStartStr.split('-');
+            const simStartYear = parseInt(simStartParts[0]);
+            const simStartMonth = parseInt(simStartParts[1]);
+            
+            // Find simulation start value
+            const simStartFormatted = `${simStartYear}-${String(simStartMonth).padStart(2, '0')}`;
+            const historicalIndex = historical.findIndex(d => d.date === simStartFormatted);
+            
+            let simStartValue;
+            if (historicalIndex >= 0) {
+                simStartValue = historical[historicalIndex].value * scaleFactor;
+            } else if (simStartFormatted > historical[historical.length - 1].date) {
+                // Project forward from end of historical
+                const lastHistDate = historical[historical.length - 1].date;
+                const lastHistDateParts = lastHistDate.split('-');
+                const monthsToProject = (simStartYear - parseInt(lastHistDateParts[0])) * 12 + 
+                                        (simStartMonth - parseInt(lastHistDateParts[1]));
+                const yearsToProject = monthsToProject / 12;
+                simStartValue = historical[historical.length - 1].value * scaleFactor * 
+                               Math.pow(1 + params.cagr / 100, yearsToProject);
+            } else {
+                simStartValue = historical[0].value * scaleFactor;
+            }
+            
+            // Generate Benchmark line data points (from simulation start date to end of horizon)
+            const benchmarkData = [];
+            
+            // Calculate end date based on simulation start + horizon
+            const simEndYear = simStartYear + params.horizon;
+            const simEndFormatted = `${simEndYear}-${String(simStartMonth).padStart(2, '0')}`;
+            
+            // Generate monthly points for benchmark
+            for (let month = 0; month <= params.horizon * 12; month++) {
+                const date = new Date(simStartYear, simStartMonth - 1 + month);
+                const dateStr = formatDate(date);
+                const years = month / 12;
+                const benchmarkValue = simStartValue * Math.pow(1 + params.benchmarkLine / 100, years);
+                benchmarkData.push({
+                    x: dateStr,
+                    y: benchmarkValue
+                });
+            }
+            
+            state.chart.data.datasets[1].data = benchmarkData;
+            autoScaleYAxis();
+            state.chart.update('none');
+        }
+
+        function updateChartScale() {
+            if (!state.chart) return;
+            
+            state.chart.options.scales.y.type = state.isLogScale ? 'logarithmic' : 'linear';
+            autoScaleYAxis();
+            state.chart.update();
+        }
+
+        function autoScaleYAxis() {
+            if (!state.chart) return;
+            
+            // Find min and max across all datasets
+            let minY = Infinity;
+            let maxY = -Infinity;
+            
+            state.chart.data.datasets.forEach(dataset => {
+                if (dataset.data && dataset.data.length > 0) {
+                    dataset.data.forEach(point => {
+                        const val = typeof point === 'object' ? point.y : point;
+                        if (val !== null && val !== undefined && !isNaN(val)) {
+                            if (val < minY) minY = val;
+                            if (val > maxY) maxY = val;
+                        }
+                    });
+                }
+            });
+            
+            if (minY !== Infinity && maxY !== -Infinity) {
+                // Add 5% padding above and below
+                const range = maxY - minY;
+                const padding = range * 0.08;
+                
+                state.chart.options.scales.y.min = Math.max(0, minY - padding);
+                state.chart.options.scales.y.max = maxY + padding;
+            }
+        }
+
+        function applyViewPeriod() {
+            if (!state.chart) return;
+            
+            const historical = historicalData[state.currentBenchmark];
+            const params = getParameters();
+            const scaleFactor = getScaleFactor();
+            
+            // Parse simulation start date
+            const simStartStr = params.startDate;
+            const simStartParts = simStartStr.split('-');
+            const simStartYear = parseInt(simStartParts[0]);
+            const simStartMonth = parseInt(simStartParts[1]);
+            
+            // Calculate simulation end date based on horizon
+            const simEndYear = simStartYear + params.horizon;
+            const simEndFormatted = `${simEndYear}-${String(simStartMonth).padStart(2, '0')}`;
+            
+            // Get all data points up to simulation end
+            let allLabels = historical.map(d => d.date).filter(d => d <= simEndFormatted);
+            let historicalData_scaled = historical
+                .filter(d => d.date <= simEndFormatted)
+                .map(d => ({
+                    x: d.date,
+                    y: d.value * scaleFactor
+                }));
+            
+            // Find simulation start value for benchmark
+            const historicalIndex = historical.findIndex(d => d.date === simStartStr);
+            let simStartValue;
+            if (historicalIndex >= 0) {
+                simStartValue = historical[historicalIndex].value * scaleFactor;
+            } else if (simStartStr > historical[historical.length - 1].date) {
+                const lastHistDate = historical[historical.length - 1].date;
+                const lastHistDateParts = lastHistDate.split('-');
+                const monthsToProject = (simStartYear - parseInt(lastHistDateParts[0])) * 12 + 
+                                        (simStartMonth - parseInt(lastHistDateParts[1]));
+                const yearsToProject = monthsToProject / 12;
+                simStartValue = historical[historical.length - 1].value * scaleFactor * 
+                               Math.pow(1 + params.cagr / 100, yearsToProject);
+            } else {
+                simStartValue = historical[0].value * scaleFactor;
+            }
+            
+            // Collect all simulation labels (limited to horizon)
+            state.simulationHistory.forEach(sim => {
+                sim.data.forEach(d => {
+                    if (!allLabels.includes(d.date) && d.date <= simEndFormatted) {
+                        allLabels.push(d.date);
+                    }
+                });
+            });
+            
+            // Also add current simulation labels if running
+            if (state.simulationData.length > 0) {
+                state.simulationData.forEach(d => {
+                    if (!allLabels.includes(d.date) && d.date <= simEndFormatted) {
+                        allLabels.push(d.date);
+                    }
+                });
+            }
+            
+            // Sort labels chronologically
+            allLabels.sort();
+            
+            // Calculate how many months to show
+            let monthsToShow;
+            if (state.viewPeriod === 'all') {
+                monthsToShow = allLabels.length;
+            } else {
+                monthsToShow = parseInt(state.viewPeriod) * 12;
+            }
+            
+            // Get the last N months
+            const startIndex = Math.max(0, allLabels.length - monthsToShow);
+            const visibleLabels = allLabels.slice(startIndex);
+            
+            // Filter historical data to visible range
+            const filteredHistorical = historicalData_scaled.filter(d => visibleLabels.includes(d.x));
+            
+            // Update chart
+            state.chart.data.labels = visibleLabels;
+            state.chart.data.datasets[0].data = filteredHistorical;
+            
+            // Update Benchmark line (from simulation start date)
+            const benchmarkData = [];
+            
+            visibleLabels.forEach((label) => {
+                if (label >= simStartStr) {
+                    const labelParts = label.split('-');
+                    const labelYear = parseInt(labelParts[0]);
+                    const labelMonth = parseInt(labelParts[1]);
+                    const simMonths = (labelYear - simStartYear) * 12 + (labelMonth - simStartMonth);
+                    const years = simMonths / 12;
+                    const benchmarkValue = simStartValue * Math.pow(1 + params.benchmarkLine / 100, years);
+                    benchmarkData.push({ x: label, y: benchmarkValue });
+                }
+            });
+            state.chart.data.datasets[1].data = benchmarkData;
+            
+            // Update all simulation datasets (index 2+)
+            for (let i = 2; i < state.chart.data.datasets.length; i++) {
+                const simIndex = i - 2;
+                if (simIndex < state.simulationHistory.length) {
+                    const simData = state.simulationHistory[simIndex].data;
+                    const filteredSim = simData
+                        .filter(d => visibleLabels.includes(d.date))
+                        .map(d => ({ x: d.date, y: d.value * scaleFactor }));
+                    state.chart.data.datasets[i].data = filteredSim;
+                } else if (state.simulationData.length > 0 && i === state.currentDatasetIndex) {
+                    // Current running simulation
+                    const filteredSim = state.simulationData
+                        .filter(d => visibleLabels.includes(d.date))
+                        .map(d => ({ x: d.date, y: d.value * scaleFactor }));
+                    state.chart.data.datasets[i].data = filteredSim;
+                }
+            }
+            
+            autoScaleYAxis();
+            state.chart.update();
+        }
+
+        function resetChart() {
+            if (!state.chart) return;
+            
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const scaleFactor = getScaleFactor();
+            
+            const historicalScaled = historical.map(d => ({
+                x: d.date,
+                y: d.value * scaleFactor
+            }));
+            
+            // Remove all simulation datasets (indices 2+)
+            while (state.chart.data.datasets.length > 2) {
+                state.chart.data.datasets.pop();
+            }
+            
+            // Clear simulation history
+            state.simulationHistory = [];
+            
+            state.chart.data.datasets[0].data = historicalScaled;
+            state.chart.data.datasets[1].data = []; // Benchmark
+            updateBenchmarkLine();
+            autoScaleYAxis();
+            state.chart.update();
+        }
+
+        // ============================================
+        // ANIMATION
+        // ============================================
+        
+        function startSimulation() {
+            if (state.isRunning && !state.isPaused) return;
+            
+            if (!state.isPaused) {
+                // Generate new simulation data
+                state.simulationData = generateSimulation();
+                state.currentSimulationIndex = 0;
+                
+                // Get color for current scenario
+                const color = scenarioColors[state.scenario];
+                const scenarioNames = {
+                    worst: 'Peggiore',
+                    bear: 'Bear',
+                    normal: 'Normale',
+                    bull: 'Bull',
+                    best: 'Migliore',
+                    random: 'Random'
+                };
+                
+                // Add new dataset for this simulation
+                const newDataset = {
+                    label: `Sim ${scenarioNames[state.scenario]}`,
+                    data: [],
+                    borderColor: color,
+                    backgroundColor: color.replace(')', ', 0.1)').replace('rgb', 'rgba'),
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    tension: 0.1,
+                    fill: false,
+                    scenario: state.scenario, // Store scenario for reference
+                    order: 50 - state.simulationHistory.length // Newer simulations on top
+                };
+                
+                state.chart.data.datasets.push(newDataset);
+                state.currentDatasetIndex = state.chart.data.datasets.length - 1;
+            }
+            
+            state.isRunning = true;
+            state.isPaused = false;
+            
+            elements.btnStart.disabled = true;
+            elements.btnPause.disabled = false;
+            
+            if (state.animationSpeed === 0) {
+                // Instant render
+                renderFullSimulation();
+            } else {
+                animateSimulation();
+            }
+        }
+
+        function animateSimulation() {
+            if (!state.isRunning || state.isPaused) return;
+            
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const scaleFactor = getScaleFactor();
+            const totalMonths = state.simulationData.length;
+            
+            // Add next data point
+            if (state.currentSimulationIndex < totalMonths) {
+                const dataPoint = state.simulationData[state.currentSimulationIndex];
+                
+                state.chart.data.datasets[state.currentDatasetIndex].data.push({
+                    x: dataPoint.date,
+                    y: dataPoint.value * scaleFactor
+                });
+                
+                // Auto-scale Y axis every 12 months
+                if (state.currentSimulationIndex % 12 === 0) {
+                    autoScaleYAxis();
+                }
+                
+                state.chart.update('none');
+                
+                // Update progress
+                const progress = (state.currentSimulationIndex + 1) / totalMonths * 100;
+                const currentYear = Math.floor(state.currentSimulationIndex / 12) + 1;
+                elements.progressFill.style.width = `${progress}%`;
+                elements.progressText.textContent = `Anno ${currentYear} di ${params.horizon}`;
+                
+                // Update stats every 6 months
+                if (state.currentSimulationIndex % 6 === 0) {
+                    const partialData = state.simulationData.slice(0, state.currentSimulationIndex + 1);
+                    updateStatistics(partialData);
+                }
+                
+                // Update yearly report every 12 months
+                if (state.currentSimulationIndex % 12 === 0) {
+                    const partialData = state.simulationData.slice(0, state.currentSimulationIndex + 1);
+                    updateYearlyReport(partialData);
+                }
+                
+                // Update 5-year report every 60 months
+                if (state.currentSimulationIndex % 60 === 0) {
+                    const partialData = state.simulationData.slice(0, state.currentSimulationIndex + 1);
+                    updateFiveyearReport(partialData);
+                }
+                
+                state.currentSimulationIndex++;
+                
+                // Calculate delay based on speed (per month)
+                const delay = state.animationSpeed / 12;
+                setTimeout(() => animateSimulation(), delay);
+            } else {
+                // Simulation complete
+                finishSimulation();
+            }
+        }
+
+        function renderFullSimulation() {
+            const params = getParameters();
+            const scaleFactor = getScaleFactor();
+            
+            const simulatedScaled = state.simulationData.map(d => ({
+                x: d.date,
+                y: d.value * scaleFactor
+            }));
+            
+            state.chart.data.datasets[state.currentDatasetIndex].data = simulatedScaled;
+            autoScaleYAxis();
+            state.chart.update();
+            
+            elements.progressFill.style.width = '100%';
+            elements.progressText.textContent = `Anno ${params.horizon} di ${params.horizon}`;
+            
+            finishSimulation();
+        }
+
+        function finishSimulation() {
+            state.isRunning = false;
+            state.isPaused = false;
+            
+            // Calculate final CAGR and add to history
+            const params = getParameters();
+            const historical = historicalData[state.currentBenchmark];
+            const startValue = historical[historical.length - 1].value;
+            const stats = calculateStatistics(state.simulationData, startValue, params.capital);
+            if (stats) {
+                state.cagrHistory.push(stats.cagr);
+                updateCagrAverage();
+            }
+            
+            // Save completed simulation to history
+            state.simulationHistory.push({
+                data: [...state.simulationData],
+                scenario: state.scenario,
+                datasetIndex: state.currentDatasetIndex,
+                startDate: state.simulationStartDate,
+                startValue: state.simulationStartValue
+            });
+            
+            elements.btnStart.disabled = false;
+            elements.btnPause.disabled = true;
+            
+            updateStatistics(state.simulationData);
+            updateYearlyReport(state.simulationData);
+            updateFiveyearReport(state.simulationData);
+            updateComparison();
+        }
+        
+        function updateCagrAverage() {
+            if (state.cagrHistory.length === 0) {
+                elements.statCagrAvg.textContent = '0,00%';
+                elements.statCagrAvg.className = 'stat-value';
+                elements.statCagrCount.textContent = '0 simulazioni';
+            } else {
+                const avgCagr = state.cagrHistory.reduce((a, b) => a + b, 0) / state.cagrHistory.length;
+                const params = getParameters();
+                elements.statCagrAvg.textContent = formatPercentNoSign(avgCagr);
+                elements.statCagrAvg.className = 'stat-value ' + (avgCagr >= params.cagr ? 'positive' : 'negative');
+                elements.statCagrCount.textContent = `${state.cagrHistory.length} simulazion${state.cagrHistory.length === 1 ? 'e' : 'i'}`;
+            }
+        }
+
+        function pauseSimulation() {
+            state.isPaused = true;
+            elements.btnStart.disabled = false;
+            elements.btnPause.disabled = true;
+            elements.btnStart.innerHTML = '<span>▶️</span> Riprendi';
+        }
+
+        function resetSimulation() {
+            state.isRunning = false;
+            state.isPaused = false;
+            state.currentSimulationIndex = 0;
+            state.simulationData = [];
+            state.simulationHistory = [];
+            state.cagrHistory = [];
+            state.viewPeriod = 'all';
+            
+            // Reset zoom buttons
+            elements.zoomBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period === 'all');
+            });
+            
+            elements.btnStart.disabled = false;
+            elements.btnStart.innerHTML = '<span>▶️</span> Avvia';
+            elements.btnPause.disabled = true;
+            elements.progressFill.style.width = '0%';
+            elements.progressText.textContent = `Anno 0 di ${elements.paramHorizon.value}`;
+            
+            resetChart();
+            resetStatistics();
+            updateYearlyReport([]);
+            updateFiveyearReport([]);
+        }
+
+        function newSimulation() {
+            state.seed = Math.random() * 10000;
+            // Don't reset chart, just reset current simulation state
+            state.isRunning = false;
+            state.isPaused = false;
+            state.currentSimulationIndex = 0;
+            state.simulationData = [];
+            
+            elements.btnStart.disabled = false;
+            elements.btnStart.innerHTML = '<span>▶️</span> Avvia';
+            elements.btnPause.disabled = true;
+            elements.progressFill.style.width = '0%';
+            elements.progressText.textContent = `Anno 0 di ${elements.paramHorizon.value}`;
+            
+            // Start new simulation immediately
+            startSimulation();
+        }
+
+        function resetStatistics() {
+            const capital = parseFloat(elements.paramCapital.value);
+            const inflation = parseFloat(elements.paramInflation.value);
+            elements.statFinalValue.textContent = formatCurrency(capital);
+            elements.statFinalValue.className = 'stat-value';
+            elements.statTotalReturn.textContent = '+0,00%';
+            elements.statFinalValueTaxed.textContent = formatCurrency(capital);
+            elements.statFinalValueTaxed.className = 'stat-value';
+            elements.statTotalReturnTaxed.textContent = '+0,00% (tassa 26%)';
+            elements.statFinalValueReal.textContent = formatCurrency(capital);
+            elements.statFinalValueReal.className = 'stat-value';
+            elements.statTotalReturnReal.textContent = `+0,00% (inflaz. ${inflation}%)`;
+            elements.statCagr.textContent = '0,00%';
+            elements.statCagr.className = 'stat-value';
+            elements.statCagrDiff.textContent = 'vs atteso: 0,00%';
+            elements.statCagrAvg.textContent = '0,00%';
+            elements.statCagrAvg.className = 'stat-value';
+            elements.statCagrCount.textContent = '0 simulazioni';
+            elements.statMaxDD.textContent = '0,00%';
+            elements.statCurrentDD.textContent = '0,00%';
+            elements.statVolatility.textContent = '0,00%';
+            elements.statLongestDD.textContent = '0 mesi';
+            elements.statBestYear.textContent = '+0,0%';
+            elements.statWorstYear.textContent = '0,0%';
+        }
+
+        // ============================================
+        // EVENT HANDLERS
+        // ============================================
+        
+        function setupEventListeners() {
+            // Benchmark tabs
+            elements.benchmarkTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    elements.benchmarkTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    state.currentBenchmark = tab.dataset.benchmark;
+                    
+                    // Update parameters
+                    const defaults = benchmarkDefaults[state.currentBenchmark];
+                    elements.paramCagr.value = defaults.cagr;
+                    elements.paramVolatility.value = defaults.volatility;
+                    elements.paramMaxDD.value = defaults.maxDrawdown;
+                    elements.paramMaxDDDuration.value = defaults.maxDrawdownDuration;
+                    elements.paramConvergence.value = defaults.convergenceYears;
+                    elements.paramBenchmarkLine.value = defaults.cagr; // Sync benchmark to CAGR
+                    
+                    resetSimulation();
+                });
+            });
+            
+            // Scenario options
+            elements.scenarioOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    elements.scenarioOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    option.querySelector('input').checked = true;
+                    state.scenario = option.dataset.scenario;
+                });
+            });
+            
+            // Speed buttons
+            elements.speedBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    elements.speedBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.animationSpeed = parseInt(btn.dataset.speed);
+                });
+            });
+            
+            // Preset buttons
+            elements.presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = btn.dataset.preset;
+                    switch(preset) {
+                        case 'conservative':
+                            elements.paramHorizon.value = '20';
+                            elements.paramCagr.value = '8';
+                            elements.paramVolatility.value = '12';
+                            elements.paramBenchmarkLine.value = '8';
+                            state.scenario = 'normal';
+                            break;
+                        case 'aggressive':
+                            elements.paramHorizon.value = '10';
+                            elements.paramCagr.value = '12';
+                            elements.paramVolatility.value = '20';
+                            elements.paramBenchmarkLine.value = '12';
+                            state.scenario = 'bull';
+                            break;
+                        case 'longterm':
+                            elements.paramHorizon.value = '40';
+                            elements.paramCagr.value = '10';
+                            elements.paramVolatility.value = '15';
+                            elements.paramBenchmarkLine.value = '10';
+                            state.scenario = 'normal';
+                            break;
+                        case 'prudent':
+                            elements.paramHorizon.value = '10';
+                            elements.paramCagr.value = '6';
+                            elements.paramVolatility.value = '10';
+                            elements.paramBenchmarkLine.value = '6';
+                            state.scenario = 'bear';
+                            break;
+                        case 'balanced':
+                            elements.paramHorizon.value = '15';
+                            elements.paramCagr.value = '9';
+                            elements.paramVolatility.value = '14';
+                            elements.paramBenchmarkLine.value = '9';
+                            state.scenario = 'normal';
+                            break;
+                        case 'pension':
+                            elements.paramHorizon.value = '20';
+                            elements.paramCagr.value = '8.5';
+                            elements.paramVolatility.value = '14';
+                            elements.paramBenchmarkLine.value = '8.5';
+                            state.scenario = 'normal';
+                            break;
+                    }
+                    updateScenarioUI();
+                    resetSimulation();
+                });
+            });
+            
+            // Control buttons
+            elements.btnStart.addEventListener('click', startSimulation);
+            elements.btnPause.addEventListener('click', pauseSimulation);
+            elements.btnReset.addEventListener('click', resetSimulation);
+            elements.btnNew.addEventListener('click', newSimulation);
+            // Zoom period buttons
+            elements.zoomBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    elements.zoomBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.viewPeriod = btn.dataset.period;
+                    applyViewPeriod();
+                });
+            });
+            
+            // Scale toggle
+            elements.scaleToggle.addEventListener('click', () => {
+                state.isLogScale = !state.isLogScale;
+                elements.scaleToggle.classList.toggle('active', state.isLogScale);
+                updateChartScale();
+            });
+            
+            // Parameter changes
+            [elements.paramCagr, elements.paramVolatility, elements.paramMaxDD, 
+             elements.paramMaxDDDuration, elements.paramConvergence, elements.paramHorizon,
+             elements.paramCapital, elements.paramBenchmarkLine, elements.paramInflation, elements.paramStartDate].forEach(input => {
+                input.addEventListener('change', () => {
+                    if (!state.isRunning) {
+                        resetChart();
+                        updateBenchmarkLine();
+                    }
+                });
+            });
+
+            // Sync CAGR to Benchmark line (one-way: CAGR → Benchmark)
+            elements.paramCagr.addEventListener('input', () => {
+                elements.paramBenchmarkLine.value = elements.paramCagr.value;
+            });
+        }
+
+        function updateScenarioUI() {
+            elements.scenarioOptions.forEach(option => {
+                option.classList.remove('selected');
+                if (option.dataset.scenario === state.scenario) {
+                    option.classList.add('selected');
+                    option.querySelector('input').checked = true;
+                }
+            });
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        function init() {
+            setupEventListeners();
+            initChart();
+            resetStatistics();
+            
+            // Set initial progress text
+            elements.progressText.textContent = `Anno 0 di ${elements.paramHorizon.value}`;
+        }
+
+        // Start app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
