@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calcolatore Fondo Pensione PERSEO SIRIO</title>
+    <title>Calcolatore Fondo Pensione</title>
     <style>
         * {
             margin: 0;
@@ -546,7 +546,7 @@
 <body>
     <div class="container">
         <h1>🏦 Calcolatore Fondo Pensione</h1>
-        <p class="subtitle">PERSEO SIRIO - Politecnico di Milano</p>
+        <p class="subtitle">Simulatore Pensione Complementare</p>
         
         <div class="input-section">
             <div class="input-header">
@@ -577,6 +577,14 @@
                         </span>
                     </label>
                 </div>
+
+                <div class="input-group" id="employerContribGroup" style="margin-top: 10px;">
+                    <label for="employerPercentage">Contributo Datore (%):</label>
+                    <div class="slider-container">
+                        <input type="range" id="employerPercentage" min="0" max="10" value="1" step="0.1">
+                        <div class="percentage-display" id="employerPercentageDisplay">1.0%</div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -606,7 +614,7 @@
                         <span class="breakdown-value" id="yearlyYourContribution">€4,068.61</span>
                     </div>
                     <div class="breakdown-item employer-row">
-                        <span class="breakdown-label">🏢 Datore (1%)</span>
+                        <span class="breakdown-label" id="employerLabel">🏢 Datore (1.0%)</span>
                         <span class="breakdown-value" id="yearlyEmployer">€271.18</span>
                     </div>
                     <div class="breakdown-item tfr-row">
@@ -680,16 +688,19 @@
     <script>
         // Dati base
         const tfrPercentuale = 6.91 / 100; // TFR è circa 6.91% dello stipendio
-        const contributoDatorePercentuale = 0.01; // 1% dello stipendio
         const mensilita = 13;
         const aliquotaMarginale = 0.35; // 35% di aliquota marginale IRPEF
         const limiteDeducibilita = 5164.57;
-        
+
         // Elementi DOM
         const stipendioInput = document.getElementById('stipendio');
         const slider = document.getElementById('percentage');
         const percentageDisplay = document.getElementById('percentageDisplay');
         const contributionToggle = document.getElementById('contributionToggle');
+        const employerPercentageInput = document.getElementById('employerPercentage');
+        const employerPercentageDisplay = document.getElementById('employerPercentageDisplay');
+        const employerLabel = document.getElementById('employerLabel');
+        const employerContribGroup = document.getElementById('employerContribGroup');
         
         // Gestione input stipendio
         stipendioInput.addEventListener('input', function() {
@@ -705,28 +716,38 @@
             updateCalculations();
         });
         
+        // Gestione slider contributo datore
+        employerPercentageInput.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            employerPercentageDisplay.textContent = value.toFixed(1) + '%';
+            employerLabel.textContent = `🏢 Datore (${value.toFixed(1)}%)`;
+            updateCalculations();
+        });
+
         // Gestione toggle
         contributionToggle.addEventListener('change', function() {
             const isOpenFund = this.checked;
-            
-            // Aggiorna visibilità righe
+
+            // Aggiorna visibilità righe e input contributo datore
             document.querySelectorAll('.employer-row, .tfr-row').forEach(row => {
                 row.style.display = isOpenFund ? 'none' : 'flex';
             });
-            
+            employerContribGroup.style.display = isOpenFund ? 'none' : 'flex';
+
             // Aggiorna etichetta
-            document.getElementById('monthlyTotalLabel').textContent = 
+            document.getElementById('monthlyTotalLabel').textContent =
                 isOpenFund ? 'Versamento Mensile' : 'Totale Mensile al Fondo';
-            
+
             // Aggiorna info text
             const infoText = document.getElementById('infoText');
             if (isOpenFund) {
                 infoText.innerHTML = '💡 <strong>Fondo Aperto:</strong> I versamenti diretti sono interamente deducibili fino a €5,164.57 annui. Non ricevi contributi dal datore né TFR, ma hai piena flessibilità sui versamenti.';
             } else {
-                const contributoDatoreAnnuo = (parseFloat(stipendioInput.value) * contributoDatorePercentuale * mensilita).toFixed(2);
+                const employerPercent = parseFloat(employerPercentageInput.value) / 100;
+                const contributoDatoreAnnuo = (parseFloat(stipendioInput.value) * employerPercent * mensilita).toFixed(2);
                 infoText.innerHTML = `💡 <strong>Nota bene:</strong> I tuoi contributi sono deducibili fiscalmente. Con un'aliquota marginale del 35%, il tuo costo effettivo è molto inferiore a quanto versi. Inoltre, ricevi €${contributoDatoreAnnuo} all'anno "gratis" dal datore di lavoro!`;
             }
-            
+
             updateCalculations();
         });
         
@@ -741,9 +762,10 @@
             const stipendioBase = parseFloat(stipendioInput.value) || 0;
             const percentage = parseFloat(slider.value);
             const isOpenFund = contributionToggle.checked;
-            
+            const employerPercent = parseFloat(employerPercentageInput.value) / 100;
+
             // Calcola valori dinamici basati sullo stipendio
-            const contributoDatore = stipendioBase * contributoDatorePercentuale;
+            const contributoDatore = stipendioBase * employerPercent;
             const tfrMensile = (stipendioBase / 13.5) * 12 / 12; // Formula approssimativa TFR
             
             // Aggiorna display percentuale
@@ -829,7 +851,12 @@
         
         // Event listener per lo slider
         slider.addEventListener('input', updateCalculations);
-        
+
+        // Inizializza valori display contributo datore
+        const initialEmployerPercent = parseFloat(employerPercentageInput.value);
+        employerPercentageDisplay.textContent = initialEmployerPercent.toFixed(1) + '%';
+        employerLabel.textContent = `🏢 Datore (${initialEmployerPercent.toFixed(1)}%)`;
+
         // Calcolo iniziale
         updateCalculations();
     </script>
