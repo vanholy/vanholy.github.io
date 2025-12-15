@@ -703,21 +703,52 @@
         </header>
 
         <div class="apps-grid">
+            <!-- Simulatore Scenari di Mercato -->
+            <div class="app-card">
+                <div class="app-header" onclick="toggleApp(this)">
+                    <h2 class="app-title">📈 SIMULATORE SCENARI DI MERCATO</h2>
+                    <p class="app-description">
+                        Simulatore avanzato Monte Carlo per proiezioni di mercato. Scenari realistici basati su dati storici reali
+                        (NASDAQ, S&P 500, MSCI World, Emerging Markets, Europa, Bond 7-10y). Visualizzazione drawdown, volatilità e performance annuali.
+                    </p>
+                    <div class="app-tags">
+                        <span class="app-tag">Monte Carlo</span>
+                        <span class="app-tag">Historical Data</span>
+                        <span class="app-tag">Chart.js</span>
+                        <span class="app-tag">Market Scenarios</span>
+                        <span class="app-tag">Real Benchmarks</span>
+                        <span class="app-tag">Drawdown Analysis</span>
+                    </div>
+                    <div class="app-header-controls">
+                        <button class="open-window-btn" onclick="event.stopPropagation(); window.open('simulatore_scenari_mercato.html', '_blank')">🔗 Apri</button>
+                    </div>
+                </div>
+                <div class="app-content">
+                    <iframe src="simulatore_scenari_mercato.html" class="app-iframe" height="800"></iframe>
+                    <div class="app-actions">
+                        <button class="app-btn" onclick="event.stopPropagation(); window.open('simulatore_scenari_mercato.html', '_blank')">
+                            🚀 LAUNCH APP
+                        </button>
+                        <div class="app-toggle">▼</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Simulatore Finanziario -->
             <div class="app-card">
                 <div class="app-header" onclick="toggleApp(this)">
-                    <h2 class="app-title">📊 SIMULATORE FINANZIARIO AI</h2>
+                    <h2 class="app-title">📊 SIMULATORE FINANZIARIO INVESTIMENTI</h2>
                     <p class="app-description">
-                        Sistema avanzato di simulazione patrimoniale con intelligenza artificiale integrata.
+                        Sistema avanzato di simulazione patrimoniale per la pianificazione finanziaria.
                         Proiezioni dettagliate, analisi scenari di mercato e ottimizzazione asset allocation dinamica.
                     </p>
                     <div class="app-tags">
-                        <span class="app-tag">AI Powered</span>
-                        <span class="app-tag">Claude API</span>
                         <span class="app-tag">Chart.js</span>
                         <span class="app-tag">Portfolio</span>
                         <span class="app-tag">Pension Fund</span>
                         <span class="app-tag">Market Scenarios</span>
+                        <span class="app-tag">Asset Allocation</span>
+                        <span class="app-tag">Retirement Planning</span>
                     </div>
                     <div class="app-header-controls">
                         <button class="open-window-btn" onclick="event.stopPropagation(); window.open('simulatore_finanziario_finale.html', '_blank')">🔗 Apri</button>
