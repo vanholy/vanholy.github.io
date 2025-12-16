@@ -95,6 +95,77 @@
             letter-spacing: -0.5px;
         }
 
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1.5rem;
+            padding-left: 1.5rem;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .currency-toggle {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+
+        .currency-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            transition: 0.3s;
+            border-radius: 20px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-secondary);
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .currency-toggle input:checked + .toggle-slider {
+            background-color: var(--accent-blue);
+        }
+
+        .currency-toggle input:checked + .toggle-slider:before {
+            transform: translateX(16px);
+            background-color: white;
+        }
+
+        .currency-select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.3rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: var(--font-sans);
+            cursor: pointer;
+        }
+
+        .currency-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .benchmark-tabs {
             display: flex;
             gap: 0.5rem;
@@ -884,6 +955,16 @@
         <div class="logo">
             <div class="logo-icon">📈</div>
             <span class="logo-text">Simulatore Scenari di Mercato</span>
+            <div class="currency-selector">
+                <label class="currency-toggle">
+                    <input type="checkbox" id="currency-enabled">
+                    <span class="toggle-slider"></span>
+                </label>
+                <select id="currency-select" class="currency-select" disabled>
+                    <option value="USD">USD $</option>
+                    <option value="EUR">EUR €</option>
+                </select>
+            </div>
         </div>
         <div class="benchmark-tabs">
             <button class="benchmark-tab active" data-benchmark="NASDAQ">NASDAQ</button>
@@ -1213,6 +1294,18 @@
                     <div class="stat-label">CAGR Medio</div>
                     <div class="stat-value" id="stat-cagr-avg">0,00%</div>
                     <div class="stat-change" id="stat-cagr-count">0 simulazioni</div>
+                </div>
+
+                <div class="stat-card fx-stat" style="display: none;">
+                    <div class="stat-label">Valore con Cambio</div>
+                    <div class="stat-value" id="stat-final-value-fx">€ 100.000</div>
+                    <div class="stat-change" id="stat-total-return-fx">+0,00% (EUR)</div>
+                </div>
+
+                <div class="stat-card fx-stat" style="display: none;">
+                    <div class="stat-label">CAGR con Cambio</div>
+                    <div class="stat-value" id="stat-cagr-fx">0,00%</div>
+                    <div class="stat-change" id="stat-cagr-fx-diff">vs nominale: 0,00%</div>
                 </div>
 
                 <div class="stats-grid">
@@ -1704,6 +1797,80 @@
         }
 
         // ============================================
+        // EUR/USD EXCHANGE RATE SIMULATION
+        // ============================================
+        
+        // Generate EUR/USD exchange rate simulation for the given number of months
+        // Based on historical volatility patterns:
+        // - Calm years: 7-10% annual range
+        // - Standard years: 12-15% annual range  
+        // - Crisis years: 20-25% annual range
+        function generateFxSimulation(months) {
+            const fxData = [];
+            let rate = 1.08; // Starting EUR/USD rate
+            
+            // EUR/USD has mean-reverting tendency around 1.00-1.20 range
+            const meanRate = 1.10;
+            const meanReversionStrength = 0.02; // Monthly mean reversion
+            
+            // Annual volatility scenarios (converted to monthly)
+            const volatilityRegimes = {
+                calm: 0.08 / Math.sqrt(12),      // ~7-10% annual
+                standard: 0.13 / Math.sqrt(12),  // ~12-15% annual
+                crisis: 0.22 / Math.sqrt(12)     // ~20-25% annual
+            };
+            
+            let seed = state.seed * 7919; // Different seed for FX
+            function seededRandom() {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            }
+            
+            function randomNormal() {
+                const u1 = seededRandom();
+                const u2 = seededRandom();
+                return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            }
+            
+            let currentRegime = 'standard';
+            let monthsInRegime = 0;
+            
+            for (let i = 0; i < months; i++) {
+                // Regime switching (approximately every 2-4 years on average)
+                monthsInRegime++;
+                if (monthsInRegime > 24 && seededRandom() < 0.05) {
+                    const regimeRoll = seededRandom();
+                    if (regimeRoll < 0.3) currentRegime = 'calm';
+                    else if (regimeRoll < 0.85) currentRegime = 'standard';
+                    else currentRegime = 'crisis';
+                    monthsInRegime = 0;
+                }
+                
+                const volatility = volatilityRegimes[currentRegime];
+                
+                // Mean reversion component
+                const meanReversion = (meanRate - rate) * meanReversionStrength;
+                
+                // Random shock
+                const shock = randomNormal() * volatility;
+                
+                // Small drift (EUR tends to be slightly weaker long-term vs USD)
+                const drift = -0.001; // -1.2% annual drift
+                
+                // Calculate monthly return
+                const monthlyReturn = drift + meanReversion + shock;
+                rate *= (1 + monthlyReturn);
+                
+                // Keep within reasonable bounds (0.80 - 1.60)
+                rate = Math.max(0.80, Math.min(1.60, rate));
+                
+                fxData.push(rate);
+            }
+            
+            return fxData;
+        }
+
+        // ============================================
         // BENCHMARK DEFAULTS
         // ============================================
         
@@ -1773,8 +1940,111 @@
             seed: Math.random() * 10000,
             viewPeriod: 'all',
             simulationStartDate: '2024-12',
-            simulationStartValue: null
+            simulationStartValue: null,
+            currencyEnabled: false,
+            selectedCurrency: 'USD',
+            fxSimulation: [] // EUR/USD exchange rate simulation
         };
+
+        // Native currency for each benchmark
+        const benchmarkCurrency = {
+            NASDAQ: 'USD',
+            SP500: 'USD',
+            MSCI_WORLD: 'USD',
+            EMERGING: 'USD',
+            EUROPE: 'EUR',
+            BOND_7_10: 'EUR'
+        };
+
+        // Historical EUR/USD exchange rates (average annual)
+        // Pre-1999: synthetic rates based on Deutsche Mark
+        const historicalEURUSD = {
+            1994: 1.19, 1995: 1.31, 1996: 1.27, 1997: 1.13, 1998: 1.12,
+            1999: 1.07, 2000: 0.92, 2001: 0.90, 2002: 0.95, 2003: 1.13,
+            2004: 1.24, 2005: 1.24, 2006: 1.26, 2007: 1.37, 2008: 1.47,
+            2009: 1.39, 2010: 1.33, 2011: 1.39, 2012: 1.29, 2013: 1.33,
+            2014: 1.33, 2015: 1.11, 2016: 1.11, 2017: 1.13, 2018: 1.18,
+            2019: 1.12, 2020: 1.14, 2021: 1.18, 2022: 1.05, 2023: 1.08,
+            2024: 1.08
+        };
+
+        // Generate FX simulation for future years
+        function generateFXSimulation(startYear, months) {
+            const fxData = [];
+            let currentRate = historicalEURUSD[2024] || 1.08;
+            
+            // Volatility parameters based on user's specifications
+            // Calm years: 7-10%, Standard: 12-15%, Crisis: 20-25%
+            const annualVolatilities = {
+                calm: 0.085,    // 8.5% average
+                standard: 0.135, // 13.5% average
+                crisis: 0.225   // 22.5% average
+            };
+            
+            let seed = state.seed + 99999; // Different seed from main simulation
+            function seededRandom() {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            }
+            
+            for (let m = 0; m < months; m++) {
+                const year = startYear + Math.floor(m / 12);
+                
+                // Determine volatility regime (roughly 70% calm, 25% standard, 5% crisis)
+                const regime = seededRandom();
+                let annualVol;
+                if (regime < 0.70) {
+                    annualVol = annualVolatilities.calm;
+                } else if (regime < 0.95) {
+                    annualVol = annualVolatilities.standard;
+                } else {
+                    annualVol = annualVolatilities.crisis;
+                }
+                
+                const monthlyVol = annualVol / Math.sqrt(12);
+                
+                // Mean reversion towards long-term average (1.15)
+                const longTermMean = 1.15;
+                const meanReversionSpeed = 0.02;
+                const drift = meanReversionSpeed * (longTermMean - currentRate) / 12;
+                
+                // Random walk with mean reversion
+                const randomShock = (seededRandom() - 0.5) * 2 * monthlyVol;
+                currentRate *= (1 + drift + randomShock);
+                
+                // Keep rate within realistic bounds (0.80 - 1.60)
+                currentRate = Math.max(0.80, Math.min(1.60, currentRate));
+                
+                fxData.push(currentRate);
+            }
+            
+            return fxData;
+        }
+
+        // Get FX rate for a specific date (historical or simulated)
+        function getFXRate(date, simulatedFX, simStartDate) {
+            const dateParts = date.split('-');
+            const year = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]) - 1;
+            
+            // Check if it's in historical period
+            if (year <= 2024) {
+                return historicalEURUSD[year] || 1.08;
+            }
+            
+            // Calculate months from simulation start
+            const simStartParts = simStartDate.split('-');
+            const simStartYear = parseInt(simStartParts[0]);
+            const simStartMonth = parseInt(simStartParts[1]) - 1;
+            
+            const monthsFromStart = (year - simStartYear) * 12 + (month - simStartMonth);
+            
+            if (simulatedFX && monthsFromStart >= 0 && monthsFromStart < simulatedFX.length) {
+                return simulatedFX[monthsFromStart];
+            }
+            
+            return 1.08; // Default
+        }
 
         // Scenario colors matching the emoji indicators
         const scenarioColors = {
@@ -1841,6 +2111,15 @@
             statCagrDiff: document.getElementById('stat-cagr-diff'),
             statCagrAvg: document.getElementById('stat-cagr-avg'),
             statCagrCount: document.getElementById('stat-cagr-count'),
+            statFinalValueFx: document.getElementById('stat-final-value-fx'),
+            statTotalReturnFx: document.getElementById('stat-total-return-fx'),
+            statCagrFx: document.getElementById('stat-cagr-fx'),
+            statCagrFxDiff: document.getElementById('stat-cagr-fx-diff'),
+            fxStats: document.querySelectorAll('.fx-stat'),
+            
+            currencyEnabled: document.getElementById('currency-enabled'),
+            currencySelect: document.getElementById('currency-select'),
+            
             statMaxDD: document.getElementById('stat-maxdd'),
             statCurrentDD: document.getElementById('stat-current-dd'),
             statVolatility: document.getElementById('stat-volatility'),
@@ -2100,6 +2379,17 @@
                 });
             }
             
+            // Generate FX simulation if currency conversion is enabled
+            // Generate from 2025 onward (historical data available up to 2024)
+            if (state.currencyEnabled) {
+                const simEndYear = startYear + params.horizon;
+                if (simEndYear > 2024) {
+                    // Calculate months from 2025 to simulation end
+                    const futureMonths = (simEndYear - 2025 + 1) * 12;
+                    state.fxSimulation = generateFXSimulation(2025, futureMonths);
+                }
+            }
+            
             return simulationData;
         }
 
@@ -2254,6 +2544,116 @@
             elements.statLongestDD.textContent = `${stats.longestDD} mesi`;
             elements.statBestYear.textContent = formatPercent(stats.bestYear, 1);
             elements.statWorstYear.textContent = formatPercent(stats.worstYear, 1);
+            
+            // Currency conversion calculations
+            updateFXStatistics(simulationData, stats, params);
+        }
+        
+        function updateFXStatistics(simulationData, stats, params) {
+            // Read state directly from DOM elements to ensure sync
+            const currencyEnabled = elements.currencyEnabled.checked;
+            const selectedCurrency = elements.currencySelect.value;
+            
+            // Sync state
+            state.currencyEnabled = currencyEnabled;
+            state.selectedCurrency = selectedCurrency;
+            
+            if (!currencyEnabled || !simulationData || simulationData.length === 0) {
+                return;
+            }
+            
+            const nativeCurrency = benchmarkCurrency[state.currentBenchmark];
+            const targetCurrency = selectedCurrency;
+            
+            // If same currency, show same values
+            if (nativeCurrency === targetCurrency) {
+                elements.statFinalValueFx.textContent = formatCurrency(stats.finalValue);
+                elements.statFinalValueFx.className = 'stat-value ' + (stats.totalReturn >= 0 ? 'positive' : 'negative');
+                elements.statTotalReturnFx.textContent = `${formatPercent(stats.totalReturn)} (${targetCurrency})`;
+                elements.statCagrFx.textContent = formatPercentNoSign(stats.cagr);
+                elements.statCagrFx.className = 'stat-value';
+                elements.statCagrFxDiff.textContent = 'stessa valuta';
+                return;
+            }
+            
+            // Get start and end dates from simulation data
+            const startDate = simulationData[0].date;
+            const endDate = simulationData[simulationData.length - 1].date;
+            
+            // Get FX rates - use historical data for past dates, simulated for future
+            const startYear = parseInt(startDate.split('-')[0]);
+            const endYear = parseInt(endDate.split('-')[0]);
+            
+            // Generate FX simulation if needed for future years
+            if (endYear > 2024 && (!state.fxSimulation || state.fxSimulation.length === 0)) {
+                const futureMonths = (endYear - 2025 + 2) * 12;
+                state.fxSimulation = generateFXSimulation(2025, futureMonths);
+            }
+            
+            // Get historical or simulated FX rate
+            let startFX, endFX;
+            
+            if (startYear <= 2024) {
+                startFX = historicalEURUSD[startYear] || 1.08;
+            } else if (state.fxSimulation && state.fxSimulation.length > 0) {
+                startFX = state.fxSimulation[0];
+            } else {
+                startFX = 1.08;
+            }
+            
+            if (endYear <= 2024) {
+                endFX = historicalEURUSD[endYear] || 1.08;
+            } else if (state.fxSimulation && state.fxSimulation.length > 0) {
+                // Calculate index into fxSimulation (starts from 2025)
+                const endMonth = parseInt(endDate.split('-')[1]) - 1;
+                const monthsFrom2025 = (endYear - 2025) * 12 + endMonth;
+                if (monthsFrom2025 >= 0 && monthsFrom2025 < state.fxSimulation.length) {
+                    endFX = state.fxSimulation[monthsFrom2025];
+                } else if (monthsFrom2025 >= state.fxSimulation.length) {
+                    endFX = state.fxSimulation[state.fxSimulation.length - 1];
+                } else {
+                    endFX = 1.08;
+                }
+            } else {
+                endFX = 1.08;
+            }
+            
+            // Calculate FX impact
+            // If benchmark is USD and user sees in EUR:
+            // - USD strengthens (EUR/USD goes down) = good for EUR investor
+            // - USD weakens (EUR/USD goes up) = bad for EUR investor
+            let fxMultiplier;
+            if (nativeCurrency === 'USD' && targetCurrency === 'EUR') {
+                // USD asset viewed in EUR: divide by exchange rate
+                // startFX = 1.08 means 1 EUR = 1.08 USD, so 1 USD = 0.926 EUR
+                // If endFX = 1.20, 1 USD = 0.833 EUR (USD weakened, bad for EUR investor)
+                fxMultiplier = startFX / endFX;
+            } else {
+                // EUR asset viewed in USD: multiply by exchange rate
+                fxMultiplier = endFX / startFX;
+            }
+            
+            // Calculate values with FX
+            const finalValueConverted = stats.finalValue * fxMultiplier;
+            const totalReturnFx = (finalValueConverted / params.capital - 1) * 100;
+            
+            // Calculate CAGR with FX
+            const years = simulationData.length / 12;
+            const cagrFx = (Math.pow(finalValueConverted / params.capital, 1 / years) - 1) * 100;
+            
+            // Calculate FX rate change for display
+            const fxChange = ((endFX / startFX) - 1) * 100;
+            
+            // Update display
+            const currencySymbol = targetCurrency === 'EUR' ? '€' : '$';
+            elements.statFinalValueFx.textContent = `${currencySymbol} ${finalValueConverted.toLocaleString('it-IT', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+            elements.statFinalValueFx.className = 'stat-value ' + (totalReturnFx >= 0 ? 'positive' : 'negative');
+            elements.statTotalReturnFx.textContent = `${formatPercent(totalReturnFx)} (FX: ${fxChange >= 0 ? '+' : ''}${fxChange.toFixed(1)}%)`;
+            
+            elements.statCagrFx.textContent = formatPercentNoSign(cagrFx);
+            elements.statCagrFx.className = 'stat-value ' + (cagrFx >= stats.cagr ? 'positive' : 'negative');
+            const cagrDiff = cagrFx - stats.cagr;
+            elements.statCagrFxDiff.textContent = `vs nominale: ${formatPercent(cagrDiff)}`;
         }
 
         function updateComparison() {
@@ -2989,6 +3389,8 @@
             state.simulationHistory = [];
             state.cagrHistory = [];
             state.viewPeriod = 'all';
+            state.fxSimulation = []; // Reset FX simulation
+            state.seed = Math.random() * 10000; // New seed for new FX simulation
             
             // Reset zoom buttons
             elements.zoomBtns.forEach(btn => {
@@ -3043,6 +3445,15 @@
             elements.statCagrAvg.textContent = '0,00%';
             elements.statCagrAvg.className = 'stat-value';
             elements.statCagrCount.textContent = '0 simulazioni';
+            // Reset FX stats
+            elements.statFinalValueFx.textContent = formatCurrency(capital);
+            elements.statFinalValueFx.className = 'stat-value';
+            elements.statTotalReturnFx.textContent = '+0,00% (EUR)';
+            elements.statCagrFx.textContent = '0,00%';
+            elements.statCagrFx.className = 'stat-value';
+            elements.statCagrFxDiff.textContent = 'vs nominale: 0,00%';
+            // Reset FX simulation
+            state.fxSimulation = [];
             elements.statMaxDD.textContent = '0,00%';
             elements.statCurrentDD.textContent = '0,00%';
             elements.statVolatility.textContent = '0,00%';
@@ -3072,8 +3483,50 @@
                     elements.paramConvergence.value = defaults.convergenceYears;
                     elements.paramBenchmarkLine.value = defaults.cagr; // Sync benchmark to CAGR
                     
+                    // Update default currency for benchmark
+                    const defaultCurrency = benchmarkCurrency[state.currentBenchmark];
+                    elements.currencySelect.value = defaultCurrency;
+                    state.selectedCurrency = defaultCurrency;
+                    
                     resetSimulation();
                 });
+            });
+            
+            // Currency toggle
+            elements.currencyEnabled.addEventListener('change', () => {
+                const currencyEnabled = elements.currencyEnabled.checked;
+                state.currencyEnabled = currencyEnabled;
+                elements.currencySelect.disabled = !currencyEnabled;
+                
+                // Show/hide FX stat boxes
+                elements.fxStats.forEach(box => {
+                    box.style.display = currencyEnabled ? 'block' : 'none';
+                });
+                
+                // Generate FX simulation if needed and recalculate
+                if (currencyEnabled && state.simulationData && state.simulationData.length > 0) {
+                    // Generate FX simulation if not already present
+                    if (!state.fxSimulation || state.fxSimulation.length === 0) {
+                        const endDate = state.simulationData[state.simulationData.length - 1].date;
+                        const endYear = parseInt(endDate.split('-')[0]);
+                        if (endYear > 2024) {
+                            const futureMonths = (endYear - 2025 + 2) * 12;
+                            state.fxSimulation = generateFXSimulation(2025, futureMonths);
+                        }
+                    }
+                    updateStatistics(state.simulationData);
+                }
+            });
+            
+            // Currency select
+            elements.currencySelect.addEventListener('change', () => {
+                state.selectedCurrency = elements.currencySelect.value;
+                
+                // Recalculate statistics if simulation data exists (check DOM directly)
+                const currencyEnabled = elements.currencyEnabled.checked;
+                if (currencyEnabled && state.simulationData && state.simulationData.length > 0) {
+                    updateStatistics(state.simulationData);
+                }
             });
             
             // Scenario options
@@ -3206,6 +3659,16 @@
             setupEventListeners();
             initChart();
             resetStatistics();
+            
+            // Sync currency toggle state
+            state.currencyEnabled = elements.currencyEnabled.checked;
+            state.selectedCurrency = elements.currencySelect.value;
+            elements.currencySelect.disabled = !state.currencyEnabled;
+            
+            // Show/hide FX stat boxes based on initial state
+            elements.fxStats.forEach(box => {
+                box.style.display = state.currencyEnabled ? 'block' : 'none';
+            });
             
             // Set initial progress text
             elements.progressText.textContent = `Anno 0 di ${elements.paramHorizon.value}`;
