@@ -22,6 +22,7 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 <script>window.react = window.React;</script>
 <script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 <script crossorigin src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
@@ -40,9 +41,49 @@ const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 const fmtDate = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "2-digit" });
 const fmtN = (n, d = 2) => (n != null && !isNaN(n)) ? Number(n).toFixed(d) : "—";
 
-// Storage
-const loadK = async (k) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : []; } catch { return []; } };
-const saveK = async (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+// Supabase client
+const SB_URL = 'https://cfejkhmrphjiccyrkblc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmZWpraG1ycGhqaWNjeXJrYmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNjUzOTEsImV4cCI6MjA4Nzg0MTM5MX0.v2hdI9ZGaKlYi2EwNBWyjGpHSlGpQkaWk3nHEDRI1pM';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// Storage — Supabase con fallback localStorage
+const loadK = async (k) => {
+  try {
+    const table = k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
+    const { data, error } = await sb.from(table).select('*').order('date', { ascending: true });
+    if (error) throw error;
+    if (k === 'ft-v3') {
+      return data.map(r => ({ id: r.id, date: r.date, liters: Number(r.liters), pricePerLiter: Number(r.price_per_liter), odometer: r.odometer, totalCost: Number(r.total_cost), fuelType: r.fuel_type, fullTank: r.full_tank, notes: r.notes || '' }));
+    } else {
+      return data.map(r => ({ id: r.id, date: r.date, type: r.type, desc: r.description, cost: Number(r.cost), odometer: r.odometer || 0, notes: r.notes || '' }));
+    }
+  } catch(e) {
+    console.warn('Supabase load fallback:', e.message);
+    try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : []; } catch { return []; }
+  }
+};
+
+const saveK = async (k, v) => {
+  try {
+    const table = k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
+    const rows = k === 'ft-v3'
+      ? v.map(e => ({ id: e.id, date: e.date, liters: e.liters, price_per_liter: e.pricePerLiter, odometer: e.odometer, total_cost: e.totalCost, fuel_type: e.fuelType, full_tank: e.fullTank, notes: e.notes || '' }))
+      : v.map(e => ({ id: e.id, date: e.date, type: e.type, description: e.desc, cost: e.cost, odometer: e.odometer || 0, notes: e.notes || '' }));
+    // Upsert tutto + elimina eventuali righe rimosse
+    if (rows.length > 0) {
+      const { error } = await sb.from(table).upsert(rows, { onConflict: 'id' });
+      if (error) throw error;
+      const ids = v.map(e => e.id);
+      await sb.from(table).delete().not('id', 'in', `(${ids.map(i => `"${i}"`).join(',')})`);
+    } else {
+      await sb.from(table).delete().neq('id', '___none___');
+    }
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch(e) {
+    console.warn('Supabase save fallback:', e.message);
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+  }
+};
 
 const calcCons = (cur, prev) => { if (!prev) return null; const km = cur.odometer - prev.odometer; if (km <= 0) return null; return { kmDriven: km, lPer100: (cur.liters / km) * 100, costPerKm: cur.totalCost / km }; };
 
