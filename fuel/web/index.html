@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Galaxy">
+<meta name="theme-color" content="#050a18">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Galaxy Fuel Tracker</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:#050a18;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script crossorigin src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+<script type="text/babel">
+const { useState, useEffect } = React;
+const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Area, AreaChart } = Recharts;
+const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3 } = lucideReact;
+
+const FUEL_TYPES = ["B7", "HVO", "Mix"];
+const MAINT_TYPES = ["Tagliando", "Riparazione", "Pneumatici", "Revisione", "Carrozzeria", "Altro"];
+const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const fmtDate = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "2-digit" });
+const fmtN = (n, d = 2) => (n != null && !isNaN(n)) ? Number(n).toFixed(d) : "—";
+
+// Storage
+const loadK = async (k) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : []; } catch { return []; } };
+const saveK = async (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+const calcCons = (cur, prev) => { if (!prev) return null; const km = cur.odometer - prev.odometer; if (km <= 0) return null; return { kmDriven: km, lPer100: (cur.liters / km) * 100, costPerKm: cur.totalCost / km }; };
+
+const dl = (content, name, type) => { const b = new Blob([content], { type }); const u = URL.createObjectURL(b); const a = Object.assign(document.createElement("a"), { href: u, download: name }); document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u); };
+const detectFuel = (n) => { if (!n) return "B7"; const l = n.toLowerCase(); return l.includes("hvo") ? "HVO" : l.includes("mix") ? "Mix" : "B7"; };
+
+// Fuelio CSV parser
+const parseFuelioCSV = (text) => {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean); let logStart = -1;
+  for (let i = 0; i < lines.length; i++) { if (lines[i].replace(/"/g,"").trim()==="## Log") { logStart=i; break; } }
+  if (logStart===-1) return null;
+  const pL = (line) => { const r=[]; let c="",q=false; for(let i=0;i<line.length;i++){const ch=line[i]; if(ch==='"')q=!q; else if(ch===','&&!q){r.push(c.trim());c="";}else c+=ch;} r.push(c.trim()); return r; };
+  const h=pL(lines[logStart+1]).map(x=>x.toLowerCase()); const entries=[];
+  const iD=h.findIndex(x=>x.includes("data")),iO=h.findIndex(x=>x.includes("odo")),iF=h.findIndex(x=>x.includes("fuel")&&!x.includes("type")),
+    iFl=h.findIndex(x=>x.includes("full")),iP=h.findIndex(x=>x.includes("price")&&!x.includes("volume")),iN=h.findIndex(x=>x.includes("notes")),iVP=h.findIndex(x=>x.includes("volumeprice"));
+  if(iD===-1||iO===-1||iF===-1) return null;
+  let logEnd=lines.length; for(let i=logStart+2;i<lines.length;i++){if(lines[i].replace(/"/g,"").trim().startsWith("##")){logEnd=i;break;}}
+  for(let i=logStart+2;i<logEnd;i++){const cols=pL(lines[i]); if(cols.length<3)continue;
+    const date=cols[iD],odo=parseFloat(cols[iO]),lit=parseFloat(cols[iF]),full=iFl>=0?cols[iFl]==="1":true,notes=iN>=0?(cols[iN]||""):"";
+    if(!date||isNaN(odo)||isNaN(lit)||lit<=0)continue; let ppl=0;
+    if(iVP>=0&&cols[iVP]){const vp=parseFloat(cols[iVP]);if(!isNaN(vp)&&vp>0&&vp<10)ppl=vp;}
+    if(ppl===0&&iP>=0&&cols[iP]){const tp=parseFloat(cols[iP]);if(!isNaN(tp)&&tp>0)ppl=tp>lit*5?tp/lit:tp<5?tp:tp/lit;}
+    entries.push({id:genId(),date:date.slice(0,10),odometer:Math.round(odo),liters:Math.round(lit*1000)/1000,pricePerLiter:Math.round(ppl*1000)/1000,totalCost:Math.round(lit*ppl*100)/100,fullTank:full,fuelType:detectFuel(notes),notes});
+  } return entries.length>0?entries:null;
+};
+
+const exportFuelio=(entries)=>{const s=[...entries].sort((a,b)=>a.odometer-b.odometer);const l=['"## Vehicle"','"Name","Description","DistUnit","FuelUnit","ConsumptionUnit","ImportCSVDateFormat","VIN","Insurance","Plate","Make","Model","Year","TankCount","Tank1Type","Tank2Type","Active","Tank1Capacity","Tank2Capacity"','"Ford Galaxy 2.0 EcoBlue","","1","1","1","yyyy-MM-dd","WF0KXXWPCKJP17573","","FV695GW","Ford","Galaxy","2019","1","100","0","1","71.0","0.0"','"## Log"','"Data","Odo (km)","Fuel (litres)","Full","Price (optional)","l/100km (optional)","latitude (optional)","longitude (optional)","City (optional)","Notes (optional)","Missed","TankNumber","FuelType","VolumePrice","StationID (optional)","ExcludeDistance","UniqueId","TankCalc"'];s.forEach(e=>{const n=e.fuelType!=="B7"?`[${e.fuelType}] ${e.notes||""}`.trim():(e.notes||"");l.push(`"${e.date}","${e.odometer}","${e.liters.toFixed(3)}","${e.fullTank?1:0}","${e.totalCost.toFixed(2)}","0.0","","","","${n}","0","1","102","${e.pricePerLiter.toFixed(3)}","0","0.0","0","0.0"`);});dl(l.join("\n"),`galaxy_fuelio_${new Date().toISOString().slice(0,10)}.csv`,"text/csv;charset=utf-8");};
+const exportCSV=(entries)=>{const s=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));dl(["Data;Tipo;Litri;Prezzo/L;Totale;Odometro;Pieno;Note",...s.map(e=>`${e.date};${e.fuelType};${e.liters};${e.pricePerLiter};${e.totalCost.toFixed(2)};${e.odometer};${e.fullTank?"Si":"No"};${(e.notes||"").replace(/;/g,",")}`)].join("\n"),`galaxy_consumi_${new Date().toISOString().slice(0,10)}.csv`,"text/csv;charset=utf-8");};
+const exportJSON=(entries,maint)=>{dl(JSON.stringify({app:"Ford Galaxy Fuel Tracker",v:3,date:new Date().toISOString(),entries,maintenance:maint},null,2),`galaxy_backup_${new Date().toISOString().slice(0,10)}.json`,"application/json");};
+
+// Ford Logo SVG Component — glossy/chrome style
+const FordLogo = ({ size = 52, glow = true }) => {
+  const w = size, h = size * 0.44;
+  return (
+    <svg width={w} height={h} viewBox="0 0 300 132" xmlns="http://www.w3.org/2000/svg" style={glow ? { filter: "drop-shadow(0 0 10px rgba(0,80,200,0.5))" } : {}}>
+      <defs>
+        {/* Chrome rim gradient */}
+        <linearGradient id="fRim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#e8eef8"/><stop offset="18%" stopColor="#a0b8d8"/><stop offset="40%" stopColor="#7898c0"/><stop offset="55%" stopColor="#c0d0e8"/><stop offset="75%" stopColor="#8aa8cc"/><stop offset="100%" stopColor="#d0dce8"/>
+        </linearGradient>
+        {/* Blue body gradient */}
+        <linearGradient id="fBlue" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1a5caa"/><stop offset="35%" stopColor="#003a88"/><stop offset="65%" stopColor="#002a6e"/><stop offset="100%" stopColor="#001845"/>
+        </linearGradient>
+        {/* Inner ring gradient */}
+        <linearGradient id="fInner" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6090c0" stopOpacity="0.5"/><stop offset="50%" stopColor="#2060a0" stopOpacity="0.2"/><stop offset="100%" stopColor="#80b0e0" stopOpacity="0.4"/>
+        </linearGradient>
+        {/* Glass shine top */}
+        <linearGradient id="fShine" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0.45"/><stop offset="40%" stopColor="#fff" stopOpacity="0.12"/><stop offset="60%" stopColor="#fff" stopOpacity="0"/><stop offset="100%" stopColor="#fff" stopOpacity="0"/>
+        </linearGradient>
+        {/* Bottom reflection */}
+        <linearGradient id="fBtm" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0"/><stop offset="70%" stopColor="#fff" stopOpacity="0"/><stop offset="100%" stopColor="#9cc0f0" stopOpacity="0.18"/>
+        </linearGradient>
+        {/* Text gradient */}
+        <linearGradient id="fTxt" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff"/><stop offset="50%" stopColor="#e8f0ff"/><stop offset="100%" stopColor="#c0d8f8"/>
+        </linearGradient>
+        <clipPath id="fClip"><ellipse cx="150" cy="66" rx="136" ry="55"/></clipPath>
+      </defs>
+      {/* Chrome outer rim */}
+      <ellipse cx="150" cy="66" rx="146" ry="62" fill="url(#fRim)" />
+      <ellipse cx="150" cy="66" rx="143" ry="59.5" fill="#1a1a2e" />
+      {/* Blue body */}
+      <ellipse cx="150" cy="66" rx="140" ry="57" fill="url(#fBlue)" />
+      {/* Inner decorative ring */}
+      <ellipse cx="150" cy="66" rx="128" ry="48" fill="none" stroke="url(#fInner)" strokeWidth="1.8"/>
+      <ellipse cx="150" cy="66" rx="125" ry="46" fill="none" stroke="rgba(100,160,220,0.12)" strokeWidth="0.8"/>
+      {/* Ford text with subtle shadow */}
+      <text x="150" y="87" textAnchor="middle" fontFamily="'Georgia','Times New Roman','Palatino',serif" fontSize="70" fontWeight="400" fontStyle="italic" fill="rgba(0,20,60,0.5)" letterSpacing="-2" transform="translate(1,1.5)">Ford</text>
+      <text x="150" y="87" textAnchor="middle" fontFamily="'Georgia','Times New Roman','Palatino',serif" fontSize="70" fontWeight="400" fontStyle="italic" fill="url(#fTxt)" letterSpacing="-2">Ford</text>
+      {/* Glass shine overlay — clipped to oval */}
+      <g clipPath="url(#fClip)">
+        <ellipse cx="150" cy="20" rx="120" ry="52" fill="url(#fShine)" />
+        <ellipse cx="150" cy="120" rx="130" ry="50" fill="url(#fBtm)" />
+      </g>
+      {/* Tiny specular highlight */}
+      <ellipse cx="110" cy="38" rx="35" ry="8" fill="rgba(255,255,255,0.10)" transform="rotate(-12,110,38)"/>
+    </svg>
+  );
+};
+
+// Vehicle data from libretto
+const VEHICLE = {
+  targa: "FV695GW", vin: "WF0KXXWPCKJP17573", immatricolazione: "29/01/2019", acquisto: "27/02/2026", prezzoAcquisto: 17500,
+  costruttore: "FORD-WERKE GMBH", modello: "GALAXY 3ª Serie", tipo: "WA6 YMCB1KX", motore: "2.0 EcoBlue TDCi",
+  alimentazione: "Gasolio (Diesel)", cilindrata: "1995 cc", potenza: "110,3 kW (150 CV)", cambio: "Automatico (PowerShift 6)",
+  euro: "Euro 6D-TEMP", co2: "173 g/km (WLTP)", categoria: "M1 – Autovettura", carrozzeria: "AC (Familiare/SW)",
+  posti: "7", porte: "5", lunghezza: "4.848 mm", larghezza: "1.916 mm", massaTotale: "1.995 kg", massaVuoto: "1.860 kg",
+  massaTraino: "2.000 kg", serbatoio: "71 litri", pneumaticiA1: "235/55 R17 103V", pneumaticiA2: "235/50 R18 101V",
+  pneumaticiA3: "235/55 R17 103Q M+S", omologazione: "e13*2001/116*0185*32", regUE: "2017/1347",
+  ultimaRevisione: "03/02/2025 – Regolare", distribuzione: "Cinghia a bagno d'olio (BIO)", intervalloBIO: "240.000 km / 10 anni",
+};
+
+// Insurance data from policy
+const INSURANCE = {
+  compagnia: "VHV Italia Assicurazioni S.p.A.", polizza: "100052551", agenzia: "Cavallino – Venezia",
+  decorrenza: "27/02/2026", scadenza: "27/02/2027", classeCU: "1", classeVHV: "31", forma: "Bonus Malus",
+  premioNetto: 923.60, imposte: 126.52, ssn: 35.88, totale: 1086.00, massimaleRC: "€ 11.000.000",
+  garanzie: [
+    { nome: "Responsabilità Civile", premio: 341.73, attiva: true, dettaglio: "Mass. 11M per sinistro" },
+    { nome: "Incendio", premio: 25.03, attiva: true, dettaglio: "Valore intero €17.200" },
+    { nome: "Furto e Rapina", premio: 55.05, attiva: true, dettaglio: "Val. €17.200 · Scop. 10% · Fr. €250" },
+    { nome: "Eventi socio-politici", premio: 83.29, attiva: true, dettaglio: "Val. €17.200 · Scop. 10% · Fr. €250" },
+    { nome: "Eventi atmosferici", premio: 286.18, attiva: true, dettaglio: "Val. €17.200 · Scop. 10% · Fr. €250" },
+    { nome: "Cristalli", premio: 48.28, attiva: true, dettaglio: "€1.000 conv. / €500 non conv. · Fr. €200" },
+    { nome: "Assistenza", premio: 34.04, attiva: true, dettaglio: "Inclusa" },
+    { nome: "Infortuni", premio: 50.00, attiva: true, dettaglio: "Morte e invalidità · Mass. €50.000" },
+    { nome: "Danni accidentali", premio: 0, attiva: false, dettaglio: "—" },
+    { nome: "Danni da collisione", premio: 0, attiva: false, dettaglio: "—" },
+    { nome: "Urto animali selvatici", premio: 0, attiva: false, dettaglio: "—" },
+    { nome: "Tutela legale", premio: 0, attiva: false, dettaglio: "—" },
+  ],
+};
+
+// ═══════════ COMPONENT ═══════════
+function App() {
+  const [entries, setEntries] = useState([]);
+  const [maint, setMaint] = useState([]);
+  const [view, setView] = useState("dash");
+  const [subView, setSubView] = useState("fuel"); // for log tab: fuel | maint
+  const [infoTab, setInfoTab] = useState("veicolo"); // veicolo | assicurazione
+  const [loading, setLoading] = useState(true);
+  const [editId, setEditId] = useState(null);
+  const [editMaintId, setEditMaintId] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [form, setForm] = useState({ date: new Date().toISOString().slice(0,10), liters:"", price:"", odo:"", fuel:"HVO", full:true, notes:"" });
+  const [mForm, setMForm] = useState({ date: new Date().toISOString().slice(0,10), type:"Tagliando", desc:"", cost:"", odo:"", notes:"" });
+
+  useEffect(() => { Promise.all([loadK("ft-v3"), loadK("ft-maint-v3")]).then(([f,m]) => { setEntries(f); setMaint(m); setLoading(false); }); }, []);
+  const showMsg = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
+
+  // Fuel calculations
+  const sorted = [...entries].sort((a,b) => a.odometer - b.odometer);
+  const enriched = sorted.map((e,i) => ({ ...e, calc: e.fullTank ? calcCons(e, i>0 ? sorted[i-1] : null) : null }));
+  const withCalc = enriched.filter(e => e.calc);
+  const stats = { n: entries.length, liters: entries.reduce((s,e) => s+e.liters, 0), cost: entries.reduce((s,e) => s+e.totalCost, 0),
+    km: withCalc.reduce((s,e) => s+e.calc.kmDriven, 0), avgL: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.lPer100, 0)/withCalc.length : null,
+    avgC: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.costPerKm, 0)/withCalc.length : null };
+  const byFuel = FUEL_TYPES.map(ft => { const f=withCalc.filter(e=>e.fuelType===ft), all=entries.filter(e=>e.fuelType===ft);
+    return { type:ft, count:all.length, avgL:f.length?f.reduce((s,e)=>s+e.calc.lPer100,0)/f.length:null, avgC:f.length?f.reduce((s,e)=>s+e.calc.costPerKm,0)/f.length:null, liters:all.reduce((s,e)=>s+e.liters,0), cost:all.reduce((s,e)=>s+e.totalCost,0) }; }).filter(s => s.count > 0);
+  const chartData = withCalc.map(e => ({ date:fmtDate(e.date), "l/100km":+e.calc.lPer100.toFixed(2), "€/km":+e.calc.costPerKm.toFixed(3) }));
+  const totalMaintCost = maint.reduce((s,m) => s + m.cost, 0);
+
+  // Monthly aggregations for Stats
+  const monthlyFuel = (() => {
+    const m = {}; entries.forEach(e => { const k = e.date.slice(0,7); if(!m[k]) m[k]={month:k,liters:0,cost:0,count:0}; m[k].liters+=e.liters; m[k].cost+=e.totalCost; m[k].count++; });
+    return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).map(x=>({...x, label: new Date(x.month+"-15").toLocaleDateString("it-IT",{month:"short",year:"2-digit"})}));
+  })();
+  const monthlyKm = (() => {
+    const m = {}; withCalc.forEach(e => { const k = e.date.slice(0,7); if(!m[k]) m[k]={month:k,km:0}; m[k].km+=e.calc.kmDriven; });
+    return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).map(x=>({...x, label: new Date(x.month+"-15").toLocaleDateString("it-IT",{month:"short",year:"2-digit"})}));
+  })();
+  const monthlyCons = (() => {
+    const m = {}; withCalc.forEach(e => { const k = e.date.slice(0,7); if(!m[k]) m[k]={month:k,totL:0,totKm:0}; m[k].totL+=e.liters; m[k].totKm+=e.calc.kmDriven; });
+    return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).map(x=>({...x, "l/100km":+(x.totL/x.totKm*100).toFixed(2), label: new Date(x.month+"-15").toLocaleDateString("it-IT",{month:"short",year:"2-digit"})}));
+  })();
+  const costBreakdown = [ {name:"Carburante",value:+stats.cost.toFixed(0),color:"#0099ff"}, {name:"Manutenzione",value:+totalMaintCost.toFixed(0),color:"#ffa832"}, {name:"Assicurazione",value:1086,color:"#c080ff"} ].filter(x=>x.value>0);
+  const totalOwnership = costBreakdown.reduce((s,x)=>s+x.value,0);
+
+  // Handlers
+  const handleSubmit = async () => {
+    const liters=parseFloat(form.liters),price=parseFloat(form.price),odo=parseInt(form.odo); if(!liters||!price||!odo) return;
+    const entry = { id:editId||genId(), date:form.date, liters, pricePerLiter:price, odometer:odo, totalCost:Math.round(liters*price*100)/100, fuelType:form.fuel, fullTank:form.full, notes:form.notes };
+    const u = editId ? entries.map(e=>e.id===editId?entry:e) : [...entries,entry]; setEntries(u); await saveK("ft-v3",u);
+    setForm({date:new Date().toISOString().slice(0,10),liters:"",price:"",odo:"",fuel:"HVO",full:true,notes:""}); setEditId(null); setView("dash");
+  };
+  const handleMaintSubmit = async () => {
+    const cost=parseFloat(mForm.cost),odo=mForm.odo?parseInt(mForm.odo):0; if(!mForm.desc||isNaN(cost)) return;
+    const entry = { id:editMaintId||genId(), date:mForm.date, type:mForm.type, desc:mForm.desc, cost, odometer:odo, notes:mForm.notes };
+    const u = editMaintId ? maint.map(m=>m.id===editMaintId?entry:m) : [...maint,entry]; setMaint(u); await saveK("ft-maint-v3",u);
+    setMForm({date:new Date().toISOString().slice(0,10),type:"Tagliando",desc:"",cost:"",odo:"",notes:""}); setEditMaintId(null); showMsg(true,"Spesa registrata");
+  };
+  const handleDelete = async (id) => { const u=entries.filter(e=>e.id!==id); setEntries(u); await saveK("ft-v3",u); };
+  const handleDeleteMaint = async (id) => { const u=maint.filter(m=>m.id!==id); setMaint(u); await saveK("ft-maint-v3",u); };
+  const handleEdit = (e) => { setForm({date:e.date,liters:""+e.liters,price:""+e.pricePerLiter,odo:""+e.odometer,fuel:e.fuelType,full:e.fullTank,notes:e.notes||""}); setEditId(e.id); setView("add"); };
+  const handleEditMaint = (m) => { setMForm({date:m.date,type:m.type,desc:m.desc,cost:""+m.cost,odo:m.odometer?""+m.odometer:"",notes:m.notes||""}); setEditMaintId(m.id); };
+  const handleReset = async () => { if(confirm("Cancellare TUTTI i dati?")){ setEntries([]); setMaint([]); await saveK("ft-v3",[]); await saveK("ft-maint-v3",[]); }};
+  const handleImportJSON = async (e) => { const file=e.target.files?.[0]; if(!file)return; try{const data=JSON.parse(await file.text()); const imp=data.entries||data;
+    if(!Array.isArray(imp)||!imp.length){showMsg(false,"File non valido");return;} const keys=new Set(entries.map(e=>`${e.date}-${e.odometer}`));
+    const added=imp.filter(e=>e.date&&e.odometer&&!keys.has(`${e.date}-${e.odometer}`)).map(e=>({...e,id:e.id||genId(),totalCost:e.totalCost||e.liters*e.pricePerLiter,fullTank:e.fullTank!==false}));
+    const m=[...entries,...added]; setEntries(m); await saveK("ft-v3",m); if(data.maintenance){const mk=new Set(maint.map(m=>m.id));const am=data.maintenance.filter(m=>!mk.has(m.id));const mm=[...maint,...am];setMaint(mm);await saveK("ft-maint-v3",mm);}
+    showMsg(true,`${added.length} rifornimenti importati`); }catch{showMsg(false,"Errore JSON");} e.target.value=""; };
+  const handleImportFuelio = async (e) => { const file=e.target.files?.[0]; if(!file)return; try{const parsed=parseFuelioCSV(await file.text());
+    if(!parsed){showMsg(false,"Formato Fuelio non riconosciuto");return;} const keys=new Set(entries.map(e=>`${e.date}-${e.odometer}`));
+    const added=parsed.filter(e=>!keys.has(`${e.date}-${e.odometer}`)); const m=[...entries,...added]; setEntries(m); await saveK("ft-v3",m);
+    showMsg(true,`${added.length} importati da Fuelio`);}catch(err){showMsg(false,"Errore: "+err.message);} e.target.value=""; };
+
+  if (loading) return (
+    <div style={{...S.root,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:16}}>
+      <FordLogo size={90} />
+      <div style={{fontSize:16,fontWeight:200,letterSpacing:"0.35em",fontFamily:"'Outfit',sans-serif",color:"#a0b8d8",background:"linear-gradient(90deg, #8aa0c0, #e0eaf8, #ffffff, #e0eaf8, #8aa0c0)",backgroundSize:"200% auto",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"shimmer 6s linear infinite"}}>GALAXY</div>
+      <div style={{color:"rgba(0,180,255,0.35)",fontSize:9,fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",animation:"pulse 1.5s infinite"}}>LOADING...</div>
+    </div>
+  );
+
+  const FC = { HVO:"#00d4ff", B7:"#f0c000", Mix:"#c080ff" };
+
+  return (
+    <div style={S.root}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@200;300;400;500;600;700;800&display=swap');
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}} @keyframes glow{0%,100%{filter:drop-shadow(0 0 6px rgba(0,100,200,0.3))}50%{filter:drop-shadow(0 0 14px rgba(0,100,200,0.6))}}
+        @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+        input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1)} input:focus{border-color:#0080cc!important;box-shadow:0 0 10px rgba(0,128,204,0.15)!important}
+        select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+        select:focus{border-color:#0080cc!important;box-shadow:0 0 10px rgba(0,128,204,0.15)!important}
+        ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:rgba(0,100,200,0.15);border-radius:4px}
+      `}</style>
+      {/* BG effects */}
+      <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(0,100,200,0.04)",animation:"scanline 10s linear infinite"}}/>
+      </div>
+      <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,pointerEvents:"none",zIndex:0,backgroundImage:"linear-gradient(rgba(0,80,180,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(0,80,180,0.015) 1px, transparent 1px)",backgroundSize:"50px 50px"}}/>
+
+      {msg && <div style={{...S.toast,background:msg.ok?"rgba(0,200,140,0.92)":"rgba(255,50,80,0.92)"}}>{msg.text}</div>}
+
+      {/* Header */}
+      <div style={{...S.header,flexDirection:"column",alignItems:"center",gap:6,position:"relative"}}>
+        <div style={{animation:"glow 4s ease-in-out infinite"}}><FordLogo size={64}/></div>
+        <div style={{fontSize:22,fontWeight:200,color:"#c8d8ec",fontFamily:"'Outfit',sans-serif",letterSpacing:"0.32em",lineHeight:1,background:"linear-gradient(90deg, #8aa0c0, #e0eaf8, #ffffff, #e0eaf8, #8aa0c0)",backgroundSize:"200% auto",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"shimmer 6s linear infinite"}}>GALAXY</div>
+        <div style={{fontSize:9,color:"rgba(0,160,255,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:2}}>2.0 ECOBLUE 150CV // FV695GW</div>
+        {stats.avgL && <div style={{position:"absolute",right:20,top:"50%",transform:"translateY(-50%)",textAlign:"right"}}><div style={{fontSize:24,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace",textShadow:"0 0 14px rgba(0,153,255,0.3)"}}>{fmtN(stats.avgL,1)}</div><div style={{fontSize:7,color:"rgba(0,160,255,0.35)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>L/100KM</div></div>}
+      </div>
+
+      {/* Nav */}
+      <div style={S.nav}>
+        {[{id:"dash",Icon:Home,label:"Home"},{id:"add",Icon:PlusCircle,label:"Nuovo"},{id:"log",Icon:List,label:"Log"},{id:"stats",Icon:BarChart3,label:"Analisi"},{id:"maint",Icon:Wrench,label:"Spese"},{id:"info",Icon:Car,label:"Auto"},{id:"io",Icon:Database,label:"Dati"}].map(t=>{
+          const active = view===t.id;
+          return (
+          <button key={t.id} style={{...S.navBtn,...(active?S.navAct:{})}} onClick={()=>{setView(t.id);if(t.id==="add"&&!editId)setForm(f=>({...f,liters:"",price:"",odo:"",notes:""}));}}>
+            <t.Icon size={20} strokeWidth={active?2.2:1.5} style={{transition:"all 0.2s"}} />
+            <span style={{fontSize:9,letterSpacing:"0.06em",fontFamily:"'Outfit',sans-serif",fontWeight:active?700:500}}>{t.label}</span>
+          </button>
+        );})}
+      </div>
+
+      <div style={S.content}>
+
+        {/* ═══ DASHBOARD ═══ */}
+        {view==="dash" && (
+          entries.length===0 ? (
+            <div style={{...S.empty,animation:"slideUp 0.5s ease"}}>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:24}}>
+                <FordLogo size={100}/>
+                <div style={{fontSize:24,fontWeight:200,color:"#c8d8ec",fontFamily:"'Outfit',sans-serif",letterSpacing:"0.3em",marginTop:14,background:"linear-gradient(90deg, #8aa0c0, #e0eaf8, #ffffff, #e0eaf8, #8aa0c0)",backgroundSize:"200% auto",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"shimmer 6s linear infinite"}}>GALAXY</div>
+              </div>
+              <div style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.3)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.12em",marginBottom:4}}>FUEL TRACKER</div>
+              <div style={{fontSize:9,color:"rgba(0,160,255,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.12em",marginBottom:24}}>SISTEMA PRONTO</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.35)",marginBottom:24,lineHeight:1.6,fontFamily:"'Outfit',sans-serif"}}>Inserisci i rifornimenti o importa i dati da Fuelio.</div>
+              <button style={S.primary} onClick={()=>setView("add")}>NUOVO RIFORNIMENTO</button>
+              <button style={{...S.secondary,marginTop:10}} onClick={()=>setView("io")}>IMPORTA DA FUELIO</button>
+            </div>
+          ) : (
+            <div style={{animation:"slideUp 0.3s ease"}}>
+              <div style={S.grid4}>
+                {[["CONSUMO",stats.avgL?fmtN(stats.avgL,1):"—","l/100km",true],["€/KM",stats.avgC?fmtN(stats.avgC,3):"—","euro/km",false],["DISTANZA",stats.km>0?stats.km.toLocaleString("it-IT"):"—","km",false],["SPESA",fmtN(stats.cost,0),"€ fuel",false]].map(([l,v,u,hl],i)=>(
+                  <div key={i} style={{...S.card,...(hl?{border:"1px solid rgba(0,120,255,0.2)",background:"rgba(0,100,200,0.06)"}:{})}}>
+                    <div style={{fontSize:8,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:6}}>{l}</div>
+                    <div style={{fontSize:22,fontWeight:700,color:hl?"#0099ff":"#fff",fontFamily:"'JetBrains Mono',monospace",textShadow:hl?"0 0 12px rgba(0,153,255,0.25)":"none"}}>{v}</div>
+                    <div style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{u}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Maint summary */}
+              {maint.length>0 && (
+                <div style={{...S.card,marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",border:"1px solid rgba(255,160,0,0.12)",background:"rgba(255,160,0,0.03)"}} onClick={()=>setView("maint")}>
+                  <div><div style={{fontSize:8,color:"rgba(255,180,50,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.12em"}}>MANUTENZIONE</div><div style={{fontSize:18,fontWeight:700,color:"#ffa832",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>€ {fmtN(totalMaintCost,0)}</div></div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace"}}>{maint.length} interventi →</div>
+                </div>
+              )}
+              {chartData.length>=2 && (
+                <div style={S.chartBox}><div style={S.chartTitle}>◇ ANDAMENTO CONSUMI</div>
+                  <ResponsiveContainer width="100%" height={170}><AreaChart data={chartData} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <defs><linearGradient id="gF" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0099ff" stopOpacity={0.25}/><stop offset="100%" stopColor="#0099ff" stopOpacity={0}/></linearGradient></defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="date" tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}} domain={["auto","auto"]}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(0,100,200,0.3)",borderRadius:8,fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#0099ff"}}/>
+                    <Area type="monotone" dataKey="l/100km" stroke="#0099ff" strokeWidth={2} fill="url(#gF)" dot={{fill:"#0099ff",r:3,strokeWidth:0}}/>
+                  </AreaChart></ResponsiveContainer>
+                </div>
+              )}
+              {/* Compare summary */}
+              {byFuel.length>=2 && (
+                <div style={{display:"grid",gridTemplateColumns:`repeat(${byFuel.length},1fr)`,gap:8,marginBottom:14}}>
+                  {byFuel.map(s=>(
+                    <div key={s.type} style={{...S.card,borderTop:`2px solid ${FC[s.type]}`,textAlign:"center"}}>
+                      <div style={{fontSize:9,color:FC[s.type],fontFamily:"'JetBrains Mono',monospace",fontWeight:700,letterSpacing:"0.1em",marginBottom:6}}>{s.type}</div>
+                      <div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{s.avgL?fmtN(s.avgL,1):"—"}</div>
+                      <div style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>l/100km</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={S.secTitle}>◇ ULTIMI RIFORNIMENTI</div>
+              {[...enriched].reverse().slice(0,3).map(e=>(
+                <div key={e.id} style={S.row} onClick={()=>handleEdit(e)}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}><div style={{width:3,height:28,borderRadius:2,background:FC[e.fuelType],boxShadow:`0 0 6px ${FC[e.fuelType]}30`}}/><div>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:12,fontWeight:600,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{fmtDate(e.date)}</span><span style={{fontSize:8,color:FC[e.fuelType],fontFamily:"'JetBrains Mono',monospace",padding:"1px 5px",border:`1px solid ${FC[e.fuelType]}25`,borderRadius:3}}>{e.fuelType}</span></div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{fmtN(e.liters,1)}L · {fmtN(e.totalCost,2)}€</div>
+                  </div></div>
+                  <div style={{textAlign:"right"}}>{e.calc?(<><div style={{fontSize:18,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(e.calc.lPer100,1)}</div><div style={{fontSize:7,color:"rgba(0,153,255,0.4)",fontFamily:"'JetBrains Mono',monospace"}}>L/100</div></>):<div style={{color:"rgba(255,255,255,0.1)"}}>—</div>}</div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* ═══ ADD FORM ═══ */}
+        {view==="add" && (
+          <div style={{animation:"slideUp 0.3s ease"}}>
+            <div style={S.secTitle}>◇ {editId?"MODIFICA":"NUOVO RIFORNIMENTO"}</div>
+            <div style={S.fg}><label style={S.lbl}>DATA</label><input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={S.inp}/></div>
+            <div style={{display:"flex",gap:12}}>
+              <div style={{...S.fg,flex:1}}><label style={S.lbl}>LITRI</label><input type="number" step="0.01" placeholder="45.00" value={form.liters} onChange={e=>setForm(f=>({...f,liters:e.target.value}))} style={S.inp} inputMode="decimal"/></div>
+              <div style={{...S.fg,flex:1}}><label style={S.lbl}>€/LITRO</label><input type="number" step="0.001" placeholder="1.610" value={form.price} onChange={e=>setForm(f=>({...f,price:e.target.value}))} style={S.inp} inputMode="decimal"/></div>
+            </div>
+            {form.liters&&form.price&&<div style={{fontSize:13,color:"#0099ff",padding:"10px 14px",background:"rgba(0,100,200,0.06)",border:"1px solid rgba(0,100,200,0.15)",borderRadius:8,marginBottom:16,textAlign:"center",fontFamily:"'JetBrains Mono',monospace"}}>TOTALE: <strong>{fmtN(parseFloat(form.liters)*parseFloat(form.price),2)} €</strong></div>}
+            <div style={S.fg}><label style={S.lbl}>CONTACHILOMETRI</label><input type="number" placeholder="190500" value={form.odo} onChange={e=>setForm(f=>({...f,odo:e.target.value}))} style={S.inp} inputMode="numeric"/></div>
+            <div style={S.fg}><label style={S.lbl}>CARBURANTE</label><div style={{display:"flex",gap:8}}>{FUEL_TYPES.map(ft=>(<button key={ft} style={{...S.fuelOpt,...(form.fuel===ft?{background:`${FC[ft]}12`,borderColor:FC[ft],color:FC[ft],boxShadow:`0 0 10px ${FC[ft]}15`}:{})}} onClick={()=>setForm(f=>({...f,fuel:ft}))}>{ft}</button>))}</div></div>
+            <div style={S.fg}><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>setForm(f=>({...f,full:!f.full}))}>
+              <div style={{width:20,height:20,borderRadius:4,border:`1px solid ${form.full?"#0099ff":"rgba(255,255,255,0.12)"}`,background:form.full?"rgba(0,100,200,0.15)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#0099ff",fontWeight:700}}>{form.full&&"✓"}</div>
+              <span style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:"'Outfit',sans-serif"}}>Pieno completo</span>
+            </label></div>
+            <div style={S.fg}><label style={S.lbl}>NOTE</label><input type="text" placeholder="autostrada, città..." value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} style={S.inp}/></div>
+            <button style={S.primary} onClick={handleSubmit}>{editId?"SALVA":"REGISTRA"}</button>
+            {editId&&<button style={{...S.secondary,marginTop:8}} onClick={()=>{setEditId(null);setForm({date:new Date().toISOString().slice(0,10),liters:"",price:"",odo:"",fuel:"HVO",full:true,notes:""});}}>ANNULLA</button>}
+          </div>
+        )}
+
+        {/* ═══ LOG ═══ */}
+        {view==="log" && (
+          <div style={{animation:"slideUp 0.3s ease"}}>
+            <div style={S.secTitle}>◇ STORICO RIFORNIMENTI ({entries.length})</div>
+            {[...enriched].reverse().map(e=>(
+              <div key={e.id} style={S.hCard}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:3,height:16,borderRadius:2,background:FC[e.fuelType]}}/><span style={{fontSize:8,color:FC[e.fuelType],fontFamily:"'JetBrains Mono',monospace",padding:"1px 5px",border:`1px solid ${FC[e.fuelType]}25`,borderRadius:3}}>{e.fuelType}</span><span style={{fontSize:12,fontWeight:600,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{fmtDate(e.date)}</span></div>
+                  <div style={{display:"flex",gap:2}}><button style={S.iconBtn} onClick={()=>handleEdit(e)}>✏️</button><button style={S.iconBtn} onClick={()=>handleDelete(e.id)}>🗑️</button></div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:4}}>
+                  {[[fmtN(e.liters,1)+"L","LITRI"],[fmtN(e.pricePerLiter,3)+"€","€/L"],[fmtN(e.totalCost,2)+"€","TOT"],[e.calc?fmtN(e.calc.lPer100,1):"—","L/100"]].map(([v,l],i)=>(
+                    <div key={i} style={{textAlign:"center",padding:"4px 0"}}><div style={{fontSize:13,fontWeight:600,color:i===3&&e.calc?"#0099ff":i===3?"rgba(255,255,255,0.1)":"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{v}</div><div style={{fontSize:7,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:2}}>{l}</div></div>
+                  ))}
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:"rgba(255,255,255,0.15)",marginTop:8,paddingTop:6,borderTop:"1px solid rgba(255,255,255,0.03)",fontFamily:"'JetBrains Mono',monospace"}}>
+                  <span>ODO {e.odometer.toLocaleString("it-IT")}</span>{e.calc&&<span>↔ {e.calc.kmDriven} km</span>}{!e.fullTank&&<span style={{color:"#f0c000"}}>PARZIALE</span>}
+                </div>
+                {e.notes&&<div style={{fontSize:10,color:"rgba(255,255,255,0.25)",marginTop:4,fontFamily:"'Outfit',sans-serif"}}>→ {e.notes}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ═══ STATS ═══ */}
+        {view==="stats" && (
+          <div style={{animation:"slideUp 0.3s ease"}}>
+            {entries.length < 2 ? (
+              <div style={S.empty}><div style={{fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace"}}>SERVONO ALMENO 2 PIENI PER LE STATISTICHE</div></div>
+            ) : (<>
+              {/* Summary cards */}
+              <div style={S.secTitle}>◇ RIEPILOGO GENERALE</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+                {[
+                  [stats.n+"","RIFORN.",false],[fmtN(stats.liters,0),"LITRI",false],[fmtN(stats.km,0),"KM",false],
+                  [stats.avgL?fmtN(stats.avgL,1):"—","L/100",true],[stats.avgC?fmtN(stats.avgC,3):"—","€/KM",false],
+                  [sorted.length?sorted[sorted.length-1].odometer.toLocaleString("it-IT"):"—","ODO",false],
+                ].map(([v,l,hl],i)=>(
+                  <div key={i} style={{...S.card,textAlign:"center",...(hl?{border:"1px solid rgba(0,120,255,0.2)",background:"rgba(0,100,200,0.06)"}:{})}}>
+                    <div style={{fontSize:18,fontWeight:700,color:hl?"#0099ff":"#fff",fontFamily:"'JetBrains Mono',monospace",textShadow:hl?"0 0 10px rgba(0,153,255,0.2)":"none"}}>{v}</div>
+                    <div style={{fontSize:7,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:4}}>{l}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Consumption over time */}
+              {chartData.length>=2 && (<>
+                <div style={S.secTitle}>◇ CONSUMO NEL TEMPO (L/100KM)</div>
+                <div style={S.chartBox}>
+                  <ResponsiveContainer width="100%" height={180}><AreaChart data={chartData} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <defs><linearGradient id="gFS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0099ff" stopOpacity={0.25}/><stop offset="100%" stopColor="#0099ff" stopOpacity={0}/></linearGradient></defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="date" tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}} domain={["auto","auto"]}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(0,100,200,0.3)",borderRadius:8,fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#0099ff"}}/>
+                    <Area type="monotone" dataKey="l/100km" stroke="#0099ff" strokeWidth={2} fill="url(#gFS)" dot={{fill:"#0099ff",r:3,strokeWidth:0}} activeDot={{r:5,fill:"#0099ff",stroke:"rgba(0,153,255,0.3)",strokeWidth:4}}/>
+                  </AreaChart></ResponsiveContainer>
+                </div>
+              </>)}
+
+              {/* €/km over time */}
+              {chartData.length>=2 && (<>
+                <div style={S.secTitle}>◇ COSTO PER KM (€/KM)</div>
+                <div style={S.chartBox}>
+                  <ResponsiveContainer width="100%" height={180}><AreaChart data={chartData} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <defs><linearGradient id="cFS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c080ff" stopOpacity={0.2}/><stop offset="100%" stopColor="#c080ff" stopOpacity={0}/></linearGradient></defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="date" tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}} domain={["auto","auto"]}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(192,128,255,0.3)",borderRadius:8,fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#c080ff"}}/>
+                    <Area type="monotone" dataKey="€/km" stroke="#c080ff" strokeWidth={2} fill="url(#cFS)" dot={{fill:"#c080ff",r:3}} activeDot={{r:5,fill:"#c080ff",stroke:"rgba(192,128,255,0.3)",strokeWidth:4}}/>
+                  </AreaChart></ResponsiveContainer>
+                </div>
+              </>)}
+
+              {/* Monthly fuel cost */}
+              {monthlyFuel.length>=2 && (<>
+                <div style={S.secTitle}>◇ SPESA CARBURANTE MENSILE</div>
+                <div style={S.chartBox}>
+                  <ResponsiveContainer width="100%" height={180}><BarChart data={monthlyFuel} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="label" tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}} tickFormatter={v=>"€"+v}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(0,200,140,0.3)",borderRadius:8,fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#00c88a"}} formatter={v=>["€ "+fmtN(v,2),"Spesa"]}/>
+                    <Bar dataKey="cost" fill="#00c88a" radius={[4,4,0,0]} fillOpacity={0.75}/>
+                  </BarChart></ResponsiveContainer>
+                </div>
+              </>)}
+
+              {/* Monthly km */}
+              {monthlyKm.length>=2 && (<>
+                <div style={S.secTitle}>◇ KM PERCORSI AL MESE</div>
+                <div style={S.chartBox}>
+                  <ResponsiveContainer width="100%" height={180}><BarChart data={monthlyKm} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="label" tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(0,153,255,0.3)",borderRadius:8,fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#0099ff"}} formatter={v=>[v.toLocaleString("it-IT")+" km","Distanza"]}/>
+                    <Bar dataKey="km" fill="#0099ff" radius={[4,4,0,0]} fillOpacity={0.6}/>
+                  </BarChart></ResponsiveContainer>
+                </div>
+              </>)}
+
+              {/* Monthly avg consumption */}
+              {monthlyCons.length>=2 && (<>
+                <div style={S.secTitle}>◇ CONSUMO MEDIO MENSILE</div>
+                <div style={S.chartBox}>
+                  <ResponsiveContainer width="100%" height={180}><AreaChart data={monthlyCons} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <defs><linearGradient id="mCS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f0c000" stopOpacity={0.2}/><stop offset="100%" stopColor="#f0c000" stopOpacity={0}/></linearGradient></defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="label" tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}} domain={["auto","auto"]}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(240,192,0,0.3)",borderRadius:8,fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#f0c000"}}/>
+                    <Area type="monotone" dataKey="l/100km" stroke="#f0c000" strokeWidth={2} fill="url(#mCS)" dot={{fill:"#f0c000",r:3}}/>
+                  </AreaChart></ResponsiveContainer>
+                </div>
+              </>)}
+
+              {/* B7 vs HVO comparison */}
+              {byFuel.length>=2 && (<>
+                <div style={S.secTitle}>◇ CONFRONTO B7 vs HVO</div>
+                <div style={S.chartBox}>
+                  <div style={S.chartTitle}>CONSUMO MEDIO (l/100km)</div>
+                  <ResponsiveContainer width="100%" height={140}><BarChart data={byFuel.filter(s=>s.avgL).map(s=>({name:s.type,"l/100km":+s.avgL.toFixed(2)}))} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="name" tick={{fill:"rgba(255,255,255,0.4)",fontSize:11,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}} domain={["auto","auto"]}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(0,100,200,0.3)",borderRadius:8,fontFamily:"'JetBrains Mono',monospace",color:"#0099ff"}}/>
+                    <Bar dataKey="l/100km" radius={[4,4,0,0]} fillOpacity={0.8}>
+                      {byFuel.filter(s=>s.avgL).map((s,i)=>(<rect key={i} fill={FC[s.type]}/>))}
+                    </Bar>
+                  </BarChart></ResponsiveContainer>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:`repeat(${byFuel.length},1fr)`,gap:8,marginBottom:16}}>
+                  {byFuel.map(s=>(
+                    <div key={s.type} style={{...S.hCard,borderTop:`2px solid ${FC[s.type]}`}}>
+                      <div style={{fontSize:10,color:FC[s.type],fontFamily:"'JetBrains Mono',monospace",fontWeight:700,letterSpacing:"0.1em",marginBottom:10}}>{s.type}</div>
+                      {[["Consumo",s.avgL?fmtN(s.avgL,1)+" l/100":"—"],["€/km",s.avgC?fmtN(s.avgC,3):"—"],["Pieni",""+s.count],["Litri",fmtN(s.liters,0)+" L"],["Spesa","€ "+fmtN(s.cost,0)]].map(([l,v],i)=>(
+                        <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,0.025)"}}>
+                          <span style={{fontSize:9,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace"}}>{l}</span>
+                          <span style={{fontSize:10,fontWeight:600,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </>)}
+
+              {/* Total cost of ownership */}
+              {costBreakdown.length>0 && (<>
+                <div style={S.secTitle}>◇ COSTO TOTALE DI POSSESSO</div>
+                <div style={S.hCard}>
+                  <div style={{textAlign:"center",marginBottom:16}}>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginBottom:6}}>TOTALE</div>
+                    <div style={{fontSize:32,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>€ {totalOwnership.toLocaleString("it-IT")}</div>
+                  </div>
+                  {costBreakdown.map((c,i)=>{
+                    const pct = totalOwnership>0 ? (c.value/totalOwnership*100) : 0;
+                    return (
+                      <div key={i} style={{marginBottom:12}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                          <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"'Outfit',sans-serif"}}>{c.name}</span>
+                          <span style={{fontSize:12,fontWeight:600,color:c.color,fontFamily:"'JetBrains Mono',monospace"}}>€ {c.value.toLocaleString("it-IT")} <span style={{fontSize:9,color:"rgba(255,255,255,0.25)"}}>({fmtN(pct,0)}%)</span></span>
+                        </div>
+                        <div style={{width:"100%",height:6,borderRadius:3,background:"rgba(255,255,255,0.04)",overflow:"hidden"}}>
+                          <div style={{width:pct+"%",height:"100%",borderRadius:3,background:c.color,opacity:0.7,transition:"width 0.5s ease"}}/>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>)}
+
+              {/* Price per liter trend */}
+              {entries.length>=3 && (<>
+                <div style={S.secTitle}>◇ PREZZO AL LITRO NEL TEMPO</div>
+                <div style={S.chartBox}>
+                  <ResponsiveContainer width="100%" height={160}><AreaChart data={[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date)).map(e=>({date:fmtDate(e.date),"€/L":+e.pricePerLiter.toFixed(3),tipo:e.fuelType}))} margin={{top:5,right:10,left:-15,bottom:5}}>
+                    <defs><linearGradient id="pLS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ff6b6b" stopOpacity={0.15}/><stop offset="100%" stopColor="#ff6b6b" stopOpacity={0}/></linearGradient></defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/><XAxis dataKey="date" tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/><YAxis tick={{fill:"rgba(255,255,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}} domain={["auto","auto"]}/>
+                    <Tooltip contentStyle={{background:"rgba(8,12,24,0.95)",border:"1px solid rgba(255,107,107,0.3)",borderRadius:8,fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#ff6b6b"}}/>
+                    <Area type="monotone" dataKey="€/L" stroke="#ff6b6b" strokeWidth={2} fill="url(#pLS)" dot={{fill:"#ff6b6b",r:2.5}}/>
+                  </AreaChart></ResponsiveContainer>
+                </div>
+              </>)}
+            </>)}
+          </div>
+        )}
+
+        {/* ═══ MAINT ═══ */}
+        {view==="maint" && (
+          <div style={{animation:"slideUp 0.3s ease"}}>
+            <div style={S.secTitle}>◇ {editMaintId?"MODIFICA SPESA":"REGISTRA SPESA"}</div>
+            <div style={{display:"flex",gap:12}}>
+              <div style={{...S.fg,flex:1}}><label style={S.lbl}>DATA</label><input type="date" value={mForm.date} onChange={e=>setMForm(f=>({...f,date:e.target.value}))} style={S.inp}/></div>
+              <div style={{...S.fg,flex:1}}><label style={S.lbl}>TIPO</label><select value={mForm.type} onChange={e=>setMForm(f=>({...f,type:e.target.value}))} style={S.inp}>{MAINT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+            </div>
+            <div style={S.fg}><label style={S.lbl}>DESCRIZIONE</label><input type="text" placeholder="Cambio olio, sostituzione filtri..." value={mForm.desc} onChange={e=>setMForm(f=>({...f,desc:e.target.value}))} style={S.inp}/></div>
+            <div style={{display:"flex",gap:12}}>
+              <div style={{...S.fg,flex:1}}><label style={S.lbl}>COSTO €</label><input type="number" step="0.01" placeholder="350.00" value={mForm.cost} onChange={e=>setMForm(f=>({...f,cost:e.target.value}))} style={S.inp} inputMode="decimal"/></div>
+              <div style={{...S.fg,flex:1}}><label style={S.lbl}>KM (OPZ.)</label><input type="number" placeholder="192000" value={mForm.odo} onChange={e=>setMForm(f=>({...f,odo:e.target.value}))} style={S.inp} inputMode="numeric"/></div>
+            </div>
+            <div style={S.fg}><label style={S.lbl}>NOTE</label><input type="text" placeholder="officina, garanzia..." value={mForm.notes} onChange={e=>setMForm(f=>({...f,notes:e.target.value}))} style={S.inp}/></div>
+            <button style={{...S.primary,background:"linear-gradient(135deg,#ff8c00,#cc6600)"}} onClick={handleMaintSubmit}>{editMaintId?"SALVA":"REGISTRA SPESA"}</button>
+            {editMaintId&&<button style={{...S.secondary,marginTop:8}} onClick={()=>{setEditMaintId(null);setMForm({date:new Date().toISOString().slice(0,10),type:"Tagliando",desc:"",cost:"",odo:"",notes:""});}}>ANNULLA</button>}
+
+            {maint.length>0 && (
+              <>
+                <div style={{...S.secTitle,marginTop:24}}>◇ STORICO SPESE ({maint.length}) · € {fmtN(totalMaintCost,0)}</div>
+                {[...maint].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m=>(
+                  <div key={m.id} style={S.hCard}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:8,color:"#ffa832",fontFamily:"'JetBrains Mono',monospace",padding:"2px 6px",border:"1px solid rgba(255,168,50,0.2)",borderRadius:3,background:"rgba(255,168,50,0.06)"}}>{m.type.toUpperCase()}</span>
+                        <span style={{fontSize:12,fontWeight:600,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{fmtDate(m.date)}</span>
+                      </div>
+                      <div style={{display:"flex",gap:2}}><button style={S.iconBtn} onClick={()=>handleEditMaint(m)}>✏️</button><button style={S.iconBtn} onClick={()=>handleDeleteMaint(m.id)}>🗑️</button></div>
+                    </div>
+                    <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",fontFamily:"'Outfit',sans-serif",marginBottom:6}}>{m.desc}</div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div style={{fontSize:18,fontWeight:700,color:"#ffa832",fontFamily:"'JetBrains Mono',monospace"}}>€ {fmtN(m.cost,2)}</div>
+                      {m.odometer>0&&<div style={{fontSize:9,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>ODO {m.odometer.toLocaleString("it-IT")}</div>}
+                    </div>
+                    {m.notes&&<div style={{fontSize:10,color:"rgba(255,255,255,0.2)",marginTop:4,fontFamily:"'Outfit',sans-serif"}}>→ {m.notes}</div>}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ═══ INFO ═══ */}
+        {view==="info" && (
+          <div style={{animation:"slideUp 0.3s ease"}}>
+            {/* Sub-tabs */}
+            <div style={{display:"flex",gap:6,marginBottom:16}}>
+              {[["veicolo","VEICOLO"],["assicurazione","ASSICURAZIONE"]].map(([id,label])=>(
+                <button key={id} style={{flex:1,padding:"10px 0",background:infoTab===id?"rgba(0,100,200,0.1)":"rgba(255,255,255,0.02)",border:`1px solid ${infoTab===id?"rgba(0,100,200,0.25)":"rgba(255,255,255,0.05)"}`,borderRadius:8,color:infoTab===id?"#0099ff":"rgba(255,255,255,0.3)",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}} onClick={()=>setInfoTab(id)}>{label}</button>
+              ))}
+            </div>
+
+            {infoTab==="veicolo" && (
+              <>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:24}}>
+                  <FordLogo size={90}/>
+                  <div style={{fontSize:26,fontWeight:200,color:"#c8d8ec",fontFamily:"'Outfit',sans-serif",letterSpacing:"0.32em",marginTop:14,background:"linear-gradient(90deg, #8aa0c0, #e0eaf8, #ffffff, #e0eaf8, #8aa0c0)",backgroundSize:"200% auto",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"shimmer 6s linear infinite"}}>GALAXY</div>
+                  <div style={{fontSize:10,color:"rgba(0,160,255,0.4)",fontFamily:"'JetBrains Mono',monospace",marginTop:6,letterSpacing:"0.12em"}}>3ª SERIE // 2019</div>
+                </div>
+
+                <div style={S.secTitle}>◇ ACQUISTO</div>
+                <div style={S.hCard}>
+                  {[["Data acquisto",VEHICLE.acquisto],["Prezzo","€ "+VEHICLE.prezzoAcquisto.toLocaleString("it-IT")]].map(([l,v],i)=>(
+                    <div key={i} style={S.infoRow}><span style={S.infoLabel}>{l}</span><span style={S.infoValue}>{v}</span></div>
+                  ))}
+                </div>
+
+                <div style={S.secTitle}>◇ IDENTIFICAZIONE</div>
+                <div style={S.hCard}>
+                  {[["Targa",VEHICLE.targa],["VIN (Telaio)",VEHICLE.vin],["Immatricolazione",VEHICLE.immatricolazione],["Costruttore",VEHICLE.costruttore],["Modello",VEHICLE.modello],["Tipo",VEHICLE.tipo],["Categoria",VEHICLE.categoria],["Carrozzeria",VEHICLE.carrozzeria]].map(([l,v],i)=>(
+                    <div key={i} style={S.infoRow}><span style={S.infoLabel}>{l}</span><span style={S.infoValue}>{v}</span></div>
+                  ))}
+                </div>
+
+                <div style={S.secTitle}>◇ MOTORE E TRASMISSIONE</div>
+                <div style={S.hCard}>
+                  {[["Motore",VEHICLE.motore],["Alimentazione",VEHICLE.alimentazione],["Cilindrata",VEHICLE.cilindrata],["Potenza",VEHICLE.potenza],["Cambio",VEHICLE.cambio],["Normativa",VEHICLE.euro],["CO₂ WLTP",VEHICLE.co2],["Distribuzione",VEHICLE.distribuzione],["Intervallo BIO",VEHICLE.intervalloBIO]].map(([l,v],i)=>(
+                    <div key={i} style={S.infoRow}><span style={S.infoLabel}>{l}</span><span style={S.infoValue}>{v}</span></div>
+                  ))}
+                </div>
+
+                <div style={S.secTitle}>◇ DIMENSIONI E PESI</div>
+                <div style={S.hCard}>
+                  {[["Lunghezza",VEHICLE.lunghezza],["Larghezza",VEHICLE.larghezza],["Posti",VEHICLE.posti],["Massa totale",VEHICLE.massaTotale],["Massa a vuoto",VEHICLE.massaVuoto],["Massa traino",VEHICLE.massaTraino],["Serbatoio",VEHICLE.serbatoio]].map(([l,v],i)=>(
+                    <div key={i} style={S.infoRow}><span style={S.infoLabel}>{l}</span><span style={S.infoValue}>{v}</span></div>
+                  ))}
+                </div>
+
+                <div style={S.secTitle}>◇ PNEUMATICI AMMESSI</div>
+                <div style={S.hCard}>
+                  {[["A1",VEHICLE.pneumaticiA1],["A2",VEHICLE.pneumaticiA2],["A3 (M+S)",VEHICLE.pneumaticiA3]].map(([l,v],i)=>(
+                    <div key={i} style={S.infoRow}><span style={S.infoLabel}>{l}</span><span style={S.infoValue}>{v}</span></div>
+                  ))}
+                </div>
+
+                <div style={S.secTitle}>◇ OMOLOGAZIONE</div>
+                <div style={S.hCard}>
+                  {[["Omologazione",VEHICLE.omologazione],["REG UE",VEHICLE.regUE],["Ultima revisione",VEHICLE.ultimaRevisione]].map(([l,v],i)=>(
+                    <div key={i} style={S.infoRow}><span style={S.infoLabel}>{l}</span><span style={S.infoValue}>{v}</span></div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {infoTab==="assicurazione" && (
+              <>
+                <div style={{...S.hCard,border:"1px solid rgba(0,100,200,0.15)",background:"rgba(0,100,200,0.04)",marginBottom:16,textAlign:"center"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{INSURANCE.compagnia}</div>
+                  <div style={{fontSize:9,color:"rgba(0,160,255,0.4)",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>POLIZZA N° {INSURANCE.polizza}</div>
+                  <div style={{fontSize:28,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace",marginTop:12,textShadow:"0 0 12px rgba(0,153,255,0.2)"}}>€ {INSURANCE.totale.toLocaleString("it-IT",{minimumFractionDigits:2})}</div>
+                  <div style={{fontSize:8,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>PREMIO ANNUALE</div>
+                </div>
+
+                <div style={S.secTitle}>◇ CONTRATTO</div>
+                <div style={S.hCard}>
+                  {[["Agenzia",INSURANCE.agenzia],["Decorrenza",INSURANCE.decorrenza],["Scadenza",INSURANCE.scadenza],["Classe CU",INSURANCE.classeCU],["Classe VHV",INSURANCE.classeVHV],["Forma",INSURANCE.forma],["Massimale RC",INSURANCE.massimaleRC]].map(([l,v],i)=>(
+                    <div key={i} style={S.infoRow}><span style={S.infoLabel}>{l}</span><span style={S.infoValue}>{v}</span></div>
+                  ))}
+                </div>
+
+                <div style={S.secTitle}>◇ DETTAGLIO PREMIO</div>
+                <div style={S.hCard}>
+                  {[["Premio netto","€ "+INSURANCE.premioNetto.toFixed(2)],["Imposte","€ "+INSURANCE.imposte.toFixed(2)],["SSN","€ "+INSURANCE.ssn.toFixed(2)],["TOTALE","€ "+INSURANCE.totale.toFixed(2)]].map(([l,v],i)=>(
+                    <div key={i} style={{...S.infoRow,...(i===3?{borderTop:"1px solid rgba(0,100,200,0.15)",paddingTop:8,marginTop:4}:{})}}><span style={{...S.infoLabel,...(i===3?{color:"rgba(255,255,255,0.5)",fontWeight:700}:{})}}>{l}</span><span style={{...S.infoValue,...(i===3?{color:"#0099ff",fontWeight:700}:{})}}>{v}</span></div>
+                  ))}
+                </div>
+
+                <div style={S.secTitle}>◇ GARANZIE</div>
+                {INSURANCE.garanzie.map((g,i)=>(
+                  <div key={i} style={{...S.hCard,marginBottom:6,opacity:g.attiva?1:0.35,borderLeft:`2px solid ${g.attiva?"#0099ff":"rgba(255,255,255,0.1)"}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div><div style={{fontSize:12,fontWeight:600,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{g.nome}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.3)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{g.dettaglio}</div></div>
+                      <div style={{textAlign:"right"}}>{g.attiva?<div style={{fontSize:14,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace"}}>€{fmtN(g.premio,2)}</div>:<div style={{fontSize:10,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>ESCLUSA</div>}</div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ═══ IO ═══ */}
+        {view==="io" && (
+          <div style={{animation:"slideUp 0.3s ease"}}>
+            <div style={S.secTitle}>◇ IMPORTA</div>
+            <label style={S.ioCard}><input type="file" accept=".csv" onChange={handleImportFuelio} style={{display:"none"}}/>
+              <div style={{fontSize:20,color:"#0099ff"}}>📱</div><div style={{flex:1}}><div style={S.ioTitle}>IMPORTA DA FUELIO</div><div style={S.ioDesc}>CSV esportato da Fuelio. Scrivi "HVO" o "Mix" nelle note per il tipo.</div></div>
+            </label>
+            <label style={S.ioCard}><input type="file" accept=".json" onChange={handleImportJSON} style={{display:"none"}}/>
+              <div style={{fontSize:20,color:"#c080ff"}}>📥</div><div style={{flex:1}}><div style={S.ioTitle}>RIPRISTINA BACKUP</div><div style={S.ioDesc}>Backup JSON (include rifornimenti e spese manutenzione).</div></div>
+            </label>
+            <div style={{...S.secTitle,marginTop:24}}>◇ ESPORTA</div>
+            {entries.length===0?<div style={{fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>NESSUN DATO</div>:(
+              <>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                  {[["📄","CSV","Excel",()=>exportCSV(entries)],["📱","FUELIO","CSV",()=>exportFuelio(entries)],["💾","JSON","Backup",()=>exportJSON(entries,maint)]].map(([i,t,d,fn],idx)=>(
+                    <button key={idx} style={S.ioBtn} onClick={fn}><div style={{fontSize:20,marginBottom:4}}>{i}</div><div style={{fontSize:10,fontWeight:700,color:"#fff"}}>{t}</div><div style={{fontSize:8,color:"rgba(255,255,255,0.2)",marginTop:2}}>{d}</div></button>
+                  ))}
+                </div>
+                <div style={{...S.secTitle,marginTop:24}}>◇ SISTEMA</div>
+                <div style={S.hCard}>
+                  <div style={{fontSize:10,color:"rgba(0,153,255,0.4)",fontFamily:"'JetBrains Mono',monospace",marginBottom:4}}>{entries.length} RIFORNIMENTI · {maint.length} SPESE</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace",marginBottom:12}}>FUEL € {fmtN(stats.cost,0)} + MAINT € {fmtN(totalMaintCost,0)} = € {fmtN(stats.cost+totalMaintCost,0)}</div>
+                  <button style={S.danger} onClick={handleReset}>⚠ CANCELLA TUTTI I DATI</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+const S = {
+  root:{maxWidth:480,margin:"0 auto",minHeight:"100vh",background:"linear-gradient(180deg,#050a18,#0a0f1e)",color:"#e5e5e5",fontFamily:"'Outfit',sans-serif",position:"relative",paddingBottom:80},
+  toast:{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",padding:"10px 20px",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,zIndex:100,maxWidth:400,textAlign:"center",fontFamily:"'JetBrains Mono',monospace"},
+  header:{display:"flex",justifyContent:"center",padding:"16px 20px 12px",borderBottom:"1px solid rgba(0,80,180,0.1)",position:"relative",zIndex:1},
+  nav:{display:"flex",justifyContent:"space-around",padding:"8px 4px 6px",borderBottom:"1px solid rgba(0,80,180,0.08)",background:"rgba(0,20,60,0.3)",position:"relative",zIndex:1},
+  navBtn:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",color:"rgba(180,200,230,0.45)",cursor:"pointer",padding:"8px 8px 6px",borderRadius:10,transition:"all 0.25s"},
+  navAct:{color:"#2dabff",background:"rgba(0,120,255,0.1)",boxShadow:"0 0 14px rgba(0,120,255,0.1)"},
+  content:{padding:"16px 20px",position:"relative",zIndex:1},
+  grid4:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14},
+  card:{background:"rgba(255,255,255,0.02)",borderRadius:10,padding:"13px 15px",border:"1px solid rgba(255,255,255,0.04)"},
+  chartBox:{background:"rgba(0,60,140,0.03)",borderRadius:10,padding:"14px 10px",border:"1px solid rgba(0,80,180,0.08)",marginBottom:14},
+  chartTitle:{fontSize:9,fontWeight:600,color:"rgba(0,153,255,0.4)",marginBottom:12,paddingLeft:4,fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.12em"},
+  secTitle:{fontSize:9,fontWeight:600,color:"rgba(0,153,255,0.35)",marginBottom:12,marginTop:8,letterSpacing:"0.15em",fontFamily:"'JetBrains Mono',monospace"},
+  row:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",background:"rgba(255,255,255,0.015)",borderRadius:10,marginBottom:6,border:"1px solid rgba(255,255,255,0.03)",cursor:"pointer"},
+  empty:{textAlign:"center",padding:"40px 20px"},
+  hCard:{background:"rgba(255,255,255,0.02)",borderRadius:10,padding:14,border:"1px solid rgba(255,255,255,0.04)",marginBottom:8},
+  iconBtn:{background:"none",border:"none",cursor:"pointer",fontSize:13,padding:"3px 5px",borderRadius:4,opacity:0.4},
+  fg:{marginBottom:16},
+  lbl:{display:"block",fontSize:8,color:"rgba(0,153,255,0.35)",marginBottom:7,fontWeight:600,letterSpacing:"0.15em",fontFamily:"'JetBrains Mono',monospace"},
+  inp:{width:"100%",padding:"11px 13px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,color:"#fff",fontSize:15,fontFamily:"'JetBrains Mono',monospace",outline:"none",boxSizing:"border-box",transition:"all 0.2s"},
+  fuelOpt:{flex:1,padding:"10px 0",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,color:"rgba(255,255,255,0.3)",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",transition:"all 0.2s"},
+  primary:{width:"100%",padding:"13px 0",background:"linear-gradient(135deg,#0066cc,#0099ff)",border:"none",borderRadius:10,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:8,boxShadow:"0 0 16px rgba(0,100,200,0.2)"},
+  secondary:{width:"100%",padding:"11px 0",background:"transparent",border:"1px solid rgba(0,100,200,0.2)",borderRadius:10,color:"#0099ff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em"},
+  danger:{width:"100%",padding:"11px 0",background:"rgba(255,50,80,0.06)",border:"1px solid rgba(255,50,80,0.15)",borderRadius:8,color:"#ff3250",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"},
+  link:{background:"none",border:"none",color:"#0099ff",cursor:"pointer",fontSize:10,fontWeight:600,padding:"8px 0",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"},
+  ioCard:{display:"flex",alignItems:"flex-start",gap:14,padding:14,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:10,cursor:"pointer",marginBottom:8,width:"100%",boxSizing:"border-box",textAlign:"left"},
+  ioBtn:{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:14,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:10,cursor:"pointer",textAlign:"center",fontFamily:"'Outfit',sans-serif"},
+  ioTitle:{fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'Outfit',sans-serif",marginBottom:3},
+  ioDesc:{fontSize:10,color:"rgba(255,255,255,0.25)",lineHeight:1.4,fontFamily:"'Outfit',sans-serif"},
+  // Info rows
+  infoRow:{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid rgba(255,255,255,0.025)",alignItems:"flex-start",gap:12},
+  infoLabel:{fontSize:11,color:"rgba(255,255,255,0.3)",fontFamily:"'Outfit',sans-serif",flexShrink:0},
+  infoValue:{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.8)",fontFamily:"'JetBrains Mono',monospace",textAlign:"right",wordBreak:"break-all"},
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
