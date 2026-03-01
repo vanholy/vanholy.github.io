@@ -1,4 +1,4 @@
-const CACHE = 'galaxy-v3';
+const CACHE = 'galaxy-v4';
 const ASSETS = ['./'];
 
 self.addEventListener('install', e => {
@@ -13,8 +13,8 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('cdn') || e.request.url.includes('fonts.googleapis') || e.request.url.includes('unpkg') || e.request.url.includes('cdnjs')) {
-    e.respondWith(caches.open(CACHE).then(c => c.match(e.request).then(r => r || fetch(e.request).then(res => { c.put(e.request, res.clone()); return res; }))));
+    e.respondWith(fetch(e.request).then(res => { caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res; }).catch(() => caches.match(e.request)));
     return;
   }
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+  e.respondWith(fetch(e.request).then(res => { caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res; }).catch(() => caches.match(e.request)));
 });
