@@ -238,6 +238,35 @@ function App() {
 
   const totalMaintCost = useMemo(() => maint.reduce((s,m) => s + m.cost, 0), [maint]);
 
+  // Tank composition — simulate fill/consume cycle
+  const tankComp = useMemo(() => {
+    const CAP = 71;
+    const tank = { B7:0, HVO:0, Mix:0 };
+    const avgCons = stats.avgL || 7; // fallback 7 l/100km
+    for (let i = 0; i < sorted.length; i++) {
+      const e = sorted[i];
+      if (i > 0) {
+        const km = e.odometer - sorted[i-1].odometer;
+        if (e.fullTank) {
+          const remaining = Math.max(0, CAP - e.liters);
+          const tot = tank.B7 + tank.HVO + tank.Mix;
+          if (tot > 0) { const r = remaining / tot; tank.B7 *= r; tank.HVO *= r; tank.Mix *= r; }
+          else { tank.B7 = 0; tank.HVO = 0; tank.Mix = 0; }
+        } else {
+          const consumed = km * avgCons / 100;
+          const tot = tank.B7 + tank.HVO + tank.Mix;
+          if (tot > 0) { const r = Math.max(0, tot - consumed) / tot; tank.B7 *= r; tank.HVO *= r; tank.Mix *= r; }
+        }
+      }
+      tank[e.fuelType] = (tank[e.fuelType] || 0) + e.liters;
+      const tot = tank.B7 + tank.HVO + tank.Mix;
+      if (tot > CAP) { const r = CAP / tot; tank.B7 *= r; tank.HVO *= r; tank.Mix *= r; }
+    }
+    const tot = tank.B7 + tank.HVO + tank.Mix;
+    return { B7: tank.B7, HVO: tank.HVO, Mix: tank.Mix, total: tot,
+      pctB7: tot > 0 ? tank.B7 / tot * 100 : 0, pctHVO: tot > 0 ? tank.HVO / tot * 100 : 0, pctMix: tot > 0 ? tank.Mix / tot * 100 : 0 };
+  }, [sorted, stats.avgL]);
+
   // Chart data
   const chartData = useMemo(() => withCalc.map(e => ({ date:fmtDate(e.date), dateFull:e.date, "l/100km":+e.calc.lPer100.toFixed(2), "€/km":+e.calc.costPerKm.toFixed(3), km:e.calc.kmDriven, liters:e.liters, cost:e.totalCost, fuel:e.fuelType })), [withCalc]);
 
@@ -468,6 +497,42 @@ function App() {
                   ))}
                 </ChartCard>
               </div>
+
+              {/* Tank Composition */}
+              {tankComp.total > 0 && (
+                <ChartCard title="Composizione Serbatoio (stima)" icon={Fuel} color="#00d4ff">
+                  <div style={{marginBottom:12}}>
+                    <div style={{display:"flex",height:32,borderRadius:8,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
+                      {tankComp.pctB7 > 0 && <div style={{width:tankComp.pctB7+"%",background:"linear-gradient(135deg,#f0c000,#e6b400)",transition:"width 0.5s"}}/>}
+                      {tankComp.pctHVO > 0 && <div style={{width:tankComp.pctHVO+"%",background:"linear-gradient(135deg,#00d4ff,#0099cc)",transition:"width 0.5s"}}/>}
+                      {tankComp.pctMix > 0 && <div style={{width:tankComp.pctMix+"%",background:"linear-gradient(135deg,#c080ff,#9060cc)",transition:"width 0.5s"}}/>}
+                    </div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:Object.entries({B7:tankComp.pctB7,HVO:tankComp.pctHVO,Mix:tankComp.pctMix}).filter(([,v])=>v>0).map(()=>"1fr").join(" "),gap:12}}>
+                    {tankComp.pctB7 > 0 && (
+                      <div style={{textAlign:"center",padding:"10px 8px",background:"rgba(240,192,0,0.04)",borderRadius:8,border:"1px solid rgba(240,192,0,0.12)"}}>
+                        <div style={{fontSize:22,fontWeight:700,color:"#f0c000",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(tankComp.pctB7,1)}%</div>
+                        <div style={{fontSize:8,color:"rgba(240,192,0,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>B7 · {fmtN(tankComp.B7,1)} L</div>
+                      </div>
+                    )}
+                    {tankComp.pctHVO > 0 && (
+                      <div style={{textAlign:"center",padding:"10px 8px",background:"rgba(0,212,255,0.04)",borderRadius:8,border:"1px solid rgba(0,212,255,0.12)"}}>
+                        <div style={{fontSize:22,fontWeight:700,color:"#00d4ff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(tankComp.pctHVO,1)}%</div>
+                        <div style={{fontSize:8,color:"rgba(0,212,255,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>HVO · {fmtN(tankComp.HVO,1)} L</div>
+                      </div>
+                    )}
+                    {tankComp.pctMix > 0 && (
+                      <div style={{textAlign:"center",padding:"10px 8px",background:"rgba(192,128,255,0.04)",borderRadius:8,border:"1px solid rgba(192,128,255,0.12)"}}>
+                        <div style={{fontSize:22,fontWeight:700,color:"#c080ff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(tankComp.pctMix,1)}%</div>
+                        <div style={{fontSize:8,color:"rgba(192,128,255,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>Mix · {fmtN(tankComp.Mix,1)} L</div>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{textAlign:"center",marginTop:10,fontSize:8,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>
+                    Stima: {fmtN(tankComp.total,1)} L / 71 L nel serbatoio
+                  </div>
+                </ChartCard>
+              )}
 
               {/* Recent entries */}
               <ChartCard title={`Ultimi Rifornimenti (${Math.min(5,enriched.length)})`} icon={Clock}>
