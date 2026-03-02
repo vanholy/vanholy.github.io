@@ -36,7 +36,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 <script type="text/babel">
 const { useState, useEffect } = React;
 const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Area, AreaChart } = Recharts;
-const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3 } = LucideReact;
+const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3, Droplets } = LucideReact;
 
 const FUEL_TYPES = ["B7", "HVO", "Diesel+", "Mix"];
 const MAINT_TYPES = ["Tagliando", "Riparazione", "Pneumatici", "Revisione", "Carrozzeria", "Altro"];
@@ -53,6 +53,7 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 // Storage — Supabase con fallback localStorage
 const loadK = async (k) => {
   try {
+    if (k === 'ft-adblue-v1') { const r = localStorage.getItem(k); return r ? JSON.parse(r) : []; }
     const table = k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
     const { data, error } = await sb.from(table).select('*').order('date', { ascending: true });
     if (error) throw error;
@@ -69,6 +70,7 @@ const loadK = async (k) => {
 
 const saveK = async (k, v) => {
   try {
+    if (k === 'ft-adblue-v1') { localStorage.setItem(k, JSON.stringify(v)); return; }
     const table = k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
     const rows = k === 'ft-v3'
       ? v.map(e => ({ id: e.id, date: e.date, liters: e.liters, price_per_liter: e.pricePerLiter, odometer: e.odometer, total_cost: e.totalCost, fuel_type: e.fuelType, full_tank: e.fullTank, notes: e.notes || '' }))
@@ -269,8 +271,11 @@ function App() {
   const [msg, setMsg] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0,10), liters:"", price:"", odo:"", fuel:"HVO", full:true, notes:"" });
   const [mForm, setMForm] = useState({ date: new Date().toISOString().slice(0,10), type:"Tagliando", desc:"", cost:"", odo:"", notes:"" });
+  const [adblue, setAdblue] = useState([]);
+  const [abForm, setAbForm] = useState({ date: new Date().toISOString().slice(0,10), liters:"", cost:"", odo:"", notes:"" });
+  const [editAbId, setEditAbId] = useState(null);
 
-  useEffect(() => { Promise.all([loadK("ft-v3"), loadK("ft-maint-v3")]).then(([f,m]) => { setEntries(f); setMaint(m); setLoading(false); }); }, []);
+  useEffect(() => { Promise.all([loadK("ft-v3"), loadK("ft-maint-v3"), loadK("ft-adblue-v1")]).then(([f,m,a]) => { setEntries(f); setMaint(m); setAdblue(a); setLoading(false); }); }, []);
   const showMsg = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
 
   // Fuel calculations
@@ -350,7 +355,31 @@ function App() {
   const handleDeleteMaint = async (id) => { const u=maint.filter(m=>m.id!==id); setMaint(u); await saveK("ft-maint-v3",u); };
   const handleEdit = (e) => { setForm({date:e.date,liters:""+e.liters,price:""+e.pricePerLiter,odo:""+e.odometer,fuel:e.fuelType,full:e.fullTank,notes:e.notes||""}); setEditId(e.id); setView("add"); };
   const handleEditMaint = (m) => { setMForm({date:m.date,type:m.type,desc:m.desc,cost:""+m.cost,odo:m.odometer?""+m.odometer:"",notes:m.notes||""}); setEditMaintId(m.id); };
-  const handleReset = async () => { if(confirm("Cancellare TUTTI i dati?")){ setEntries([]); setMaint([]); await saveK("ft-v3",[]); await saveK("ft-maint-v3",[]); }};
+  // AdBlue handlers
+  const handleAbSubmit = async () => {
+    const liters=parseFloat(abForm.liters),cost=parseFloat(abForm.cost)||0,odo=parseInt(abForm.odo); if(!liters||!odo) return;
+    const entry = { id:editAbId||genId(), date:abForm.date, liters, cost, odometer:odo, notes:abForm.notes||"" };
+    const u = editAbId ? adblue.map(a=>a.id===editAbId?entry:a) : [...adblue,entry]; setAdblue(u); await saveK("ft-adblue-v1",u);
+    setAbForm({date:new Date().toISOString().slice(0,10),liters:"",cost:"",odo:"",notes:""}); setEditAbId(null); showMsg(true,"AdBlue registrato");
+  };
+  const handleAbDelete = async (id) => { const u=adblue.filter(a=>a.id!==id); setAdblue(u); await saveK("ft-adblue-v1",u); };
+  const handleAbEdit = (a) => { setAbForm({date:a.date,liters:""+a.liters,cost:a.cost?""+a.cost:"",odo:""+a.odometer,notes:a.notes||""}); setEditAbId(a.id); setView("adblue"); };
+  // AdBlue stats
+  const abSorted = [...adblue].sort((a,b) => a.odometer - b.odometer);
+  const abStats = (() => {
+    if (abSorted.length < 2) return null;
+    const totalL = abSorted.reduce((s,a)=>s+a.liters,0);
+    const totalCost = abSorted.reduce((s,a)=>s+(a.cost||0),0);
+    const kmSpan = abSorted[abSorted.length-1].odometer - abSorted[0].odometer;
+    const lPer1000 = kmSpan > 0 ? (totalL / kmSpan) * 1000 : null;
+    const avgInterval = kmSpan / (abSorted.length - 1);
+    const lastOdo = abSorted[abSorted.length-1].odometer;
+    const currentOdo = entries.length ? Math.max(...entries.map(e=>e.odometer)) : lastOdo;
+    const kmSinceLast = currentOdo - lastOdo;
+    const estNextKm = avgInterval > 0 ? Math.round(lastOdo + avgInterval) : null;
+    return { totalL, totalCost, kmSpan, lPer1000, avgInterval: Math.round(avgInterval), lastOdo, kmSinceLast, estNextKm, count: abSorted.length };
+  })();
+  const handleReset = async () => { if(confirm("Cancellare TUTTI i dati?")){ setEntries([]); setMaint([]); setAdblue([]); await saveK("ft-v3",[]); await saveK("ft-maint-v3",[]); await saveK("ft-adblue-v1",[]); }};
   const handleImportJSON = async (e) => { const file=e.target.files?.[0]; if(!file)return; try{const data=JSON.parse(await file.text()); const imp=data.entries||data;
     if(!Array.isArray(imp)||!imp.length){showMsg(false,"File non valido");return;} const keys=new Set(entries.map(e=>`${e.date}-${e.odometer}`));
     const added=imp.filter(e=>e.date&&e.odometer&&!keys.has(`${e.date}-${e.odometer}`)).map(e=>({...e,id:e.id||genId(),totalCost:e.totalCost||e.liters*e.pricePerLiter,fullTank:e.fullTank!==false}));
@@ -402,7 +431,7 @@ function App() {
 
       {/* Nav */}
       <div style={S.nav}>
-        {[{id:"dash",Icon:Home,label:"Home"},{id:"add",Icon:PlusCircle,label:"Nuovo"},{id:"log",Icon:List,label:"Log"},{id:"stats",Icon:BarChart3,label:"Analisi"},{id:"maint",Icon:Wrench,label:"Spese"},{id:"info",Icon:Car,label:"Auto"},{id:"io",Icon:Database,label:"Dati"}].map(t=>{
+        {[{id:"dash",Icon:Home,label:"Home"},{id:"add",Icon:PlusCircle,label:"Nuovo"},{id:"log",Icon:List,label:"Log"},{id:"stats",Icon:BarChart3,label:"Analisi"},{id:"maint",Icon:Wrench,label:"Spese"},{id:"info",Icon:Car,label:"Auto"},{id:"adblue",Icon:Droplets,label:"AdBlue"},{id:"io",Icon:Database,label:"Dati"}].map(t=>{
           const active = view===t.id;
           return (
           <button key={t.id} style={{...S.navBtn,...(active?S.navAct:{})}} onClick={()=>{setView(t.id);if(t.id==="add"&&!editId)setForm(f=>({...f,liters:"",price:"",odo:"",notes:""}));}}>
@@ -849,6 +878,70 @@ function App() {
                 ))}
               </>
             )}
+          </div>
+        )}
+
+        {/* ═══ ADBLUE ═══ */}
+        {view==="adblue" && (
+          <div style={{animation:"slideUp 0.3s ease"}}>
+            <div style={S.secTitle}>◇ REGISTRA ADBLUE</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+              <div style={S.fg}><label style={S.lbl}>DATA</label><input type="date" value={abForm.date} onChange={e=>setAbForm(f=>({...f,date:e.target.value}))} style={S.inp}/></div>
+              <div style={S.fg}><label style={S.lbl}>LITRI</label><input type="number" step="0.01" placeholder="10" value={abForm.liters} onChange={e=>setAbForm(f=>({...f,liters:e.target.value}))} style={S.inp}/></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+              <div style={S.fg}><label style={S.lbl}>COSTO €</label><input type="number" step="0.01" placeholder="15.00" value={abForm.cost} onChange={e=>setAbForm(f=>({...f,cost:e.target.value}))} style={S.inp}/></div>
+              <div style={S.fg}><label style={S.lbl}>ODOMETRO (KM)</label><input type="number" placeholder="195000" value={abForm.odo} onChange={e=>setAbForm(f=>({...f,odo:e.target.value}))} style={S.inp}/></div>
+            </div>
+            <div style={S.fg}><label style={S.lbl}>NOTE</label><input type="text" placeholder="tipo, fornitore..." value={abForm.notes} onChange={e=>setAbForm(f=>({...f,notes:e.target.value}))} style={S.inp}/></div>
+            <button style={{...S.primary,background:"linear-gradient(135deg,#0088cc,#00bbff)"}} onClick={handleAbSubmit}>{editAbId?"SALVA MODIFICA":"REGISTRA ADBLUE"}</button>
+            {editAbId&&<button style={{...S.secondary,marginTop:8}} onClick={()=>{setEditAbId(null);setAbForm({date:new Date().toISOString().slice(0,10),liters:"",cost:"",odo:"",notes:""});}}>ANNULLA MODIFICA</button>}
+
+            {abStats && (<>
+              <div style={{...S.secTitle,marginTop:24}}>◇ STATISTICHE</div>
+              <div style={S.grid4}>
+                <div style={S.card}>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em",marginBottom:6}}>CONSUMO</div>
+                  <div style={{fontSize:22,fontWeight:700,color:"#00bbff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(abStats.lPer1000,1)}</div>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.3)",fontFamily:"'JetBrains Mono',monospace"}}>L / 1.000 KM</div>
+                </div>
+                <div style={S.card}>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em",marginBottom:6}}>INTERVALLO</div>
+                  <div style={{fontSize:22,fontWeight:700,color:"#00bbff",fontFamily:"'JetBrains Mono',monospace"}}>{abStats.avgInterval.toLocaleString("it-IT")}</div>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.3)",fontFamily:"'JetBrains Mono',monospace"}}>KM MEDI</div>
+                </div>
+                <div style={S.card}>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em",marginBottom:6}}>PROSSIMO</div>
+                  <div style={{fontSize:22,fontWeight:700,color:abStats.estNextKm && abStats.kmSinceLast > abStats.avgInterval*0.85?"#ff6b6b":"#00bbff",fontFamily:"'JetBrains Mono',monospace"}}>{abStats.estNextKm ? abStats.estNextKm.toLocaleString("it-IT") : "—"}</div>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.3)",fontFamily:"'JetBrains Mono',monospace"}}>{abStats.kmSinceLast.toLocaleString("it-IT")} km fa</div>
+                </div>
+                <div style={S.card}>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em",marginBottom:6}}>TOTALE</div>
+                  <div style={{fontSize:22,fontWeight:700,color:"#00bbff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(abStats.totalL,1)}</div>
+                  <div style={{fontSize:8,color:"rgba(0,180,255,0.3)",fontFamily:"'JetBrains Mono',monospace"}}>L · € {fmtN(abStats.totalCost,2)}</div>
+                </div>
+              </div>
+            </>)}
+
+            {adblue.length>0 && (<>
+              <div style={{...S.secTitle,marginTop:20}}>◇ STORICO ({adblue.length})</div>
+              {[...adblue].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(a=>(
+                <div key={a.id} style={S.row}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#fff"}}>{fmtDate(a.date)}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{a.odometer.toLocaleString("it-IT")} km{a.notes ? " · "+a.notes : ""}</div>
+                  </div>
+                  <div style={{textAlign:"right",marginRight:8}}>
+                    <div style={{fontSize:14,fontWeight:700,color:"#00bbff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(a.liters,1)} L</div>
+                    {a.cost>0 && <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",fontFamily:"'JetBrains Mono',monospace"}}>€{fmtN(a.cost,2)}</div>}
+                  </div>
+                  <div>
+                    <button style={S.iconBtn} onClick={()=>handleAbEdit(a)}>✏️</button>
+                    <button style={S.iconBtn} onClick={()=>handleAbDelete(a.id)}>🗑️</button>
+                  </div>
+                </div>
+              ))}
+            </>)}
           </div>
         )}
 
