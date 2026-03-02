@@ -30,9 +30,10 @@ const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, B
 const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3, TrendingUp, Fuel, DollarSign, Activity, Calendar, ChevronRight, Download, Upload, Trash2, Edit3, Check, X, Info, PieChart: PieIcon, Target, Gauge, Route, Clock, Zap } = LucideReact;
 
 // ═══ CONSTANTS ═══
-const FUEL_TYPES = ["B7", "HVO", "Mix"];
+const FUEL_TYPES = ["B7", "HVO", "Diesel+", "Mix"];
 const MAINT_TYPES = ["Tagliando", "Riparazione", "Pneumatici", "Revisione", "Carrozzeria", "Altro"];
-const FC = { HVO:"#00d4ff", B7:"#f0c000", Mix:"#c080ff" };
+const FC = { HVO:"#00d4ff", B7:"#f0c000", "Diesel+":"#ff8c00", Mix:"#c080ff" };
+const CETANE = { B7:51, HVO:75, "Diesel+":60, Mix:55 };
 const MONTHS_IT = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 
 const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -85,7 +86,7 @@ const saveK = async (k, v) => {
 
 const calcCons = (cur, prev) => { if (!prev) return null; const km = cur.odometer - prev.odometer; if (km <= 0) return null; return { kmDriven: km, lPer100: (cur.liters / km) * 100, costPerKm: cur.totalCost / km }; };
 const dl = (content, name, type) => { const b = new Blob([content], { type }); const u = URL.createObjectURL(b); const a = Object.assign(document.createElement("a"), { href: u, download: name }); document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u); };
-const detectFuel = (n) => { if (!n) return "B7"; const l = n.toLowerCase(); return l.includes("hvo") ? "HVO" : l.includes("mix") ? "Mix" : "B7"; };
+const detectFuel = (n) => { if (!n) return "B7"; const l = n.toLowerCase(); return l.includes("hvo") ? "HVO" : l.includes("diesel+") || l.includes("premium") || l.includes("v-power") || l.includes("excellium") ? "Diesel+" : l.includes("mix") ? "Mix" : "B7"; };
 
 // Fuelio CSV parser
 const parseFuelioCSV = (text) => {
@@ -193,6 +194,66 @@ const StatBox = ({label, value, unit, highlight, color="#fff", small}) => (
   </div>
 );
 
+// ═══ CETANE CALCULATOR ═══
+const CetaneCalc = ({tankComp}) => {
+  const [targetCetane, setTargetCetane] = React.useState("60");
+  const CAP = 71;
+  const space = CAP - tankComp.total;
+  const target = parseFloat(targetCetane);
+  const currentCetane = tankComp.cetane;
+  const results = React.useMemo(() => {
+    if (!target || target < 40 || target > 80 || tankComp.total <= 0) return null;
+    const calc = (fuelCetane, name) => {
+      if (Math.abs(fuelCetane - currentCetane) < 0.01) return { name, liters: 0, possible: true, note: "Cetano già al target" };
+      const needed = tankComp.total * (target - currentCetane) / (fuelCetane - currentCetane);
+      if (needed < 0) return { name, liters: 0, possible: false, note: fuelCetane > currentCetane ? "Serve abbassare" : "Serve alzare" };
+      return { name, liters: Math.min(needed, space), possible: needed <= space, full: needed, note: needed > space ? `Servirebbero ${fmtN(needed,1)}L (spazio: ${fmtN(space,1)}L)` : null };
+    };
+    return [calc(CETANE.HVO, "HVO"), calc(CETANE["Diesel+"], "Diesel+"), calc(CETANE.B7, "B7")];
+  }, [target, tankComp, currentCetane, space]);
+  return (
+    <ChartCard title="Calcolatore Cetano" icon={Target} color="#00c88a">
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:9,color:"rgba(0,200,140,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",fontWeight:600,marginBottom:6}}>CETANO DESIDERATO</div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <input type="range" min="45" max="75" step="0.5" value={targetCetane} onChange={e=>setTargetCetane(e.target.value)} style={{flex:1,accentColor:"#00c88a"}}/>
+          <input type="number" min="40" max="80" step="0.5" value={targetCetane} onChange={e=>setTargetCetane(e.target.value)} style={{width:70,padding:"6px 10px",background:"rgba(0,200,140,0.06)",border:"1px solid rgba(0,200,140,0.2)",borderRadius:6,color:"#00c88a",fontSize:16,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",outline:"none"}}/>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:8,color:"rgba(255,255,255,0.12)",fontFamily:"'JetBrains Mono',monospace"}}><span>45</span><span>Cetano attuale: {fmtN(currentCetane,1)}</span><span>75</span></div>
+      </div>
+      {results && (
+        <div style={{display:"grid",gap:8}}>
+          {results.map(r => (
+            <div key={r.name} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:`rgba(${r.name==="HVO"?"0,212,255":r.name==="Diesel+"?"255,140,0":"240,192,0"},0.03)`,borderRadius:8,border:`1px solid rgba(${r.name==="HVO"?"0,212,255":r.name==="Diesel+"?"255,140,0":"240,192,0"},0.08)`}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:3,height:28,borderRadius:2,background:FC[r.name]}}/>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:FC[r.name],fontFamily:"'JetBrains Mono',monospace"}}>{r.name}</div>
+                  <div style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace",marginTop:1}}>Cetano: {CETANE[r.name]}</div>
+                </div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                {r.possible && r.liters > 0 ? (
+                  <><div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(r.liters,1)} L</div>
+                  <div style={{fontSize:7,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>da aggiungere</div></>
+                ) : r.liters === 0 && r.possible ? (
+                  <div style={{fontSize:10,color:"rgba(0,200,140,0.5)",fontFamily:"'JetBrains Mono',monospace"}}>{r.note}</div>
+                ) : !r.possible && r.full ? (
+                  <><div style={{fontSize:14,fontWeight:700,color:"rgba(255,255,255,0.4)",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(Math.min(r.full,space),1)} L</div>
+                  <div style={{fontSize:7,color:"rgba(255,80,80,0.5)",fontFamily:"'JetBrains Mono',monospace"}}>{r.note}</div></>
+                ) : (
+                  <div style={{fontSize:9,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>{r.note}</div>
+                )}
+              </div>
+            </div>
+          ))}
+          <div style={{textAlign:"center",fontSize:8,color:"rgba(255,255,255,0.1)",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>Spazio disponibile: {fmtN(space,1)} L</div>
+        </div>
+      )}
+    </ChartCard>
+  );
+};
+
 // ═══ AXIS STYLE ═══
 const AX = {tick:{fill:"rgba(255,255,255,0.25)",fontSize:10,fontFamily:"'JetBrains Mono',monospace"}};
 const GRID = <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/>;
@@ -241,30 +302,32 @@ function App() {
   // Tank composition — simulate fill/consume cycle
   const tankComp = useMemo(() => {
     const CAP = 71;
-    const tank = { B7:0, HVO:0, Mix:0 };
-    const avgCons = stats.avgL || 7; // fallback 7 l/100km
+    const tank = { B7:0, HVO:0, "Diesel+":0, Mix:0 };
+    const avgCons = stats.avgL || 7;
+    const getTot = () => tank.B7 + tank.HVO + tank["Diesel+"] + tank.Mix;
+    const scale = (r) => { tank.B7 *= r; tank.HVO *= r; tank["Diesel+"] *= r; tank.Mix *= r; };
     for (let i = 0; i < sorted.length; i++) {
       const e = sorted[i];
       if (i > 0) {
         const km = e.odometer - sorted[i-1].odometer;
         if (e.fullTank) {
           const remaining = Math.max(0, CAP - e.liters);
-          const tot = tank.B7 + tank.HVO + tank.Mix;
-          if (tot > 0) { const r = remaining / tot; tank.B7 *= r; tank.HVO *= r; tank.Mix *= r; }
-          else { tank.B7 = 0; tank.HVO = 0; tank.Mix = 0; }
+          const tot = getTot();
+          if (tot > 0) scale(remaining / tot); else { tank.B7=0; tank.HVO=0; tank["Diesel+"]=0; tank.Mix=0; }
         } else {
           const consumed = km * avgCons / 100;
-          const tot = tank.B7 + tank.HVO + tank.Mix;
-          if (tot > 0) { const r = Math.max(0, tot - consumed) / tot; tank.B7 *= r; tank.HVO *= r; tank.Mix *= r; }
+          const tot = getTot();
+          if (tot > 0) scale(Math.max(0, tot - consumed) / tot);
         }
       }
       tank[e.fuelType] = (tank[e.fuelType] || 0) + e.liters;
-      const tot = tank.B7 + tank.HVO + tank.Mix;
-      if (tot > CAP) { const r = CAP / tot; tank.B7 *= r; tank.HVO *= r; tank.Mix *= r; }
+      const tot = getTot();
+      if (tot > CAP) scale(CAP / tot);
     }
-    const tot = tank.B7 + tank.HVO + tank.Mix;
-    return { B7: tank.B7, HVO: tank.HVO, Mix: tank.Mix, total: tot,
-      pctB7: tot > 0 ? tank.B7 / tot * 100 : 0, pctHVO: tot > 0 ? tank.HVO / tot * 100 : 0, pctMix: tot > 0 ? tank.Mix / tot * 100 : 0 };
+    const tot = getTot();
+    const cetane = tot > 0 ? (tank.B7 * CETANE.B7 + tank.HVO * CETANE.HVO + tank["Diesel+"] * CETANE["Diesel+"] + tank.Mix * CETANE.Mix) / tot : 0;
+    return { B7: tank.B7, HVO: tank.HVO, "Diesel+": tank["Diesel+"], Mix: tank.Mix, total: tot, cetane,
+      pctB7: tot>0?tank.B7/tot*100:0, pctHVO: tot>0?tank.HVO/tot*100:0, "pctDiesel+": tot>0?tank["Diesel+"]/tot*100:0, pctMix: tot>0?tank.Mix/tot*100:0 };
   }, [sorted, stats.avgL]);
 
   // Chart data
@@ -505,33 +568,32 @@ function App() {
                     <div style={{display:"flex",height:32,borderRadius:8,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
                       {tankComp.pctB7 > 0 && <div style={{width:tankComp.pctB7+"%",background:"linear-gradient(135deg,#f0c000,#e6b400)",transition:"width 0.5s"}}/>}
                       {tankComp.pctHVO > 0 && <div style={{width:tankComp.pctHVO+"%",background:"linear-gradient(135deg,#00d4ff,#0099cc)",transition:"width 0.5s"}}/>}
+                      {tankComp["pctDiesel+"] > 0 && <div style={{width:tankComp["pctDiesel+"]+"%",background:"linear-gradient(135deg,#ff8c00,#cc7000)",transition:"width 0.5s"}}/>}
                       {tankComp.pctMix > 0 && <div style={{width:tankComp.pctMix+"%",background:"linear-gradient(135deg,#c080ff,#9060cc)",transition:"width 0.5s"}}/>}
                     </div>
                   </div>
-                  <div style={{display:"grid",gridTemplateColumns:Object.entries({B7:tankComp.pctB7,HVO:tankComp.pctHVO,Mix:tankComp.pctMix}).filter(([,v])=>v>0).map(()=>"1fr").join(" "),gap:12}}>
-                    {tankComp.pctB7 > 0 && (
-                      <div style={{textAlign:"center",padding:"10px 8px",background:"rgba(240,192,0,0.04)",borderRadius:8,border:"1px solid rgba(240,192,0,0.12)"}}>
-                        <div style={{fontSize:22,fontWeight:700,color:"#f0c000",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(tankComp.pctB7,1)}%</div>
-                        <div style={{fontSize:8,color:"rgba(240,192,0,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>B7 · {fmtN(tankComp.B7,1)} L</div>
+                  {/* Cetane number */}
+                  <div style={{textAlign:"center",marginBottom:14,padding:"10px 12px",background:"rgba(0,200,140,0.04)",borderRadius:8,border:"1px solid rgba(0,200,140,0.15)"}}>
+                    <div style={{fontSize:9,color:"rgba(0,200,140,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",fontWeight:600,marginBottom:4}}>NUMERO DI CETANO STIMATO</div>
+                    <div style={{fontSize:32,fontWeight:700,color:"#00c88a",fontFamily:"'JetBrains Mono',monospace",textShadow:"0 0 14px rgba(0,200,140,0.2)"}}>{fmtN(tankComp.cetane,1)}</div>
+                    <div style={{fontSize:8,color:"rgba(0,200,140,0.3)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>B7≈51 · Diesel+≈60 · HVO≈75</div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:Object.entries({B7:tankComp.pctB7,HVO:tankComp.pctHVO,"Diesel+":tankComp["pctDiesel+"],Mix:tankComp.pctMix}).filter(([,v])=>v>0).map(()=>"1fr").join(" "),gap:10}}>
+                    {[["B7",tankComp.pctB7,tankComp.B7,"240,192,0"],["HVO",tankComp.pctHVO,tankComp.HVO,"0,212,255"],["Diesel+",tankComp["pctDiesel+"],tankComp["Diesel+"],"255,140,0"],["Mix",tankComp.pctMix,tankComp.Mix,"192,128,255"]].filter(([,p])=>p>0).map(([name,pct,liters,rgb])=>(
+                      <div key={name} style={{textAlign:"center",padding:"10px 8px",background:`rgba(${rgb},0.04)`,borderRadius:8,border:`1px solid rgba(${rgb},0.12)`}}>
+                        <div style={{fontSize:20,fontWeight:700,color:FC[name],fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(pct,1)}%</div>
+                        <div style={{fontSize:8,color:`rgba(${rgb},0.5)`,fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{name} · {fmtN(liters,1)} L</div>
                       </div>
-                    )}
-                    {tankComp.pctHVO > 0 && (
-                      <div style={{textAlign:"center",padding:"10px 8px",background:"rgba(0,212,255,0.04)",borderRadius:8,border:"1px solid rgba(0,212,255,0.12)"}}>
-                        <div style={{fontSize:22,fontWeight:700,color:"#00d4ff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(tankComp.pctHVO,1)}%</div>
-                        <div style={{fontSize:8,color:"rgba(0,212,255,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>HVO · {fmtN(tankComp.HVO,1)} L</div>
-                      </div>
-                    )}
-                    {tankComp.pctMix > 0 && (
-                      <div style={{textAlign:"center",padding:"10px 8px",background:"rgba(192,128,255,0.04)",borderRadius:8,border:"1px solid rgba(192,128,255,0.12)"}}>
-                        <div style={{fontSize:22,fontWeight:700,color:"#c080ff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(tankComp.pctMix,1)}%</div>
-                        <div style={{fontSize:8,color:"rgba(192,128,255,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>Mix · {fmtN(tankComp.Mix,1)} L</div>
-                      </div>
-                    )}
+                    ))}
                   </div>
                   <div style={{textAlign:"center",marginTop:10,fontSize:8,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>
                     Stima: {fmtN(tankComp.total,1)} L / 71 L nel serbatoio
                   </div>
                 </ChartCard>
+              )}
+              {/* Cetane Calculator */}
+              {tankComp.total > 0 && (
+                <CetaneCalc tankComp={tankComp}/>
               )}
 
               {/* Recent entries */}
