@@ -11,6 +11,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:#050a18;color:#e5e5e5;font-family:'Outfit',sans-serif;overflow-x:hidden;height:100%}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:rgba(0,100,200,0.2);border-radius:4px}::-webkit-scrollbar-track{background:transparent}
+@keyframes loginShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -1216,7 +1217,61 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+// ═══ AUTH ═══
+const USERS = { prova: 'prova', vanholy: 'animal' };
+const AUTH_KEY = 'fuel-auth-v1';
+
+const LoginScreen = ({ onLogin }) => {
+  const [user, setUser] = React.useState('');
+  const [pass, setPass] = React.useState('');
+  const [err, setErr] = React.useState('');
+  const [shake, setShake] = React.useState(false);
+  const handle = () => {
+    if (USERS[user] && USERS[user] === pass) {
+      localStorage.setItem(AUTH_KEY, user);
+      onLogin(user);
+    } else {
+      setErr('Credenziali non valide');
+      setShake(true);
+      setTimeout(() => { setErr(''); setShake(false); }, 1400);
+    }
+  };
+  return (
+    <div style={{position:'fixed',inset:0,background:'#050a18',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',zIndex:9999}}>
+      <FordLogo size={90}/>
+      <div style={{marginTop:22,fontSize:11,color:'rgba(0,150,255,0.45)',fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.22em',fontWeight:700}}>GALAXY FUEL TRACKER</div>
+      <div style={{marginTop:6,fontSize:9,color:'rgba(255,255,255,0.12)',fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.15em'}}>DASHBOARD — ACCESSO RISERVATO</div>
+      <div style={{marginTop:40,width:360,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(0,100,200,0.15)',borderRadius:18,padding:'32px 28px',animation:shake?'loginShake 0.4s ease':'none'}}>
+        <div style={{marginBottom:20,fontSize:9,color:'rgba(0,120,255,0.35)',fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.18em',fontWeight:700}}>CREDENZIALI</div>
+        <input placeholder="Username" value={user} onChange={e=>setUser(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handle()} autoCapitalize="none" autoCorrect="off" spellCheck={false}
+          style={{width:'100%',marginBottom:12,padding:'13px 16px',background:'rgba(0,100,200,0.06)',border:'1px solid rgba(0,100,200,0.18)',borderRadius:9,color:'#fff',fontSize:14,fontFamily:"'JetBrains Mono',monospace",outline:'none'}}/>
+        <input type="password" placeholder="Password" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handle()}
+          style={{width:'100%',marginBottom:22,padding:'13px 16px',background:'rgba(0,100,200,0.06)',border:'1px solid rgba(0,100,200,0.18)',borderRadius:9,color:'#fff',fontSize:14,fontFamily:"'JetBrains Mono',monospace",outline:'none'}}/>
+        <button onClick={handle}
+          style={{width:'100%',padding:'14px',background:'linear-gradient(135deg,#003a88,#0060d0)',border:'none',borderRadius:9,color:'#fff',fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.14em',cursor:'pointer',boxShadow:'0 4px 24px rgba(0,80,200,0.25)'}}>
+          ACCEDI
+        </button>
+        {err && <div style={{marginTop:14,textAlign:'center',fontSize:11,color:'#ff5555',fontFamily:"'JetBrains Mono',monospace"}}>{err}</div>}
+      </div>
+    </div>
+  );
+};
+
+function Root() {
+  const [authUser, setAuthUser] = React.useState(() => localStorage.getItem(AUTH_KEY));
+  if (!authUser) return <LoginScreen onLogin={setAuthUser}/>;
+  return (
+    <>
+      <App/>
+      <button onClick={()=>{localStorage.removeItem(AUTH_KEY);setAuthUser(null);}}
+        style={{position:'fixed',top:16,right:20,zIndex:9990,padding:'6px 14px',background:'rgba(5,10,24,0.9)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:20,color:'rgba(255,255,255,0.22)',fontSize:9,fontFamily:"'JetBrains Mono',monospace",cursor:'pointer',backdropFilter:'blur(10px)',letterSpacing:'0.1em'}}>
+        LOGOUT
+      </button>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Root));
 </script>
 </body>
 </html>

@@ -18,6 +18,7 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{background:#050a18;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+@keyframes loginShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 </style>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -1014,7 +1015,60 @@ const S = {
   infoValue:{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.8)",fontFamily:"'JetBrains Mono',monospace",textAlign:"right",wordBreak:"break-all"},
 };
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+// ═══ AUTH ═══
+const USERS = { prova: 'prova', vanholy: 'animal' };
+const AUTH_KEY = 'fuel-auth-v1';
+
+const LoginScreen = ({ onLogin }) => {
+  const [user, setUser] = React.useState('');
+  const [pass, setPass] = React.useState('');
+  const [err, setErr] = React.useState('');
+  const [shake, setShake] = React.useState(false);
+  const handle = () => {
+    if (USERS[user] && USERS[user] === pass) {
+      localStorage.setItem(AUTH_KEY, user);
+      onLogin(user);
+    } else {
+      setErr('Credenziali non valide');
+      setShake(true);
+      setTimeout(() => { setErr(''); setShake(false); }, 1400);
+    }
+  };
+  return (
+    <div style={{position:'fixed',inset:0,background:'#050a18',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',zIndex:9999,padding:24}}>
+      <FordLogo size={72}/>
+      <div style={{marginTop:20,fontSize:10,color:'rgba(0,150,255,0.45)',fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.22em',fontWeight:700}}>GALAXY FUEL TRACKER</div>
+      <div style={{marginTop:8,fontSize:8,color:'rgba(255,255,255,0.12)',fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.15em'}}>ACCESSO RISERVATO</div>
+      <div style={{marginTop:32,width:'100%',maxWidth:300,background:'rgba(255,255,255,0.02)',border:'1px solid rgba(0,100,200,0.15)',borderRadius:16,padding:'24px 20px',animation:shake?'loginShake 0.4s ease':'none'}}>
+        <input placeholder="Username" value={user} onChange={e=>setUser(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handle()} autoCapitalize="none" autoCorrect="off" spellCheck={false}
+          style={{width:'100%',marginBottom:10,padding:'12px 14px',background:'rgba(0,100,200,0.06)',border:'1px solid rgba(0,100,200,0.18)',borderRadius:8,color:'#fff',fontSize:14,fontFamily:"'JetBrains Mono',monospace",outline:'none'}}/>
+        <input type="password" placeholder="Password" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handle()}
+          style={{width:'100%',marginBottom:18,padding:'12px 14px',background:'rgba(0,100,200,0.06)',border:'1px solid rgba(0,100,200,0.18)',borderRadius:8,color:'#fff',fontSize:14,fontFamily:"'JetBrains Mono',monospace",outline:'none'}}/>
+        <button onClick={handle}
+          style={{width:'100%',padding:'13px',background:'linear-gradient(135deg,#003a88,#0060d0)',border:'none',borderRadius:8,color:'#fff',fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.12em',cursor:'pointer'}}>
+          ACCEDI
+        </button>
+        {err && <div style={{marginTop:12,textAlign:'center',fontSize:10,color:'#ff5555',fontFamily:"'JetBrains Mono',monospace"}}>{err}</div>}
+      </div>
+    </div>
+  );
+};
+
+function Root() {
+  const [authUser, setAuthUser] = React.useState(() => localStorage.getItem(AUTH_KEY));
+  if (!authUser) return <LoginScreen onLogin={setAuthUser}/>;
+  return (
+    <>
+      <App/>
+      <button onClick={()=>{localStorage.removeItem(AUTH_KEY);setAuthUser(null);}}
+        style={{position:'fixed',bottom:'calc(env(safe-area-inset-bottom) + 72px)',right:12,zIndex:9990,padding:'5px 11px',background:'rgba(5,10,24,0.85)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:20,color:'rgba(255,255,255,0.2)',fontSize:8,fontFamily:"'JetBrains Mono',monospace",cursor:'pointer',backdropFilter:'blur(8px)',letterSpacing:'0.1em'}}>
+        LOGOUT
+      </button>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Root));
 </script>
 </body>
 </html>
