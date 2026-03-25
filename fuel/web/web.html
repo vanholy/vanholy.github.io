@@ -192,8 +192,8 @@ const ChartCard = ({title, icon: Icon, color="#0099ff", children, span=1, height
 const StatBox = ({label, value, unit, highlight, color="#fff", small}) => (
   <div style={{textAlign:"center",padding:small?"10px 8px":"14px 12px",background:highlight?"rgba(0,100,200,0.06)":"rgba(255,255,255,0.01)",border:`1px solid ${highlight?"rgba(0,120,255,0.2)":"rgba(255,255,255,0.03)"}`,borderRadius:10}}>
     <div style={{fontSize:small?18:26,fontWeight:700,color:highlight?"#0099ff":color,fontFamily:"'JetBrains Mono',monospace",textShadow:highlight?"0 0 14px rgba(0,153,255,0.2)":"none",lineHeight:1.1}}>{value}</div>
-    {unit && <div style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace",marginTop:3}}>{unit}</div>}
-    <div style={{fontSize:7,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:4}}>{label}</div>
+    {unit && <div style={{fontSize:8,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace",marginTop:3}}>{unit}</div>}
+    <div style={{fontSize:7,color:"rgba(255,255,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:4}}>{label}</div>
   </div>
 );
 
@@ -217,12 +217,12 @@ const CetaneCalc = ({tankComp}) => {
   return (
     <ChartCard title="Calcolatore Cetano" icon={Target} color="#00c88a">
       <div style={{marginBottom:14}}>
-        <div style={{fontSize:9,color:"rgba(0,200,140,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",fontWeight:600,marginBottom:6}}>CETANO DESIDERATO</div>
+        <div style={{fontSize:9,color:"rgba(0,200,140,0.8)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",fontWeight:600,marginBottom:6}}>CETANO DESIDERATO</div>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <input type="range" min="45" max="75" step="0.5" value={targetCetane} onChange={e=>setTargetCetane(e.target.value)} style={{flex:1,accentColor:"#00c88a"}}/>
           <input type="number" min="40" max="80" step="0.5" value={targetCetane} onChange={e=>setTargetCetane(e.target.value)} style={{width:70,padding:"6px 10px",background:"rgba(0,200,140,0.06)",border:"1px solid rgba(0,200,140,0.2)",borderRadius:6,color:"#00c88a",fontSize:16,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",outline:"none"}}/>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:8,color:"rgba(255,255,255,0.12)",fontFamily:"'JetBrains Mono',monospace"}}><span>45</span><span>Cetano attuale: {fmtN(currentCetane,1)}</span><span>75</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:8,color:"rgba(255,255,255,0.5)",fontFamily:"'JetBrains Mono',monospace"}}><span>45</span><span>Cetano attuale: {fmtN(currentCetane,1)}</span><span>75</span></div>
       </div>
       {results && (
         <div style={{display:"grid",gap:8}}>
@@ -232,13 +232,13 @@ const CetaneCalc = ({tankComp}) => {
                 <div style={{width:3,height:28,borderRadius:2,background:FC[r.name]}}/>
                 <div>
                   <div style={{fontSize:12,fontWeight:700,color:FC[r.name],fontFamily:"'JetBrains Mono',monospace"}}>{r.name}</div>
-                  <div style={{fontSize:8,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace",marginTop:1}}>Cetano: {CETANE[r.name]}</div>
+                  <div style={{fontSize:8,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace",marginTop:1}}>Cetano: {CETANE[r.name]}</div>
                 </div>
               </div>
               <div style={{textAlign:"right"}}>
                 {r.possible && r.liters > 0 ? (
                   <><div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(r.liters,1)} L</div>
-                  <div style={{fontSize:7,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>da aggiungere</div></>
+                  <div style={{fontSize:7,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace"}}>da aggiungere</div></>
                 ) : r.liters === 0 && r.possible ? (
                   <div style={{fontSize:10,color:"rgba(0,200,140,0.5)",fontFamily:"'JetBrains Mono',monospace"}}>{r.note}</div>
                 ) : !r.possible && r.full ? (
@@ -250,7 +250,7 @@ const CetaneCalc = ({tankComp}) => {
               </div>
             </div>
           ))}
-          <div style={{textAlign:"center",fontSize:8,color:"rgba(255,255,255,0.1)",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>Spazio disponibile: {fmtN(space,1)} L</div>
+          <div style={{textAlign:"center",fontSize:8,color:"rgba(255,255,255,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>Spazio disponibile: {fmtN(space,1)} L</div>
         </div>
       )}
     </ChartCard>
@@ -258,7 +258,7 @@ const CetaneCalc = ({tankComp}) => {
 };
 
 // ═══ AXIS STYLE ═══
-const AX = {tick:{fill:"rgba(255,255,255,0.25)",fontSize:10,fontFamily:"'JetBrains Mono',monospace"}};
+const AX = {tick:{fill:"rgba(255,255,255,0.55)",fontSize:10,fontFamily:"'JetBrains Mono',monospace"}};
 const GRID = <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/>;
 
 // ═══ MAIN APP ═══
@@ -503,7 +503,7 @@ function App() {
         <div style={{padding:"24px 20px 20px",borderBottom:"1px solid rgba(0,80,180,0.08)",textAlign:"center"}}>
           <FordLogo size={80}/>
           <div style={{fontSize:18,fontWeight:200,letterSpacing:"0.32em",fontFamily:"'Outfit',sans-serif",color:"#c8d8ec",marginTop:10}}>GALAXY</div>
-          <div style={{fontSize:8,color:"rgba(0,160,255,0.35)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:4}}>2.0 ECOBLUE 150CV</div>
+          <div style={{fontSize:8,color:"rgba(0,160,255,0.75)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:4}}>2.0 ECOBLUE 150CV</div>
         </div>
         {/* Nav items */}
         <div style={{padding:"12px 10px",flex:1,overflowY:"auto"}}>
@@ -512,7 +512,7 @@ function App() {
             return (
               <button key={n.id} onClick={()=>{setView(n.id);if(n.id==="add"&&!editId)setForm(f=>({...f,liters:"",price:"",odo:"",notes:""}));}} style={{
                 display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 14px",background:active?"rgba(0,100,200,0.12)":"transparent",
-                border:"none",borderRadius:8,color:active?"#0099ff":"rgba(180,200,230,0.45)",cursor:"pointer",fontSize:12,fontWeight:active?600:400,
+                border:"none",borderRadius:8,color:active?"#0099ff":"rgba(180,200,230,0.8)",cursor:"pointer",fontSize:12,fontWeight:active?600:400,
                 fontFamily:"'Outfit',sans-serif",marginBottom:2,transition:"all 0.2s",textAlign:"left"
               }}>
                 <n.Icon size={16} strokeWidth={active?2.2:1.5}/>
@@ -526,7 +526,7 @@ function App() {
         {stats.avgL && (
           <div style={{padding:"16px 20px",borderTop:"1px solid rgba(0,80,180,0.08)",textAlign:"center"}}>
             <div style={{fontSize:28,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace",textShadow:"0 0 14px rgba(0,153,255,0.25)"}}>{fmtN(stats.avgL,1)}</div>
-            <div style={{fontSize:8,color:"rgba(0,160,255,0.35)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.12em"}}>L/100KM MEDIA</div>
+            <div style={{fontSize:8,color:"rgba(0,160,255,0.75)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.12em"}}>L/100KM MEDIA</div>
           </div>
         )}
       </div>
@@ -538,13 +538,13 @@ function App() {
         {/* ════════════ DASHBOARD ════════════ */}
         {view==="dash" && (
           <div>
-            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ DASHBOARD</h1>
+            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.9)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ DASHBOARD</h1>
 
             {entries.length===0 ? (
               <div style={{textAlign:"center",padding:"80px 40px"}}>
                 <FordLogo size={140}/>
                 <div style={{fontSize:28,fontWeight:200,color:"#c8d8ec",fontFamily:"'Outfit',sans-serif",letterSpacing:"0.3em",marginTop:20}}>GALAXY</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace",marginTop:12}}>FUEL TRACKER — SISTEMA PRONTO</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",marginTop:12}}>FUEL TRACKER — SISTEMA PRONTO</div>
                 <div style={{marginTop:32,display:"flex",gap:12,justifyContent:"center"}}>
                   <button style={s.btn} onClick={()=>setView("add")}>NUOVO RIFORNIMENTO</button>
                   <button style={s.btnSec} onClick={()=>setView("io")}>IMPORTA DATI</button>
@@ -581,14 +581,14 @@ function App() {
                     <div key={f.type} style={{marginBottom:16,padding:"12px 14px",background:"rgba(255,255,255,0.015)",borderRadius:10,borderLeft:`3px solid ${FC[f.type]}`}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                         <span style={{fontSize:12,fontWeight:700,color:FC[f.type],fontFamily:"'JetBrains Mono',monospace"}}>{f.type}</span>
-                        <span style={{fontSize:9,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>{f.count} pieni</span>
+                        <span style={{fontSize:9,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace"}}>{f.count} pieni</span>
                       </div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                        <div><div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{f.avgL?fmtN(f.avgL,1):"—"}</div><div style={{fontSize:7,color:"rgba(255,255,255,0.2)"}}>l/100km</div></div>
-                        <div><div style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>{f.avgC?fmtN(f.avgC,3):"—"}</div><div style={{fontSize:7,color:"rgba(255,255,255,0.2)"}}>€/km</div></div>
-                        <div><div style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>€{fmtN(f.cost,0)}</div><div style={{fontSize:7,color:"rgba(255,255,255,0.2)"}}>spesa</div></div>
+                        <div><div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{f.avgL?fmtN(f.avgL,1):"—"}</div><div style={{fontSize:7,color:"rgba(255,255,255,0.55)"}}>l/100km</div></div>
+                        <div><div style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,0.85)",fontFamily:"'JetBrains Mono',monospace"}}>{f.avgC?fmtN(f.avgC,3):"—"}</div><div style={{fontSize:7,color:"rgba(255,255,255,0.55)"}}>€/km</div></div>
+                        <div><div style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,0.85)",fontFamily:"'JetBrains Mono',monospace"}}>€{fmtN(f.cost,0)}</div><div style={{fontSize:7,color:"rgba(255,255,255,0.55)"}}>spesa</div></div>
                       </div>
-                      {f.minL && <div style={{fontSize:8,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace",marginTop:6}}>Range: {fmtN(f.minL,1)} — {fmtN(f.maxL,1)} l/100km</div>}
+                      {f.minL && <div style={{fontSize:8,color:"rgba(255,255,255,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:6}}>Range: {fmtN(f.minL,1)} — {fmtN(f.maxL,1)} l/100km</div>}
                     </div>
                   ))}
                 </ChartCard>
@@ -607,9 +607,9 @@ function App() {
                   </div>
                   {/* Cetane number */}
                   <div style={{textAlign:"center",marginBottom:14,padding:"10px 12px",background:"rgba(0,200,140,0.04)",borderRadius:8,border:"1px solid rgba(0,200,140,0.15)"}}>
-                    <div style={{fontSize:9,color:"rgba(0,200,140,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",fontWeight:600,marginBottom:4}}>NUMERO DI CETANO STIMATO</div>
+                    <div style={{fontSize:9,color:"rgba(0,200,140,0.85)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",fontWeight:600,marginBottom:4}}>NUMERO DI CETANO STIMATO</div>
                     <div style={{fontSize:32,fontWeight:700,color:"#00c88a",fontFamily:"'JetBrains Mono',monospace",textShadow:"0 0 14px rgba(0,200,140,0.2)"}}>{fmtN(tankComp.cetane,1)}</div>
-                    <div style={{fontSize:8,color:"rgba(0,200,140,0.3)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>B7≈51 · Diesel+≈60 · HVO≈75</div>
+                    <div style={{fontSize:8,color:"rgba(0,200,140,0.7)",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>B7≈51 · Diesel+≈60 · HVO≈75</div>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:Object.entries({B7:tankComp.pctB7,HVO:tankComp.pctHVO,"Diesel+":tankComp["pctDiesel+"],Mix:tankComp.pctMix}).filter(([,v])=>v>0).map(()=>"1fr").join(" "),gap:10}}>
                     {[["B7",tankComp.pctB7,tankComp.B7,"240,192,0"],["HVO",tankComp.pctHVO,tankComp.HVO,"0,212,255"],["Diesel+",tankComp["pctDiesel+"],tankComp["Diesel+"],"255,140,0"],["Mix",tankComp.pctMix,tankComp.Mix,"192,128,255"]].filter(([,p])=>p>0).map(([name,pct,liters,rgb])=>(
@@ -619,7 +619,7 @@ function App() {
                       </div>
                     ))}
                   </div>
-                  <div style={{textAlign:"center",marginTop:10,fontSize:8,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>
+                  <div style={{textAlign:"center",marginTop:10,fontSize:8,color:"rgba(255,255,255,0.5)",fontFamily:"'JetBrains Mono',monospace"}}>
                     Stima: {fmtN(tankComp.total,1)} L / 71 L nel serbatoio
                   </div>
                 </ChartCard>
@@ -638,10 +638,10 @@ function App() {
                         <div style={{width:3,height:32,borderRadius:2,background:FC[e.fuelType]}}/>
                         <div>
                           <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:13,fontWeight:600,color:"#fff"}}>{fmtDate(e.date)}</span><span style={{fontSize:8,color:FC[e.fuelType],fontFamily:"'JetBrains Mono',monospace",padding:"1px 6px",border:`1px solid ${FC[e.fuelType]}25`,borderRadius:3}}>{e.fuelType}</span></div>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace",marginTop:3}}>{fmtN(e.liters,1)}L · €{fmtN(e.totalCost,2)} · ODO {e.odometer.toLocaleString("it-IT")}</div>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",marginTop:3}}>{fmtN(e.liters,1)}L · €{fmtN(e.totalCost,2)} · ODO {e.odometer.toLocaleString("it-IT")}</div>
                         </div>
                       </div>
-                      <div style={{textAlign:"right"}}>{e.calc?(<><div style={{fontSize:20,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(e.calc.lPer100,1)}</div><div style={{fontSize:7,color:"rgba(0,153,255,0.4)",fontFamily:"'JetBrains Mono',monospace"}}>L/100</div></>):<div style={{color:"rgba(255,255,255,0.1)"}}>—</div>}</div>
+                      <div style={{textAlign:"right"}}>{e.calc?(<><div style={{fontSize:20,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(e.calc.lPer100,1)}</div><div style={{fontSize:7,color:"rgba(0,153,255,0.75)",fontFamily:"'JetBrains Mono',monospace"}}>L/100</div></>):<div style={{color:"rgba(255,255,255,0.1)"}}>—</div>}</div>
                     </div>
                   ))}
                 </div>
@@ -653,10 +653,10 @@ function App() {
         {/* ════════════ ANALYTICS ════════════ */}
         {view==="analytics" && (
           <div>
-            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ ANALISI CONSUMI</h1>
+            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.9)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ ANALISI CONSUMI</h1>
 
             {entries.length<2 ? (
-              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>SERVONO ALMENO 2 PIENI PER LE ANALISI</div>
+              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>SERVONO ALMENO 2 PIENI PER LE ANALISI</div>
             ) : (<>
               {/* Stats row */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(8,1fr)",gap:8,marginBottom:20}}>
@@ -853,10 +853,10 @@ function App() {
         {/* ════════════ COSTS ════════════ */}
         {view==="costs" && (
           <div>
-            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ ANALISI COSTI</h1>
+            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.9)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ ANALISI COSTI</h1>
 
             {entries.length<1 ? (
-              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>NESSUN DATO</div>
+              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>NESSUN DATO</div>
             ) : (<>
               {/* Cost KPIs */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:24}}>
@@ -897,7 +897,7 @@ function App() {
                 {/* Cost of ownership breakdown */}
                 <ChartCard title="Costo Totale di Possesso" icon={PieIcon} height={360}>
                   <div style={{textAlign:"center",marginBottom:20}}>
-                    <div style={{fontSize:9,color:"rgba(255,255,255,0.2)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>TOTALE</div>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>TOTALE</div>
                     <div style={{fontSize:36,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>€ {totalOwnership.toLocaleString("it-IT")}</div>
                   </div>
                   <ResponsiveContainer width="100%" height={140}>
@@ -911,7 +911,7 @@ function App() {
                       return (<div key={i} style={{marginBottom:10}}>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                           <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{c.name}</span>
-                          <span style={{fontSize:12,fontWeight:600,color:c.color,fontFamily:"'JetBrains Mono',monospace"}}>€{c.value.toLocaleString("it-IT")} <span style={{fontSize:8,color:"rgba(255,255,255,0.2)"}}>({fmtN(pct,0)}%)</span></span>
+                          <span style={{fontSize:12,fontWeight:600,color:c.color,fontFamily:"'JetBrains Mono',monospace"}}>€{c.value.toLocaleString("it-IT")} <span style={{fontSize:8,color:"rgba(255,255,255,0.6)"}}>({fmtN(pct,0)}%)</span></span>
                         </div>
                         <div style={{width:"100%",height:6,borderRadius:3,background:"rgba(255,255,255,0.03)",overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",borderRadius:3,background:c.color,opacity:0.6}}/></div>
                       </div>);
@@ -922,7 +922,7 @@ function App() {
                 {/* Maintenance breakdown */}
                 <ChartCard title="Ripartizione Manutenzione" icon={Wrench} color="#ffa832" height={360}>
                   {maint.length===0 ? (
-                    <div style={{textAlign:"center",padding:40,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace",fontSize:11}}>NESSUNA SPESA REGISTRATA</div>
+                    <div style={{textAlign:"center",padding:40,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",fontSize:11}}>NESSUNA SPESA REGISTRATA</div>
                   ) : (<>
                     <ResponsiveContainer width="100%" height={180}>
                       <PieChart><Pie data={maintByType.map(m=>({name:m.type,value:+m.cost.toFixed(0)}))} cx="50%" cy="50%" innerRadius={30} outerRadius={70} paddingAngle={3} dataKey="value" label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`} style={{fontSize:9,fontFamily:"'JetBrains Mono',monospace",fill:"rgba(255,255,255,0.4)"}}>
@@ -959,7 +959,7 @@ function App() {
         {/* ════════════ ADD FORM ════════════ */}
         {view==="add" && (
           <div style={{maxWidth:600}}>
-            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ {editId?"MODIFICA":"NUOVO RIFORNIMENTO"}</h1>
+            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.9)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ {editId?"MODIFICA":"NUOVO RIFORNIMENTO"}</h1>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginBottom:16}}>
               <div><label style={s.lbl}>DATA</label><input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={s.inp}/></div>
               <div><label style={s.lbl}>LITRI</label><input type="number" step="0.01" placeholder="45.00" value={form.liters} onChange={e=>setForm(f=>({...f,liters:e.target.value}))} style={s.inp}/></div>
@@ -987,10 +987,10 @@ function App() {
         {/* ════════════ LOG ════════════ */}
         {view==="log" && (
           <div>
-            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ STORICO RIFORNIMENTI ({entries.length})</h1>
+            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.9)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ STORICO RIFORNIMENTI ({entries.length})</h1>
             <div style={{overflowX:"auto"}}>
               <table style={{width:"100%",borderCollapse:"separate",borderSpacing:"0 4px",fontFamily:"'JetBrains Mono',monospace",fontSize:12}}>
-                <thead><tr style={{fontSize:9,color:"rgba(0,153,255,0.35)",letterSpacing:"0.1em"}}>{["DATA","TIPO","LITRI","€/L","TOTALE","ODO","KM","L/100","€/KM","NOTE",""].map((h,i)=><th key={i} style={{padding:"8px 10px",textAlign:i<1?"left":"center",fontWeight:600}}>{h}</th>)}</tr></thead>
+                <thead><tr style={{fontSize:9,color:"rgba(0,153,255,0.85)",letterSpacing:"0.1em"}}>{["DATA","TIPO","LITRI","€/L","TOTALE","ODO","KM","L/100","€/KM","NOTE",""].map((h,i)=><th key={i} style={{padding:"8px 10px",textAlign:i<1?"left":"center",fontWeight:600}}>{h}</th>)}</tr></thead>
                 <tbody>
                   {[...enriched].reverse().map(e=>(
                     <tr key={e.id} style={{background:"rgba(255,255,255,0.015)",borderRadius:8}}>
@@ -1003,7 +1003,7 @@ function App() {
                       <td style={{textAlign:"center",color:e.calc?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.1)"}}>{e.calc?e.calc.kmDriven:"—"}</td>
                       <td style={{textAlign:"center",color:e.calc?"#0099ff":"rgba(255,255,255,0.1)",fontWeight:e.calc?700:400}}>{e.calc?fmtN(e.calc.lPer100,2):"—"}</td>
                       <td style={{textAlign:"center",color:e.calc?"#c080ff":"rgba(255,255,255,0.1)"}}>{e.calc?fmtN(e.calc.costPerKm,3):"—"}</td>
-                      <td style={{textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:10,maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.notes||""}</td>
+                      <td style={{textAlign:"center",color:"rgba(255,255,255,0.55)",fontSize:10,maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.notes||""}</td>
                       <td style={{textAlign:"center",borderRadius:"0 8px 8px 0"}}>
                         <button style={{background:"none",border:"none",cursor:"pointer",opacity:0.3,fontSize:13,padding:"2px 4px"}} onClick={()=>handleEdit(e)}>✏️</button>
                         <button style={{background:"none",border:"none",cursor:"pointer",opacity:0.3,fontSize:13,padding:"2px 4px"}} onClick={()=>handleDelete(e.id)}>🗑️</button>
@@ -1048,7 +1048,7 @@ function App() {
                       <td style={{textAlign:"center",color:"rgba(255,255,255,0.6)"}}>{m.desc}</td>
                       <td style={{textAlign:"center",color:"#ffa832",fontWeight:700}}>€{fmtN(m.cost,2)}</td>
                       <td style={{textAlign:"center",color:"rgba(255,255,255,0.3)"}}>{m.odometer>0?m.odometer.toLocaleString("it-IT"):"—"}</td>
-                      <td style={{textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:10}}>{m.notes||""}</td>
+                      <td style={{textAlign:"center",color:"rgba(255,255,255,0.55)",fontSize:10}}>{m.notes||""}</td>
                       <td style={{textAlign:"center",borderRadius:"0 8px 8px 0"}}>
                         <button style={{background:"none",border:"none",cursor:"pointer",opacity:0.3,fontSize:13,padding:"2px 4px"}} onClick={()=>handleEditMaint(m)}>✏️</button>
                         <button style={{background:"none",border:"none",cursor:"pointer",opacity:0.3,fontSize:13,padding:"2px 4px"}} onClick={()=>handleDeleteMaint(m.id)}>🗑️</button>
@@ -1064,7 +1064,7 @@ function App() {
         {/* ════════════ INFO ════════════ */}
         {view==="info" && (
           <div>
-            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ VEICOLO & ASSICURAZIONE</h1>
+            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.9)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ VEICOLO & ASSICURAZIONE</h1>
             <div style={{display:"flex",gap:8,marginBottom:24}}>
               {[["veicolo","VEICOLO"],["assicurazione","ASSICURAZIONE"]].map(([id,label])=>(
                 <button key={id} style={{padding:"10px 24px",background:infoTab===id?"rgba(0,100,200,0.1)":"transparent",border:`1px solid ${infoTab===id?"rgba(0,100,200,0.25)":"rgba(255,255,255,0.05)"}`,borderRadius:8,color:infoTab===id?"#0099ff":"rgba(255,255,255,0.3)",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em"}} onClick={()=>setInfoTab(id)}>{label}</button>
@@ -1092,8 +1092,8 @@ function App() {
                 <ChartCard title="Garanzie" icon={Check} color="#00c88a">
                   {INSURANCE.garanzie.map((g,i)=>(
                     <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.02)",opacity:g.attiva?1:0.3}}>
-                      <div><div style={{fontSize:11,fontWeight:600,color:"#fff"}}>{g.nome}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.25)",fontFamily:"'JetBrains Mono',monospace",marginTop:1}}>{g.dettaglio}</div></div>
-                      {g.attiva?<span style={{fontSize:12,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace"}}>€{fmtN(g.premio,2)}</span>:<span style={{fontSize:9,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>ESCLUSA</span>}
+                      <div><div style={{fontSize:11,fontWeight:600,color:"#fff"}}>{g.nome}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",marginTop:1}}>{g.dettaglio}</div></div>
+                      {g.attiva?<span style={{fontSize:12,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace"}}>€{fmtN(g.premio,2)}</span>:<span style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontFamily:"'JetBrains Mono',monospace"}}>ESCLUSA</span>}
                     </div>
                   ))}
                 </ChartCard>
@@ -1162,7 +1162,7 @@ function App() {
                       <td style={{textAlign:"center",color:"#00bbff",fontWeight:700}}>{fmtN(a.liters,1)} L</td>
                       <td style={{textAlign:"center",color:"rgba(255,255,255,0.6)"}}>€{fmtN(a.cost,2)}</td>
                       <td style={{textAlign:"center",color:"rgba(255,255,255,0.5)"}}>{a.odometer.toLocaleString("it-IT")}</td>
-                      <td style={{textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:10}}>{a.notes||""}</td>
+                      <td style={{textAlign:"center",color:"rgba(255,255,255,0.55)",fontSize:10}}>{a.notes||""}</td>
                       <td style={{textAlign:"center",borderRadius:"0 8px 8px 0"}}>
                         <button style={{background:"none",border:"none",cursor:"pointer",opacity:0.3,fontSize:13,padding:"2px 4px"}} onClick={()=>handleAbEdit(a)}>✏️</button>
                         <button style={{background:"none",border:"none",cursor:"pointer",opacity:0.3,fontSize:13,padding:"2px 4px"}} onClick={()=>handleAbDelete(a.id)}>🗑️</button>
@@ -1178,22 +1178,22 @@ function App() {
         {/* ════════════ IO ════════════ */}
         {view==="io" && (
           <div style={{maxWidth:700}}>
-            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.5)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ IMPORTA / ESPORTA</h1>
+            <h1 style={{fontSize:14,fontWeight:600,color:"rgba(0,153,255,0.9)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",marginBottom:24}}>◇ IMPORTA / ESPORTA</h1>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:32}}>
               <ChartCard title="Importa" icon={Upload}>
                 <label style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:10,cursor:"pointer",marginBottom:10}}>
-                  <input type="file" accept=".csv" onChange={handleImportFuelio} style={{display:"none"}}/><span style={{fontSize:20}}>📱</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>IMPORTA DA FUELIO</div><div style={{fontSize:10,color:"rgba(255,255,255,0.25)",marginTop:2}}>CSV esportato da Fuelio</div></div>
+                  <input type="file" accept=".csv" onChange={handleImportFuelio} style={{display:"none"}}/><span style={{fontSize:20}}>📱</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>IMPORTA DA FUELIO</div><div style={{fontSize:10,color:"rgba(255,255,255,0.6)",marginTop:2}}>CSV esportato da Fuelio</div></div>
                 </label>
                 <label style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:10,cursor:"pointer"}}>
-                  <input type="file" accept=".json" onChange={handleImportJSON} style={{display:"none"}}/><span style={{fontSize:20}}>📥</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>RIPRISTINA BACKUP</div><div style={{fontSize:10,color:"rgba(255,255,255,0.25)",marginTop:2}}>Backup JSON completo</div></div>
+                  <input type="file" accept=".json" onChange={handleImportJSON} style={{display:"none"}}/><span style={{fontSize:20}}>📥</span><div><div style={{fontSize:12,fontWeight:700,color:"#fff"}}>RIPRISTINA BACKUP</div><div style={{fontSize:10,color:"rgba(255,255,255,0.6)",marginTop:2}}>Backup JSON completo</div></div>
                 </label>
               </ChartCard>
               <ChartCard title="Esporta" icon={Download}>
-                {entries.length===0?<div style={{color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace",fontSize:11}}>NESSUN DATO</div>:(
+                {entries.length===0?<div style={{color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",fontSize:11}}>NESSUN DATO</div>:(
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
                     {[["📄","CSV (Excel)","Semicolon-separated",()=>exportCSV(entries)],["📱","FUELIO (CSV)","Compatibile Fuelio",()=>exportFuelio(entries)],["💾","JSON (Backup)","Backup completo",()=>exportJSON(entries,maint)]].map(([icon,title,desc,fn],i)=>(
                       <button key={i} onClick={fn} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:10,cursor:"pointer",textAlign:"left",width:"100%",color:"#fff"}}>
-                        <span style={{fontSize:20}}>{icon}</span><div><div style={{fontSize:12,fontWeight:700}}>{title}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.25)",marginTop:2}}>{desc}</div></div>
+                        <span style={{fontSize:20}}>{icon}</span><div><div style={{fontSize:12,fontWeight:700}}>{title}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.6)",marginTop:2}}>{desc}</div></div>
                       </button>
                     ))}
                   </div>
@@ -1204,7 +1204,7 @@ function App() {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div>
                   <div style={{fontSize:11,color:"rgba(0,153,255,0.4)",fontFamily:"'JetBrains Mono',monospace"}}>{entries.length} RIFORNIMENTI · {maint.length} SPESE</div>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>FUEL € {fmtN(stats.cost,0)} + MAINT € {fmtN(totalMaintCost,0)} = € {fmtN(stats.cost+totalMaintCost,0)}</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>FUEL € {fmtN(stats.cost,0)} + MAINT € {fmtN(totalMaintCost,0)} = € {fmtN(stats.cost+totalMaintCost,0)}</div>
                 </div>
                 <button style={s.btnDanger} onClick={handleReset}>⚠ CANCELLA TUTTI I DATI</button>
               </div>
