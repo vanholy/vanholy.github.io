@@ -1,0 +1,25 @@
+# REPORT PORTAFOGLIO — 22 aprile 2026
+# Generato automaticamente dalla routine di monitoraggio
+# Prezzi live aggiornati al 22-04-2026
+# Fonti prezzi: WebSearch (MarketScreener, Investing.com, TradingView, Yahoo Finance)
+#
+# RIEPILOGO ASSET ALLOCATION
+# categoria,pct_attuale,target_pct,delta_pct,soglia_min,soglia_max,alert
+# Equity,54.49%,55.7%,-1.21%,45.7%,65.7%,OK — entro soglie
+# Bond+Monetario,36.29%,36.8%,-0.51%,31.8%,41.8%,OK — entro soglie
+# Alternative,9.22%,9.3%,-0.08%,6.3%,12.3%,OK — entro soglie
+#
+# TOTALE PORTAFOGLIO BASELINE: €221.392,00
+# TOTALE PORTAFOGLIO LIVE:     €220.328,85
+# VARIAZIONE TOTALE:           -€1.063,15 (-0,48%)
+#
+ticker,nome,isin,broker,quantita,prezzo_base_eur,prezzo_live_eur,var_pct,valore_base_eur,valore_live_eur,categoria
+VWCE,Vanguard FTSE All-World UCITS ETF Acc,IE00BK5BQT80,IBKR,522.77,152.92,152.56,-0.24%,79933.55,79753.79,Equity
+VWCG,Vanguard FTSE Developed Europe UCITS ETF Acc,IE00BK5BQX27,IBKR,350.8,56.48,56.05,-0.76%,19806.18,19662.34,Equity
+EMIM,iShares Core MSCI EM IMI UCITS ETF Acc,IE00BKM4GZ66,IBKR,229,43.94,43.12,-1.87%,10062.26,9874.48,Equity
+ICGA,iShares MSCI China UCITS ETF USD Acc,IE00B3JYPS56,IBKR,1954,5.128,5.51,+7.45%,10020.11,10766.54,Equity
+XEON,Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C,LU0290358497,Fineco+Widiba,201.5,148.93,148.90,-0.02%,30009.40,30003.35,Bond
+BTP-MZ32,BTP Valore 1.65% Marzo 2032,IT0005094088,Fineco,10000,100.00,100.00,0.00%,10000.00,10000.00,Bond
+EM35,Amundi Euro Govt Bond 3-5Y UCITS ETF Acc,LU1650488494,Fineco,131,152.25,151.87,-0.25%,19944.75,19894.97,Bond
+IBGS,iShares EUR Govt Bond 1-3yr UCITS ETF Dist,IE00B14X4Q57,Fineco,142,140.03,141.34,+0.94%,19883.55,20070.28,Bond
+DBMFE,iMGP DBi Managed Futures Fund R EUR UCITS ETF,LU2951555403,Fineco,170,117.20,119.43,+1.90%,19924.02,20303.10,Alternative
