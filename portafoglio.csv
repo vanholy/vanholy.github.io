@@ -1,0 +1,16 @@
+ticker,nome,isin,broker,quantita,prezzo_mercato_eur,valore_eur,categoria
+VWCE,Vanguard FTSE All-World UCITS ETF Acc,IE00B3RBWM25,IBKR,523.277,152.92,80009.05,Equity
+VWCG,Vanguard FTSE Developed Europe UCITS ETF Acc,IE00B945VV12,IBKR,350.8771,56.48,19814.03,Equity
+EMIM,iShares Core MSCI EM IMI UCITS ETF Acc,IE00BKM4GZ66,IBKR,229.3577,43.94,10075.68,Equity
+ICGA,iShares MSCI China UCITS ETF USD Acc,IE00B3JYPS56,IBKR,1950.078,5.07,9916.15,Equity
+XEON,Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C,LU0290358497,Fineco+Widiba,213,148.93,31721.74,Bond
+BTP-MZ32,BTP Valore 1.65% Marzo 2032,IT0005094088,Fineco,10000,99.50,9950.00,Bond
+AGGH,Amundi Euro Govt Bond 3-5Y UCITS ETF Acc,LU1681045370,Fineco,131,151.98,19909.38,Bond
+IBGS,iShares EUR Govt Bond 1-3yr UCITS ETF Dist,IE00B14X4Q57,Fineco,142,140.62,19968.04,Bond
+DBMF,iMGP DBi Managed Futures Fund R EUR UCITS ETF,LU2951555585,Fineco,170,117.81,20027.70,Alternative
+
+# TARGET ALLOCATION (baseline 22 aprile 2026 - totale €221.392)
+# categoria,pct_base,soglia_min_pct,soglia_max_pct,valore_base_eur,soglia_min_eur,soglia_max_eur,trigger
+# Equity,55.7,45.7,65.7,119815,101177,145446,+-10%
+# Bond+Monetario,36.8,31.8,41.8,81549,70403,92542,+-5%
+# Alternative,9.3,6.3,12.3,20028,13948,27231,+-3%
