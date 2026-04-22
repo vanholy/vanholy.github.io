@@ -1,0 +1,25 @@
+# PORTAFOGLIO BASELINE — aggiornato 22 aprile 2026
+# ISTRUZIONI PER LA ROUTINE:
+# 1. Questo file NON va modificato — è il file di riferimento base
+# 2. Per ogni ETF cerca il prezzo live aggiornato alla data di esecuzione
+# 3. Per BTP-MZ32 (IT0005094088) usa SEMPRE prezzo 100 (tenuto a scadenza)
+# 4. Crea un nuovo file report_AAAA-MM-GG.csv con prezzi e valori aggiornati
+# 5. Calcola asset allocation attuale e confronta con i target
+# 6. Invia una mail (non bozza) con il report allegando il file CSV aggiornato
+#
+# TARGET ALLOCATION (baseline 22 aprile 2026 — totale €221.392)
+# categoria,pct_base,soglia_min_pct,soglia_max_pct,valore_base_eur,soglia_min_eur,soglia_max_eur,trigger
+# Equity,55.7,45.7,65.7,119815,101177,145446,+-10%
+# Bond+Monetario,36.8,31.8,41.8,81549,70403,92542,+-5%
+# Alternative,9.3,6.3,12.3,20028,13948,27231,+-3%
+# NOTA: XEON (monetario) è classificato come Bond per il calcolo dell'allocation
+ticker,nome,isin,broker,quantita,prezzo_base_eur,valore_base_eur,categoria
+VWCE,Vanguard FTSE All-World UCITS ETF Acc,IE00BK5BQT80,IBKR,522.77,152.92,79933.55,Equity
+VWCG,Vanguard FTSE Developed Europe UCITS ETF Acc,IE00BK5BQX27,IBKR,350.8,56.48,19806.18,Equity
+EMIM,iShares Core MSCI EM IMI UCITS ETF Acc,IE00BKM4GZ66,IBKR,229,43.94,10062.26,Equity
+ICGA,iShares MSCI China UCITS ETF USD Acc,IE00B3JYPS56,IBKR,1954,5.128,10020.11,Equity
+XEON,Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C,LU0290358497,Fineco+Widiba,201.5,148.93,30009.40,Bond
+BTP-MZ32,BTP Valore 1.65% Marzo 2032,IT0005094088,Fineco,10000,100.00,10000.00,Bond
+EM35,Amundi Euro Govt Bond 3-5Y UCITS ETF Acc,LU1650488494,Fineco,131,152.25,19944.75,Bond
+IBGS,iShares EUR Govt Bond 1-3yr UCITS ETF Dist,IE00B14X4Q57,Fineco,142,140.03,19883.55,Bond
+DBMFE,iMGP DBi Managed Futures Fund R EUR UCITS ETF,LU2951555403,Fineco,170,117.20,19924.02,Alternative
