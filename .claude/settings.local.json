@@ -30,7 +30,8 @@
       "mcp__f6b2cf11-e07b-42b5-965d-576dc24ad61b__list_projects",
       "mcp__f6b2cf11-e07b-42b5-965d-576dc24ad61b__list_tables",
       "mcp__f6b2cf11-e07b-42b5-965d-576dc24ad61b__get_advisors",
-      "mcp__f6b2cf11-e07b-42b5-965d-576dc24ad61b__execute_sql"
+      "mcp__f6b2cf11-e07b-42b5-965d-576dc24ad61b__execute_sql",
+      "mcp__f6b2cf11-e07b-42b5-965d-576dc24ad61b__apply_migration"
     ],
     "deny": [],
     "ask": []
