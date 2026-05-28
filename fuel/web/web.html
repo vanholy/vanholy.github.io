@@ -12,6 +12,7 @@
 html,body{background:#050a18;color:#e5e5e5;font-family:'Outfit',sans-serif;overflow-x:hidden;height:100%}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:rgba(0,100,200,0.2);border-radius:4px}::-webkit-scrollbar-track{background:transparent}
 @keyframes loginShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -28,7 +29,7 @@ html,body{background:#050a18;color:#e5e5e5;font-family:'Outfit',sans-serif;overf
 <script type="text/babel">
 const { useState, useEffect, useMemo } = React;
 const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Area, AreaChart, PieChart, Pie, Cell, Legend, ScatterChart, Scatter, ZAxis, ComposedChart, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ReferenceLine } = Recharts;
-const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3, TrendingUp, Fuel, DollarSign, Activity, Calendar, ChevronRight, Download, Upload, Trash2, Edit3, Check, X, Info, PieChart: PieIcon, Target, Gauge, Route, Clock, Zap, Droplets } = LucideReact;
+const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3, TrendingUp, Fuel, DollarSign, Activity, Calendar, ChevronRight, Download, Upload, Trash2, Edit3, Check, X, Info, PieChart: PieIcon, Target, Gauge, Route, Clock, Zap, Droplets, RefreshCw } = LucideReact;
 
 // ═══ CONSTANTS ═══
 const FUEL_TYPES = ["B7", "HVO", "Diesel+", "Mix"];
@@ -267,6 +268,7 @@ function App() {
   const [maint, setMaint] = useState([]);
   const [view, setView] = useState("dash");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [editMaintId, setEditMaintId] = useState(null);
   const [msg, setMsg] = useState(null);
@@ -279,6 +281,7 @@ function App() {
 
   useEffect(() => { Promise.all([loadK("ft-v3"), loadK("ft-maint-v3"), loadK("ft-adblue-v1")]).then(([f,m,a]) => { setEntries(f); setMaint(m); setAdblue(a); setLoading(false); }); }, []);
   const showMsg = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
+  const handleRefresh = async () => { setRefreshing(true); const [f,m,a] = await Promise.all([loadK("ft-v3"),loadK("ft-maint-v3"),loadK("ft-adblue-v1")]); setEntries(f); setMaint(m); setAdblue(a); setRefreshing(false); showMsg(true,"Dati aggiornati da Supabase"); };
 
   // ═══ CALCULATIONS ═══
   const sorted = useMemo(() => [...entries].sort((a,b) => a.odometer - b.odometer), [entries]);
@@ -521,6 +524,13 @@ function App() {
               </button>
             );
           })}
+        </div>
+        {/* Refresh button */}
+        <div style={{padding:"8px 10px",borderTop:"1px solid rgba(0,80,180,0.08)"}}>
+          <button onClick={handleRefresh} disabled={refreshing} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 14px",background:"transparent",border:"1px solid rgba(0,100,200,0.15)",borderRadius:8,color:refreshing?"rgba(0,153,255,0.4)":"rgba(0,153,255,0.75)",cursor:refreshing?"default":"pointer",fontSize:11,fontWeight:500,fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
+            <RefreshCw size={13} style={{animation:refreshing?"spin 0.9s linear infinite":"none",flexShrink:0}}/>
+            <span>{refreshing?"Aggiornamento...":"Aggiorna dati"}</span>
+          </button>
         </div>
         {/* Stats footer */}
         {stats.avgL && (

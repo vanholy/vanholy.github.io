@@ -37,7 +37,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 <script type="text/babel">
 const { useState, useEffect } = React;
 const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Area, AreaChart } = Recharts;
-const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3, Droplets } = LucideReact;
+const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3, Droplets, RefreshCw } = LucideReact;
 
 const FUEL_TYPES = ["B7", "HVO", "Diesel+", "Mix"];
 const MAINT_TYPES = ["Tagliando", "Riparazione", "Pneumatici", "Revisione", "Carrozzeria", "Altro"];
@@ -267,6 +267,7 @@ function App() {
   const [subView, setSubView] = useState("fuel"); // for log tab: fuel | maint
   const [infoTab, setInfoTab] = useState("veicolo"); // veicolo | assicurazione
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [editMaintId, setEditMaintId] = useState(null);
   const [msg, setMsg] = useState(null);
@@ -278,6 +279,7 @@ function App() {
 
   useEffect(() => { Promise.all([loadK("ft-v3"), loadK("ft-maint-v3"), loadK("ft-adblue-v1")]).then(([f,m,a]) => { setEntries(f); setMaint(m); setAdblue(a); setLoading(false); }); }, []);
   const showMsg = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
+  const handleRefresh = async () => { setRefreshing(true); const [f,m,a] = await Promise.all([loadK("ft-v3"),loadK("ft-maint-v3"),loadK("ft-adblue-v1")]); setEntries(f); setMaint(m); setAdblue(a); setRefreshing(false); showMsg(true,"Dati aggiornati"); };
 
   // Fuel calculations
   const sorted = [...entries].sort((a,b) => a.odometer - b.odometer);
@@ -405,7 +407,7 @@ function App() {
     <div style={S.root}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@200;300;400;500;600;700;800&display=swap');
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}} @keyframes glow{0%,100%{filter:drop-shadow(0 0 6px rgba(0,100,200,0.3))}50%{filter:drop-shadow(0 0 14px rgba(0,100,200,0.6))}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}} @keyframes glow{0%,100%{filter:drop-shadow(0 0 6px rgba(0,100,200,0.3))}50%{filter:drop-shadow(0 0 14px rgba(0,100,200,0.6))}} @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
         @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
@@ -428,6 +430,9 @@ function App() {
         <div style={{fontSize:22,fontWeight:200,color:"#c8d8ec",fontFamily:"'Outfit',sans-serif",letterSpacing:"0.32em",lineHeight:1,background:"linear-gradient(90deg, #8aa0c0, #e0eaf8, #ffffff, #e0eaf8, #8aa0c0)",backgroundSize:"200% auto",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"shimmer 6s linear infinite"}}>GALAXY</div>
         <div style={{fontSize:9,color:"rgba(0,160,255,0.4)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginTop:2}}>2.0 ECOBLUE 150CV // FV695GW</div>
         {stats.avgL && <div style={{position:"absolute",right:20,top:"50%",transform:"translateY(-50%)",textAlign:"right"}}><div style={{fontSize:24,fontWeight:700,color:"#0099ff",fontFamily:"'JetBrains Mono',monospace",textShadow:"0 0 14px rgba(0,153,255,0.3)"}}>{fmtN(stats.avgL,1)}</div><div style={{fontSize:7,color:"rgba(0,160,255,0.35)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>L/100KM</div></div>}
+        <button onClick={handleRefresh} disabled={refreshing} style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",padding:8,cursor:refreshing?"default":"pointer",color:refreshing?"rgba(0,153,255,0.3)":"rgba(0,153,255,0.5)",lineHeight:0}}>
+          <RefreshCw size={18} style={{animation:refreshing?"spin 0.9s linear infinite":"none"}}/>
+        </button>
       </div>
 
       {/* Nav */}
