@@ -288,18 +288,23 @@ function App() {
   const enriched = useMemo(() => sorted.map((e,i) => ({ ...e, calc: e.fullTank ? calcCons(e, i>0 ? sorted[i-1] : null) : null })), [sorted]);
   const withCalc = useMemo(() => enriched.filter(e => e.calc), [enriched]);
 
-  const stats = useMemo(() => ({
-    n: entries.length, liters: entries.reduce((s,e) => s+e.liters, 0), cost: entries.reduce((s,e) => s+e.totalCost, 0),
-    km: withCalc.reduce((s,e) => s+e.calc.kmDriven, 0), avgL: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.lPer100, 0)/withCalc.length : null,
-    avgC: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.costPerKm, 0)/withCalc.length : null,
-    minL: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.lPer100)) : null,
-    maxL: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.lPer100)) : null,
-    minC: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.costPerKm)) : null,
-    maxC: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.costPerKm)) : null,
-    avgLiters: entries.length ? entries.reduce((s,e)=>s+e.liters,0)/entries.length : null,
-    avgPrice: entries.length ? entries.reduce((s,e)=>s+e.pricePerLiter,0)/entries.length : null,
-    avgDist: withCalc.length ? withCalc.reduce((s,e)=>s+e.calc.kmDriven,0)/withCalc.length : null,
-  }), [entries, withCalc]);
+  const stats = useMemo(() => {
+    const cost = entries.reduce((s,e) => s+e.totalCost, 0);
+    const monthCount = new Set(entries.map(e=>e.date.slice(0,7))).size;
+    return {
+      n: entries.length, liters: entries.reduce((s,e) => s+e.liters, 0), cost,
+      km: withCalc.reduce((s,e) => s+e.calc.kmDriven, 0), avgL: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.lPer100, 0)/withCalc.length : null,
+      avgC: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.costPerKm, 0)/withCalc.length : null,
+      minL: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.lPer100)) : null,
+      maxL: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.lPer100)) : null,
+      minC: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.costPerKm)) : null,
+      maxC: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.costPerKm)) : null,
+      avgLiters: entries.length ? entries.reduce((s,e)=>s+e.liters,0)/entries.length : null,
+      avgPrice: entries.length ? entries.reduce((s,e)=>s+e.pricePerLiter,0)/entries.length : null,
+      avgDist: withCalc.length ? withCalc.reduce((s,e)=>s+e.calc.kmDriven,0)/withCalc.length : null,
+      avgMonthly: monthCount > 0 ? cost / monthCount : null,
+    };
+  }, [entries, withCalc]);
 
   const byFuel = useMemo(() => FUEL_TYPES.map(ft => {
     const f=withCalc.filter(e=>e.fuelType===ft), all=entries.filter(e=>e.fuelType===ft);
@@ -562,12 +567,13 @@ function App() {
               </div>
             ) : (<>
               {/* KPI Grid */}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10,marginBottom:24}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:10,marginBottom:24}}>
                 <StatBox label="RIFORNIMENTI" value={stats.n} highlight={false}/>
                 <StatBox label="CONSUMO MEDIO" value={stats.avgL?fmtN(stats.avgL,1):"—"} unit="l/100km" highlight={true}/>
                 <StatBox label="COSTO/KM" value={stats.avgC?fmtN(stats.avgC,3):"—"} unit="€/km" highlight={false}/>
                 <StatBox label="DISTANZA" value={stats.km>0?stats.km.toLocaleString("it-IT"):"—"} unit="km" highlight={false}/>
                 <StatBox label="SPESA FUEL" value={"€"+fmtN(stats.cost,0)} highlight={false}/>
+                <StatBox label="SPESA MENSILE" value={stats.avgMonthly?"€"+fmtN(stats.avgMonthly,0):"—"} unit="media/mese" highlight={false}/>
                 <StatBox label="ODOMETRO" value={sorted.length?sorted[sorted.length-1].odometer.toLocaleString("it-IT"):"—"} unit="km" highlight={false}/>
               </div>
 
@@ -633,10 +639,6 @@ function App() {
                     Stima: {fmtN(tankComp.total,1)} L / 71 L nel serbatoio
                   </div>
                 </ChartCard>
-              )}
-              {/* Cetane Calculator */}
-              {tankComp.total > 0 && (
-                <CetaneCalc tankComp={tankComp}/>
               )}
 
               {/* Recent entries */}
