@@ -26,7 +26,8 @@
       "Bash(start water_quality_demo.html)",
       "Bash(start parametri-chimici-completi-bergamo.html)",
       "Bash(mkdir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__f6b2cf11-e07b-42b5-965d-576dc24ad61b__execute_sql"
     ],
     "deny": [],
     "ask": []
