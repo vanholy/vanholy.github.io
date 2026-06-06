@@ -360,7 +360,7 @@ function App() {
   }, [sorted, stats.avgL]);
 
   // Chart data
-  const chartData = useMemo(() => withCalc.map(e => ({ date:fmtDate(e.date), dateFull:e.date, "l/100km":+e.calc.lPer100.toFixed(2), "€/km":+e.calc.costPerKm.toFixed(3), km:e.calc.kmDriven, liters:e.liters, cost:e.totalCost, fuel:e.fuelType })), [withCalc]);
+  const chartData = useMemo(() => withCalc.map(e => ({ date:fmtDate(e.date), dateFull:e.date, "l/100km":+e.calc.lPer100.toFixed(2), "€/km":+e.calc.costPerKm.toFixed(3), km:e.calc.kmDriven, liters:e.calc.liters, cost:e.calc.cost, fuel:e.fuelType })), [withCalc]);
 
   // Rolling average (5-point)
   const rollingAvg = useMemo(() => {
@@ -374,11 +374,11 @@ function App() {
   const monthlyData = useMemo(() => {
     const m = {};
     entries.forEach(e => { const k = e.date.slice(0,7); if(!m[k]) m[k]={month:k,liters:0,cost:0,count:0,types:{}}; m[k].liters+=e.liters; m[k].cost+=e.totalCost; m[k].count++; m[k].types[e.fuelType]=(m[k].types[e.fuelType]||0)+e.liters; });
-    withCalc.forEach(e => { const k = e.date.slice(0,7); if(m[k]){if(!m[k].km)m[k].km=0;if(!m[k].totL)m[k].totL=0; m[k].km+=e.calc.kmDriven; m[k].totL+=e.liters;} });
+    withCalc.forEach(e => { const k = e.date.slice(0,7); if(m[k]){if(!m[k].km)m[k].km=0;if(!m[k].totL)m[k].totL=0;if(!m[k].totC)m[k].totC=0; m[k].km+=e.calc.kmDriven; m[k].totL+=e.calc.liters; m[k].totC+=e.calc.cost;} });
     return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).map(x=>({
       ...x, label: new Date(x.month+"-15").toLocaleDateString("it-IT",{month:"short",year:"2-digit"}),
       "l/100km": x.km>0?+(x.totL/x.km*100).toFixed(2):null,
-      "€/km": x.km>0?+(x.cost/x.km).toFixed(3):null,
+      "€/km": x.km>0?+((x.totC||0)/x.km).toFixed(3):null,
       "€/L": x.liters>0?+(x.cost/x.liters).toFixed(3):null,
       B7:x.types["B7"]||0, HVO:x.types["HVO"]||0, Mix:x.types["Mix"]||0,
     }));

@@ -258,6 +258,11 @@ const CetaneCalcMobile = ({tankComp, FC}) => {
         </div>
         <input type="range" min="0" max={CAP} step="1" value={level} onChange={e=>setLevel(parseInt(e.target.value))} style={{width:"100%",accentColor:"#00c88a"}}/>
         <div style={{display:"flex",justifyContent:"space-between",marginTop:2,fontSize:7,color:"rgba(255,255,255,0.13)",fontFamily:"'JetBrains Mono',monospace"}}><span>vuoto</span><span>spazio {fmtN(space,0)} L</span><span>{CAP} L</span></div>
+        <div style={{display:"flex",gap:6,marginTop:8}}>
+          {[["¼",0.25],["½",0.5],["¾",0.75]].map(([lbl,f]) => { const v = Math.round(CAP * f); const active = level === v; return (
+            <button key={lbl} onClick={()=>setLevel(v)} style={{flex:1,padding:"6px 0",background:active?"rgba(0,200,140,0.14)":"rgba(255,255,255,0.02)",border:`1px solid ${active?"rgba(0,200,140,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:6,color:active?"#00c88a":"rgba(255,255,255,0.4)",fontSize:13,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer"}}>{lbl}</button>
+          ); })}
+        </div>
       </div>
       {/* 2 — cetano desiderato */}
       <div style={{marginBottom:14}}>
@@ -372,7 +377,7 @@ function App() {
     return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).map(x=>({...x, label: new Date(x.month+"-15").toLocaleDateString("it-IT",{month:"short",year:"2-digit"})}));
   })();
   const monthlyCons = (() => {
-    const m = {}; withCalc.forEach(e => { const k = e.date.slice(0,7); if(!m[k]) m[k]={month:k,totL:0,totKm:0}; m[k].totL+=e.liters; m[k].totKm+=e.calc.kmDriven; });
+    const m = {}; withCalc.forEach(e => { const k = e.date.slice(0,7); if(!m[k]) m[k]={month:k,totL:0,totKm:0}; m[k].totL+=e.calc.liters; m[k].totKm+=e.calc.kmDriven; });
     return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).map(x=>({...x, "l/100km":+(x.totL/x.totKm*100).toFixed(2), label: new Date(x.month+"-15").toLocaleDateString("it-IT",{month:"short",year:"2-digit"})}));
   })();
   const costBreakdown = [ {name:"Carburante",value:+stats.cost.toFixed(0),color:"#0099ff"}, {name:"Manutenzione",value:+totalMaintCost.toFixed(0),color:"#ffa832"}, {name:"Assicurazione",value:1086,color:"#c080ff"} ].filter(x=>x.value>0);
