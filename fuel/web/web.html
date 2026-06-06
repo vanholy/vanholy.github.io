@@ -222,9 +222,10 @@ const CetaneCalc = ({tankComp}) => {
   const results = React.useMemo(() => {
     if (!target || target < 40 || target > 80 || tankComp.total <= 0) return null;
     const calc = (fuelCetane, name) => {
-      if (Math.abs(fuelCetane - currentCetane) < 0.01) return { name, liters: 0, possible: true, note: "Cetano già al target" };
-      const needed = tankComp.total * (target - currentCetane) / (fuelCetane - currentCetane);
-      if (needed < 0) return { name, liters: 0, possible: false, note: fuelCetane > currentCetane ? "Serve abbassare" : "Serve alzare" };
+      if (Math.abs(currentCetane - target) < 0.01) return { name, liters: 0, possible: true, note: "Cetano già al target" };
+      if (Math.abs(fuelCetane - target) < 0.01) return { name, liters: 0, possible: false, note: "Target non raggiungibile" };
+      const needed = tankComp.total * (target - currentCetane) / (fuelCetane - target);
+      if (needed < 0) return { name, liters: 0, possible: false, note: fuelCetane < target ? "CN troppo basso" : "CN troppo alto" };
       return { name, liters: Math.min(needed, space), possible: needed <= space, full: needed, note: needed > space ? `Servirebbero ${fmtN(needed,1)}L (spazio: ${fmtN(space,1)}L)` : null };
     };
     return [calc(CETANE.HVO, "HVO"), calc(CETANE["Diesel+"], "Diesel+"), calc(CETANE.B7, "B7")];
@@ -307,8 +308,8 @@ function App() {
     const monthCount = new Set(entries.map(e=>e.date.slice(0,7))).size;
     return {
       n: entries.length, liters: entries.reduce((s,e) => s+e.liters, 0), cost,
-      km: withCalc.reduce((s,e) => s+e.calc.kmDriven, 0), avgL: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.lPer100, 0)/withCalc.length : null,
-      avgC: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.costPerKm, 0)/withCalc.length : null,
+      km: withCalc.reduce((s,e) => s+e.calc.kmDriven, 0), avgL: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.liters, 0)/withCalc.reduce((s,e) => s+e.calc.kmDriven, 0)*100 : null,
+      avgC: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.cost, 0)/withCalc.reduce((s,e) => s+e.calc.kmDriven, 0) : null,
       minL: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.lPer100)) : null,
       maxL: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.lPer100)) : null,
       minC: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.costPerKm)) : null,
@@ -322,7 +323,7 @@ function App() {
 
   const byFuel = useMemo(() => FUEL_TYPES.map(ft => {
     const f=withCalc.filter(e=>e.fuelType===ft), all=entries.filter(e=>e.fuelType===ft);
-    return { type:ft, count:all.length, avgL:f.length?f.reduce((s,e)=>s+e.calc.lPer100,0)/f.length:null, avgC:f.length?f.reduce((s,e)=>s+e.calc.costPerKm,0)/f.length:null, liters:all.reduce((s,e)=>s+e.liters,0), cost:all.reduce((s,e)=>s+e.totalCost,0), minL:f.length?Math.min(...f.map(e=>e.calc.lPer100)):null, maxL:f.length?Math.max(...f.map(e=>e.calc.lPer100)):null };
+    return { type:ft, count:all.length, avgL:f.length?f.reduce((s,e)=>s+e.calc.liters,0)/f.reduce((s,e)=>s+e.calc.kmDriven,0)*100:null, avgC:f.length?f.reduce((s,e)=>s+e.calc.cost,0)/f.reduce((s,e)=>s+e.calc.kmDriven,0):null, liters:all.reduce((s,e)=>s+e.liters,0), cost:all.reduce((s,e)=>s+e.totalCost,0), minL:f.length?Math.min(...f.map(e=>e.calc.lPer100)):null, maxL:f.length?Math.max(...f.map(e=>e.calc.lPer100)):null };
   }).filter(s => s.count > 0), [entries, withCalc]);
 
   const totalMaintCost = useMemo(() => maint.reduce((s,m) => s + m.cost, 0), [maint]);
