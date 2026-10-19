@@ -1,0 +1,1649 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><title>Casa Carobbio</title><meta name="robots" content="noindex,nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script></head><body>
+<title>Casa Carobbio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: registro tecnico dell'immobile. Testata fissa con schede, colonna unica larga, colori = rami di proprietà (Belotti blu, Pasinetti ambra, Comune tratteggio). */
+:root{
+  --paper:#f4f5f2; --panel:#ffffff; --soft:#eceeea; --ink:#1c2327; --muted:#59646a; --rule:#d2d8d9;
+  --b:#1b6aa0; --b-ink:#17557f; --b-fill:#dbe8f2;
+  --p:#a8681a; --p-ink:#7a4a0f; --p-fill:#f3e2c6;
+  --c:#7d8676; --c-ink:#3f463b; --c-fill:#e8eae4; --c-hatch:#a9b0a0;
+  --warn:#a5402a; --warn-bg:#f8e6e0; --mid:#8a5f00; --mid-bg:#f6ecd2; --ok:#2c7448; --ok-bg:#e1f0e6;
+  --bar:#4b5a62; --btn:#1c2327; --btn-ink:#f4f5f2; --focus:#1b6aa0;
+  --shadow:0 1px 2px rgba(20,28,32,.06),0 8px 24px rgba(20,28,32,.08);
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141a1d; --panel:#1c2327; --soft:#232b30; --ink:#e7ecee; --muted:#9ba7ad; --rule:#333d42;
+  --b:#3a8fc8; --b-ink:#9cc9ea; --b-fill:#1b3547;
+  --p:#c0822e; --p-ink:#efc489; --p-fill:#42301a;
+  --c:#9aa392; --c-ink:#cfd5c8; --c-fill:#262b25; --c-hatch:#4e5649;
+  --warn:#ef907a; --warn-bg:#3a221c; --mid:#e3bd62; --mid-bg:#3a2f15; --ok:#7fcf9a; --ok-bg:#1a3324;
+  --bar:#9fb0b8; --btn:#e7ecee; --btn-ink:#141a1d; --focus:#7fb8de;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141a1d; --panel:#1c2327; --soft:#232b30; --ink:#e7ecee; --muted:#9ba7ad; --rule:#333d42;
+  --b:#3a8fc8; --b-ink:#9cc9ea; --b-fill:#1b3547;
+  --p:#c0822e; --p-ink:#efc489; --p-fill:#42301a;
+  --c:#9aa392; --c-ink:#cfd5c8; --c-fill:#262b25; --c-hatch:#4e5649;
+  --warn:#ef907a; --warn-bg:#3a221c; --mid:#e3bd62; --mid-bg:#3a2f15; --ok:#7fcf9a; --ok-bg:#1a3324;
+  --bar:#9fb0b8; --btn:#e7ecee; --btn-ink:#141a1d; --focus:#7fb8de;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--panel)}
+h1,h2,h3,h4{font-family:var(--f-display);margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(30px,5vw,42px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(20px,3vw,25px);font-weight:600}
+h3{font-size:17px;font-weight:600}
+p{margin:0;max-width:70ch}
+a{color:var(--b-ink)}
+.mono{font-family:var(--f-mono)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* testata */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--panel);border-bottom:1px solid var(--rule)}
+.top-in{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:2px;padding-block:10px 0}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
+.brand b{font-family:var(--f-display);font-size:19px;font-weight:700;letter-spacing:.01em}
+.brand span{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+@media (max-width:520px){.brand span:not(.save){display:none}}
+.brand .save{margin-left:auto;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.dot.warn{background:var(--mid)} .dot.bad{background:var(--warn)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-inline:-4px}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:none;background:none;border:0;border-radius:0;border-bottom:3px solid transparent;color:var(--muted);font-family:var(--f-display);font-weight:600;font-size:15px;padding:10px 10px 11px;white-space:nowrap;line-height:1.2}
+nav.tabs button:hover{color:var(--ink);border-color:transparent;border-bottom-color:var(--rule)}
+nav.tabs button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ink)}
+nav.tabs button .count{font-family:var(--f-mono);font-size:11px;font-weight:600;margin-left:4px;padding:0 5px;border-radius:8px;background:var(--warn-bg);color:var(--warn)}
+
+.gsearch{margin-left:auto;width:260px;max-width:100%;padding:6px 10px;font-size:14px}
+.brand .gsearch + .save{margin-left:0}
+@media (max-width:700px){.gsearch{order:5;flex:1 1 100%;width:auto;margin:6px 0 0}.brand .gsearch + .save{margin-left:auto}}
+.scad{display:grid;grid-template-columns:7.5em minmax(0,1fr) auto;gap:6px 14px;padding:12px 14px;border-bottom:1px solid var(--rule);align-items:start;border-left:4px solid var(--sev,transparent)}
+.scad:last-child{border-bottom:0}
+.scad.late{--sev:var(--warn)} .scad.soon{--sev:var(--mid)} .scad.done{opacity:.75}
+.scad .when{font-family:var(--f-mono);font-size:13px;font-weight:600}
+.scad .when small{display:block;font-weight:500;color:var(--muted);font-size:11.5px}
+.scad .side{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
+@media (max-width:620px){.scad{grid-template-columns:minmax(0,1fr)}.scad .side{justify-content:flex-start}}
+.prog{height:6px;background:var(--soft);border-radius:3px;overflow:hidden}
+.prog > i{display:block;height:100%;background:var(--ok)}
+tr.now td{background:var(--mid-bg)}
+.note-box{border-left:4px solid var(--mid);background:var(--mid-bg);padding:10px 14px;border-radius:4px;font-size:14px}
+mark{background:var(--mid-bg);color:inherit;padding:0 1px;border-radius:2px}
+.nav-pick{display:none}
+@media (max-width:700px){
+  nav.tabs{display:none}
+  .nav-pick{display:flex;align-items:center;gap:10px;padding-block:6px 10px}
+  .nav-pick span{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .nav-pick select{flex:1;font-family:var(--f-display);font-weight:600;font-size:16px;padding:8px 10px}
+}
+main:focus{outline:none}
+.linkish{background:none;border:0;padding:0;border-radius:0;color:var(--b-ink);text-decoration:underline;font:inherit;font-weight:inherit;cursor:pointer;display:inline;text-align:left}
+.linkish.mono{font-family:var(--f-mono);font-weight:600}
+button.kpi{font-weight:400;text-align:left;line-height:1.4;align-items:start;justify-items:start;width:100%;cursor:pointer}
+button.kpi:hover{border-color:var(--muted)}
+main{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:26px 80px;display:grid;gap:34px}
+section{display:grid;gap:14px;min-width:0}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 16px}
+.head > div{display:grid;gap:4px;min-width:0}
+.lead{font-size:16px;color:var(--muted)}
+
+/* pulsanti e controlli */
+button,.btn{font:inherit;font-family:var(--f-body);font-weight:600;font-size:14px;cursor:pointer;border-radius:6px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);padding:8px 13px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;line-height:1.2}
+button:hover,.btn:hover{border-color:var(--muted)}
+button.primary,.btn.primary{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+button.primary:hover{opacity:.9}
+button.danger{color:var(--warn);border-color:var(--warn)}
+button.danger.armed{background:var(--warn);color:var(--panel)}
+button.ghost{border-color:transparent;background:transparent;padding:6px 8px;color:var(--muted)}
+button.ghost:hover{color:var(--ink);border-color:var(--rule)}
+button.mini{padding:4px 8px;font-size:12.5px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input,select,textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+input[type=checkbox]{width:auto}
+label.f{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+label.f small{font-weight:400}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters select,.filters input{width:auto;min-width:0;max-width:100%;padding:6px 9px;font-size:14px}
+.filters input[type=search]{flex:1 1 200px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;border-radius:0;padding:6px 11px;font-size:13.5px;background:var(--panel);color:var(--muted)}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* pill e chip */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:1px 8px;border:1.5px solid;border-radius:3px;white-space:nowrap;line-height:1.5}
+.pill.belotti{color:var(--b-ink);border-color:var(--b);background:var(--b-fill)}
+.pill.pasinetti{color:var(--p-ink);border-color:var(--p);background:var(--p-fill)}
+.pill.comune{color:var(--c-ink);border-color:var(--c);background:var(--c-fill)}
+.pill.st-aperta,.pill.st-alta,.pill.st-da-procurare{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.pill.st-in-corso,.pill.st-media,.pill.st-richiesto,.pill.st-in-valutazione,.pill.st-ricevuto{color:var(--mid);border-color:var(--mid);background:var(--mid-bg)}
+.pill.st-risolta,.pill.st-ottenuto,.pill.st-accettato{color:var(--ok);border-color:var(--ok);background:var(--ok-bg)}
+.pill.st-bassa,.pill.st-scartato,.pill.st-stima,.pill.neutral{color:var(--muted);border-color:var(--rule);background:var(--soft)}
+.chip{font-family:var(--f-mono);font-size:12px;font-weight:600;padding:0 6px;border:1px solid var(--rule);border-radius:3px;background:var(--soft);white-space:nowrap}
+
+/* card e pannelli */
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:860px){.grid3{grid-template-columns:1fr}}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+
+/* testata panoramica */
+.hero{display:grid;gap:12px;padding-bottom:20px;border-bottom:2px solid var(--ink)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+
+.owner{background:var(--panel);border:1px solid var(--rule);border-top:5px solid var(--o);border-radius:6px;padding:14px 16px;display:grid;gap:10px;align-content:start;min-width:0}
+.owner.belotti{--o:var(--b)} .owner.pasinetti{--o:var(--p)} .owner.comune{--o:var(--c)}
+.owner h3 small{display:block;font-family:var(--f-body);font-weight:400;font-size:13px;color:var(--muted);margin-top:3px}
+.owner ul{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:14px}
+.owner li{display:grid;grid-template-columns:3.2em minmax(0,1fr);gap:8px;align-items:baseline}
+.owner li .mono{font-weight:600}
+.owner .foot{font-size:13px;color:var(--muted);border-top:1px dashed var(--rule);padding-top:8px}
+.owner .next{font-size:13px;border-top:1px dashed var(--rule);padding-top:8px}
+.owner .next b{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;display:grid;gap:2px;text-decoration:none;color:inherit;min-width:0}
+a.kpi:hover{border-color:var(--muted)}
+.kpi .v{font-family:var(--f-display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .l{font-size:13px;color:var(--muted)}
+.kpi .s{font-size:12.5px;color:var(--muted)}
+
+.banner{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:8px;border:1px solid var(--mid);background:var(--mid-bg);color:var(--ink)}
+.banner.bad{border-color:var(--warn);background:var(--warn-bg)}
+.banner p{font-size:14px}
+
+/* liste */
+.list{display:grid;background:var(--panel);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:11px 14px;border-bottom:1px solid var(--rule);align-items:start}
+.row:last-child{border-bottom:0}
+.row .t{font-weight:600}
+.row .d{font-size:13.5px;color:var(--muted)}
+.row .side{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
+@media (max-width:560px){.row{grid-template-columns:1fr}.row .side{justify-content:flex-start}}
+.empty{padding:22px 16px;color:var(--muted);font-size:14px;text-align:center}
+
+/* tabelle */
+.table{overflow-x:auto;background:var(--panel);border:1px solid var(--rule);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+th{font-family:var(--f-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap;background:var(--soft)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover td{background:var(--soft)}
+td.n,th.n{text-align:right;white-space:nowrap}
+td small{display:block;color:var(--muted);font-size:12.5px}
+td.sub{font-family:var(--f-mono);font-weight:600;font-size:15px;white-space:nowrap}
+tr.belotti td.sub{color:var(--b-ink);box-shadow:inset 4px 0 0 var(--b)}
+tr.pasinetti td.sub{color:var(--p-ink);box-shadow:inset 4px 0 0 var(--p)}
+tr.comune td.sub{color:var(--c-ink);box-shadow:inset 4px 0 0 var(--c)}
+tr.gone td{color:var(--muted)}
+tfoot td{font-weight:600;border-top:1px solid var(--rule)}
+
+/* subalterni */
+.subwrap{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.subwrap{grid-template-columns:1fr}}
+.fig{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:14px;display:grid;gap:10px;min-width:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll svg{display:block;width:100%;min-width:560px;height:auto}
+.plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.plans{grid-template-columns:1fr}}
+.plan{margin:0;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 8px 10px;display:grid;gap:4px;min-width:0}
+.plan svg{width:100%;height:auto;display:block}
+.plan figcaption{font-family:var(--f-display);font-weight:600;font-size:14.5px;text-align:center}
+svg .b-fill{fill:var(--b-fill);stroke:var(--b);stroke-width:1.6}
+svg .p-fill{fill:var(--p-fill);stroke:var(--p);stroke-width:1.6}
+svg .c-fill{fill:url(#hatch);stroke:var(--c);stroke-width:1.2}
+svg .c-fill.strong{stroke-width:1.6}
+svg .ghost{fill:none;stroke:var(--rule);stroke-width:1;stroke-dasharray:4 4}
+svg .ghost-b{fill:none;stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+svg .bot{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+svg .ground{fill:var(--muted)}
+svg .dim{stroke:var(--muted);stroke-width:1}
+svg text{font-family:var(--f-body);fill:var(--ink);pointer-events:none}
+svg .n{font-family:var(--f-mono);font-weight:600;font-size:17px}
+svg .n.sm{font-size:13px}
+svg .lbl{font-size:11.5px}
+svg .lbl.sm{font-size:10.5px}
+svg .lbl.xs{font-size:9px;fill:var(--muted)}
+svg .note{font-size:10.5px;fill:var(--muted);font-style:italic}
+svg .lvl{font-family:var(--f-mono);font-weight:600;font-size:14px;fill:var(--muted)}
+svg .north path{fill:var(--ink)} svg .north text{font-family:var(--f-mono);font-size:11px;font-weight:600}
+svg [data-sub]{cursor:pointer;transition:filter .12s}
+svg [data-sub]:hover{filter:brightness(.93)}
+svg [data-sub].sel{stroke:var(--ink);stroke-width:3}
+.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 110px);display:grid;gap:12px}
+@media (max-width:900px){.detail{position:static}}
+.detail .big{font-family:var(--f-mono);font-size:34px;font-weight:600;line-height:1}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;font-size:14px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13.5px;align-items:center}
+.sw{display:inline-block;width:16px;height:12px;border:1.5px solid;vertical-align:-1px;margin-right:6px}
+.sw.belotti{background:var(--b-fill);border-color:var(--b)} .sw.pasinetti{background:var(--p-fill);border-color:var(--p)}
+.sw.comune{background:repeating-linear-gradient(45deg,var(--c-fill) 0 3px,var(--c-hatch) 3px 4px);border-color:var(--c)}
+
+/* storia */
+.tl{display:grid;background:var(--panel);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.tl-item{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:4px 16px;padding:13px 16px;border-bottom:1px solid var(--rule);border-left:4px solid var(--o,var(--rule))}
+.tl-item:last-child{border-bottom:0}
+.tl-item.belotti{--o:var(--b)} .tl-item.pasinetti{--o:var(--p)} .tl-item.comune{--o:var(--c)}
+.tl-item .y{font-family:var(--f-mono);font-weight:600;font-size:14px}
+.tl-item .y small{display:block;font-weight:500;font-size:11.5px;color:var(--muted)}
+.tl-item .body{display:grid;gap:4px;min-width:0}
+.tl-item .ref{font-size:12.5px;color:var(--muted);font-family:var(--f-mono)}
+.tl-item .tags{display:flex;flex-wrap:wrap;gap:5px}
+.tl-item.prev{background:repeating-linear-gradient(135deg,transparent 0 10px,var(--soft) 10px 11px)}
+@media (max-width:620px){.tl-item{grid-template-columns:minmax(0,1fr) auto}.tl-item .y{grid-column:1/-1}}
+.tl-group{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 16px;background:var(--soft);border-bottom:1px solid var(--rule)}
+
+/* persone */
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.person{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.person .top-line{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.person h3{font-size:16.5px}
+.person .role{font-size:13.5px;color:var(--muted)}
+.contacts{display:grid;gap:4px;font-size:14px}
+.contact{display:grid;grid-template-columns:5.4em minmax(0,1fr) auto;gap:8px;align-items:center}
+.contact .k{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.contact .v{overflow-wrap:anywhere;user-select:all}
+.contact .v a{color:inherit}
+.missing{font-size:12.5px;color:var(--mid);font-style:italic}
+
+/* criticità */
+.issues{display:grid;gap:10px}
+.issue{background:var(--panel);border:1px solid var(--rule);border-left:5px solid var(--sev,var(--rule));border-radius:6px;padding:13px 16px;display:grid;gap:8px;min-width:0}
+.issue.alta{--sev:var(--warn)} .issue.media{--sev:var(--mid)} .issue.bassa{--sev:var(--c)}
+.issue.done{opacity:.7;--sev:var(--ok)}
+.issue .hd{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;justify-content:space-between}
+.issue .hd h3{font-size:16.5px}
+.issue .hd h3 .mono{color:var(--muted);font-size:13px;margin-right:6px}
+.issue .what{font-size:14px}
+.issue .todo{font-size:14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px}
+.issue .todo b{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding-top:2px}
+.issue .ft{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.issue select{width:auto;padding:5px 8px;font-size:13.5px}
+
+/* spese e grafici */
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bars{display:grid;gap:7px}
+.bar-row{display:grid;grid-template-columns:minmax(0,11em) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px}
+.bar-row .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:14px;position:relative}
+.bar-fill{height:100%;background:var(--bar);border-radius:0 4px 4px 0;min-width:2px}
+.bar-row .val{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;min-width:7.5em;text-align:right}
+.split{display:flex;height:22px;gap:2px}
+.split > div{min-width:2px}
+.split .sb{background:var(--b);border-radius:4px 0 0 4px}
+.split .sp{background:var(--p);border-radius:0 4px 4px 0}
+.split-leg{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;font-size:13.5px}
+.split-leg span{display:inline-flex;align-items:center;gap:6px}
+.split-leg i{width:10px;height:10px;display:inline-block;border-radius:2px}
+.flag{font-size:11.5px;font-weight:600;color:var(--mid)}
+
+/* dati */
+.storage{display:grid;gap:6px;font-size:14px}
+pre.code{font-family:var(--f-mono);font-size:12px;background:var(--soft);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;overflow-x:auto;margin:0;white-space:pre}
+.steps{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px}
+
+/* dialog */
+dialog{border:1px solid var(--rule);border-radius:10px;background:var(--panel);color:var(--ink);padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(10,14,16,.45)}
+.dlg{display:grid;grid-template-rows:auto minmax(0,1fr) auto;max-height:calc(100dvh - 26px)}
+.dlg header{padding:16px 18px 10px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;gap:10px;align-items:center}
+.dlg .body{padding:14px 18px;overflow-y:auto;display:grid;gap:12px}
+.dlg footer{padding:12px 18px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form-grid .wide{grid-column:1/-1}
+@media (max-width:520px){.form-grid{grid-template-columns:1fr}}
+.err{color:var(--warn);font-size:13px}
+
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:10px 16px;border-radius:6px;font-size:14px;font-weight:600;box-shadow:var(--shadow);z-index:50;max-width:calc(100vw - 32px)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div id="defs"></div>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><b>Casa Carobbio</b><span id="brand-sub"></span><input type="search" id="global-q" class="gsearch" placeholder="Cerca in tutta la casa" aria-label="Cerca in tutta la casa" autocomplete="off"><span class="save" id="save-state" aria-live="polite"></span></div>
+    <nav class="tabs" id="tabs" aria-label="Sezioni"></nav>
+    <label class="nav-pick" for="nav-select"><span>Sezione</span><select id="nav-select" aria-label="Vai alla sezione"></select></label>
+  </div>
+</header>
+<main id="view" tabindex="-1"><p class="muted">Caricamento…</p></main>
+<dialog id="dlg" aria-label="Modulo"></dialog>
+<script>
+/* Progetto Supabase condiviso con le altre app del sito. Chiave anon: pubblica per natura,
+   i dati sono protetti dalle policy RLS (solo i membri in cc_membri). Mai la service role qui. */
+const CC_SUPABASE = {
+  url: 'https://cfejkhmrphjiccyrkblc.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmZWpraG1ycGhqaWNjeXJrYmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNjUzOTEsImV4cCI6MjA4Nzg0MTM5MX0.v2hdI9ZGaKlYi2EwNBWyjGpHSlGpQkaWk3nHEDRI1pM'
+};
+/* Pagina pubblicata: nessun dato incorporato. I dati arrivano da Supabase dopo l'accesso. */
+const SEED_VERSION = 0;
+const SEED = { immobile: {}, subalterni: [], quote: [], soggetti: [], eventi: [], documenti: [], criticita: [], checklist: [], spese: [], preventivi: [], detrazioni: [], scadenze: [] };
+/* ===== Schemi grafici (resi cliccabili) ===== */
+const SVG_DEFS = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" style="fill:var(--c-fill)"/><line x1="0" y1="0" x2="0" y2="7" style="stroke:var(--c-hatch);stroke-width:2"/></pattern></defs></svg>';
+
+const SVG_SECTION = `<svg viewBox="0 0 760 430" role="img" aria-label="Sezione della casa per piani: tocca un subalterno">
+<rect class="ground" x="0" y="312" width="760" height="6"/>
+<rect class="c-fill" data-sub="701" x="0" y="298" width="70" height="14"/><rect class="c-fill" data-sub="701" x="680" y="298" width="80" height="14"/>
+<text class="lbl sm" x="35" y="338" text-anchor="middle">701 giardino</text><text class="lbl sm" x="720" y="338" text-anchor="middle">701 giardino</text>
+<polygon class="c-fill strong" data-sub="706" points="80,92 360,26 640,92"/><rect class="c-fill strong" data-sub="706" x="80" y="92" width="560" height="58"/>
+<text class="n" x="360" y="118" text-anchor="middle">706</text><text class="lbl" x="360" y="138" text-anchor="middle">sottotetto · comune a entrambi</text>
+<text class="lvl" x="65" y="125" text-anchor="end">P2</text>
+<rect class="p-fill" data-sub="703" x="80" y="150" width="110" height="78"/><rect class="c-fill strong" data-sub="701" x="190" y="150" width="70" height="78"/><rect class="p-fill" data-sub="4" x="260" y="150" width="380" height="78"/><rect class="p-fill" data-sub="4" x="640" y="206" width="58" height="8"/>
+<text class="n" x="135" y="184" text-anchor="middle">703</text><text class="lbl sm" x="135" y="203" text-anchor="middle">cucina</text><text class="lbl sm" x="135" y="218" text-anchor="middle">17 m²</text>
+<text class="n sm" x="225" y="184" text-anchor="middle">701</text><text class="lbl sm" x="225" y="203" text-anchor="middle">scala</text>
+<text class="n" x="450" y="186" text-anchor="middle">4</text><text class="lbl" x="450" y="207" text-anchor="middle">abitazione · 94 m² + balcone 14 m²</text>
+<text class="lvl" x="65" y="193" text-anchor="end">P1</text>
+<rect class="b-fill" data-sub="702" x="80" y="228" width="110" height="78"/><rect class="c-fill strong" data-sub="701" x="190" y="228" width="70" height="78"/><rect class="b-fill" data-sub="704" x="260" y="228" width="380" height="78"/><rect class="b-fill" data-sub="704" x="640" y="284" width="52" height="8"/>
+<text class="n" x="135" y="262" text-anchor="middle">702</text><text class="lbl sm" x="135" y="281" text-anchor="middle">deposito</text><text class="lbl sm" x="135" y="296" text-anchor="middle">12 m²</text>
+<text class="n sm" x="225" y="262" text-anchor="middle">701</text><text class="lbl sm" x="225" y="281" text-anchor="middle">scala</text>
+<text class="n" x="450" y="264" text-anchor="middle">704</text><text class="lbl" x="450" y="285" text-anchor="middle">abitazione · 95 m² (balcone 8 m² compreso)</text>
+<text class="lvl" x="65" y="271" text-anchor="end">PT</text>
+<rect class="b-fill" data-sub="705" x="260" y="320" width="190" height="62"/><rect class="p-fill" data-sub="2" x="450" y="320" width="190" height="62"/>
+<text class="n" x="355" y="348" text-anchor="middle">705</text><text class="lbl sm" x="355" y="368" text-anchor="middle">cantina · 27 m²</text>
+<text class="n" x="545" y="348" text-anchor="middle">2</text><text class="lbl sm" x="545" y="368" text-anchor="middle">cantina · 37 m²</text>
+<text class="lvl" x="65" y="356" text-anchor="end">S1</text><text class="note" x="170" y="356" text-anchor="middle">terra piena</text>
+<text class="note" x="135" y="418" text-anchor="middle">corpo scala (lato ovest)</text><text class="note" x="450" y="418" text-anchor="middle">corpo principale</text>
+<line class="dim" x1="80" y1="402" x2="260" y2="402"/><line class="dim" x1="260" y1="402" x2="640" y2="402"/>
+</svg>`;
+
+const NORTH = '<g class="north" transform="translate(354,275)"><path d="M0,-14 L6,6 L0,2 L-6,6 Z"/><text x="0" y="20" text-anchor="middle">N</text></g>';
+const LOT = 'points="22.2,22.2 345.2,15.4 370.7,93.6 336.7,289.1 47.7,297.6 13.7,144.6"';
+
+const SVG_PLANS = [
+  { cap:'Piano interrato (S1)', svg:`<svg viewBox="0 0 384 313" role="img" aria-label="Piano interrato"><polygon class="ghost" ${LOT}/>
+<polygon class="b-fill" data-sub="705" points="153.1,46.0 314.6,42.6 312.1,103.8 153.1,103.8"/><polygon class="p-fill" data-sub="2" points="153.1,103.8 312.1,103.8 304.4,171.8 153.1,171.8"/>
+<polygon class="ghost-b" points="81.7,69.8 153.1,69.8 153.1,171.8 81.7,171.8"/>
+<text class="n" x="233" y="72.3" text-anchor="middle">705</text><text class="lbl" x="233" y="91" text-anchor="middle">cantina · 27 m²</text>
+<text class="n" x="229.6" y="135.2" text-anchor="middle">2</text><text class="lbl" x="229.6" y="153.9" text-anchor="middle">cantina · 37 m²</text>
+<text class="note" x="117.4" y="124.2" text-anchor="middle">terra piena</text>${NORTH}</svg>` },
+  { cap:'Piano terra (rialzato)', svg:`<svg viewBox="0 0 384 313" role="img" aria-label="Piano terra"><polygon class="c-fill" data-sub="701" ${LOT}/>
+<polygon class="b-fill" data-sub="704" points="153.1,46.0 314.6,42.6 304.4,171.8 153.1,171.8"/><polygon class="b-fill" data-sub="704" points="168.4,171.8 280.6,171.8 280.6,192.2 168.4,192.2"/>
+<polygon class="b-fill" data-sub="702" points="81.7,69.8 129.3,69.8 129.3,115.7 81.7,115.7"/>
+<polygon class="c-fill strong" data-sub="701" points="129.3,69.8 153.1,69.8 153.1,171.8 81.7,171.8 81.7,115.7 129.3,115.7"/>
+<polygon class="c-fill strong" data-sub="701" points="120.8,171.8 144.6,171.8 144.6,193.9 120.8,193.9"/>
+<text class="n" x="231.3" y="101.2" text-anchor="middle">704</text><text class="lbl" x="231.3" y="119.9" text-anchor="middle">abitazione · 95 m²</text>
+<text class="lbl sm" x="224.5" y="186.2" text-anchor="middle">balcone 704</text>
+<text class="n" x="105.5" y="89.3" text-anchor="middle">702</text><text class="lbl xs" x="105.5" y="106.3" text-anchor="middle">deposito</text>
+<text class="n sm" x="117.4" y="148" text-anchor="middle">701</text><text class="lbl sm" x="117.4" y="163.3" text-anchor="middle">scala</text>
+<text class="lbl" x="188.8" y="250" text-anchor="middle">701 · giardino e corte comuni</text><text class="note" x="233" y="33.2" text-anchor="middle">confine nord</text>${NORTH}</svg>` },
+  { cap:'Piano primo', svg:`<svg viewBox="0 0 384 313" role="img" aria-label="Piano primo"><polygon class="ghost" ${LOT}/>
+<polygon class="p-fill" data-sub="4" points="153.1,46.0 314.6,42.6 304.4,171.8 153.1,171.8"/><polygon class="p-fill" data-sub="4" points="161.6,171.8 294.2,171.8 294.2,202.4 161.6,202.4"/>
+<polygon class="p-fill" data-sub="703" points="81.7,69.8 129.3,69.8 129.3,115.7 81.7,115.7"/>
+<polygon class="c-fill strong" data-sub="701" points="129.3,69.8 153.1,69.8 153.1,171.8 81.7,171.8 81.7,115.7 129.3,115.7"/>
+<text class="n" x="231.3" y="101.2" text-anchor="middle">4</text><text class="lbl" x="231.3" y="119.9" text-anchor="middle">abitazione · 94 m²</text>
+<text class="lbl sm" x="227.9" y="191.4" text-anchor="middle">balcone 4 · 14 m²</text>
+<text class="n" x="105.5" y="89.3" text-anchor="middle">703</text><text class="lbl xs" x="105.5" y="106.3" text-anchor="middle">cucina</text>
+<text class="n sm" x="117.4" y="148" text-anchor="middle">701</text><text class="lbl sm" x="117.4" y="163.3" text-anchor="middle">scala</text>${NORTH}</svg>` },
+  { cap:'Piano secondo (sottotetto)', svg:`<svg viewBox="0 0 384 313" role="img" aria-label="Sottotetto"><polygon class="ghost" ${LOT}/>
+<polygon class="c-fill strong" data-sub="706" points="153.1,46.0 314.6,42.6 304.4,171.8 153.1,171.8"/>
+<polygon class="c-fill strong" data-sub="706" points="81.7,69.8 153.1,69.8 153.1,171.8 81.7,171.8"/>
+<polygon class="bot" data-sub="701" points="93.6,127.6 105.5,127.6 105.5,139.5 93.6,139.5"/>
+<text class="n" x="226.2" y="101.2" text-anchor="middle">706</text><text class="lbl" x="226.2" y="119.9" text-anchor="middle">sottotetto comune</text>
+<text class="lbl sm" x="99.6" y="156.5" text-anchor="middle">701 botola</text>
+<text class="note" x="226.2" y="137.8" text-anchor="middle">h 0,80–2,90 m</text><text class="note" x="226.2" y="153.1" text-anchor="middle">non abitabile</text>${NORTH}</svg>` }
+];
+/* ===================================================================
+   Casa Carobbio · webapp
+   Fase 1: dati nel browser (localStorage). Il resto dell'app parla solo
+   con Repo, che usa un "adattatore". Per passare al NAS basta scrivere un
+   ApiAdapter con gli stessi metodi (loadAll, put, del, saveMeta) e
+   impostarlo in Repo.adapter. Il backup JSON si importa nel nuovo DB.
+   =================================================================== */
+const APP_ID = 'casa-carobbio';
+const SCHEMA = 1;
+const STORE_KEY = 'casa-carobbio.v1';
+const COLLS = ['subalterni','quote','soggetti','eventi','documenti','criticita','checklist','spese','preventivi','detrazioni','scadenze'];
+
+/* ---------- adattatore: memoria del browser ---------- */
+const LocalAdapter = {
+  name: 'Memoria del browser (solo questo dispositivo)',
+  ok: null,
+  test(){ try{ const k='__cc_t'; localStorage.setItem(k,'1'); localStorage.removeItem(k); this.ok=true; }catch(e){ this.ok=false; } return this.ok; },
+  async loadAll(){ try{ const s=localStorage.getItem(STORE_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } },
+  async saveAll(db){ if(!this.ok) return false; try{ localStorage.setItem(STORE_KEY, JSON.stringify(db)); return true; }catch(e){ return false; } },
+  async put(coll, rec, db){ return this.saveAll(db); },
+  async del(coll, id, db){ return this.saveAll(db); },
+  async saveMeta(db){ return this.saveAll(db); },
+  async clear(){ try{ localStorage.removeItem(STORE_KEY); }catch(e){} }
+};
+/* ---------- adattatore: Supabase (pagina pubblicata) ----------
+   Attivo quando la build definisce CC_SUPABASE = {url, key} (chiave pubblica anon).
+   Tabelle cc_records (una riga per record) e cc_meta (meta, settings, immobile). */
+const META_KEYS = ['meta','settings','immobile'];
+const SupabaseAdapter = {
+  name: 'Supabase (condiviso con i familiari)',
+  ok: null, sb: null, user: null, nome: '', ruolo: null, err: '',
+  test(){ this.ok = !!this.user; return this.ok; },
+  async connect(){
+    this.sb = supabase.createClient(CC_SUPABASE.url, CC_SUPABASE.key);
+    const { data, error } = await this.sb.auth.getSession(); if(error) throw error;
+    this.user = data.session ? data.session.user : null;
+    if(!this.user) return;
+    const r = await this.sb.from('cc_membri').select('nome,ruolo').eq('user_id', this.user.id).maybeSingle();
+    if(r.error) throw r.error;
+    this.nome = r.data ? r.data.nome : ''; this.ruolo = r.data ? r.data.ruolo : null;
+  },
+  fail(e){ this.err = (e && e.message) || String(e); console.warn('Supabase:', this.err); return false; },
+  async liveRows(cols){ // PostgREST restituisce al massimo 1000 righe per richiesta
+    const out = [];
+    for(let from=0;; from+=1000){
+      const { data, error } = await this.sb.from('cc_records').select(cols).eq('deleted', false).order('coll').order('id').range(from, from+999);
+      if(error) throw error; out.push(...data); if(data.length<1000) return out;
+    }
+  },
+  async loadAll(){
+    const rows = await this.liveRows('coll,data');
+    const { data: meta, error } = await this.sb.from('cc_meta').select('key,value'); if(error) throw error;
+    if(!rows.length && !meta.length) return null;
+    const base = freshDb(), db = { app: APP_ID, schema: SCHEMA, colls: {} };
+    META_KEYS.forEach(k => { const m = meta.find(x => x.key===k); db[k] = m ? m.value : base[k]; });
+    db.settings = {...db.settings, utente: this.nome}; // chi modifica = il membro collegato
+    COLLS.forEach(c => db.colls[c] = []);
+    rows.forEach(r => (db.colls[r.coll] = db.colls[r.coll] || []).push(r.data));
+    return db;
+  },
+  async saveMeta(db){
+    try{
+      const { utente, ...settings } = db.settings || {};
+      const { error } = await this.sb.from('cc_meta').upsert([{key:'meta', value:db.meta}, {key:'settings', value:settings}, {key:'immobile', value:db.immobile||{}}]);
+      if(error) throw error; this.err = ''; return true;
+    }catch(e){ return this.fail(e); }
+  },
+  async put(coll, rec, db){
+    try{
+      const { error } = await this.sb.from('cc_records').upsert({coll, id:rec.id, data:rec, deleted:false}); if(error) throw error;
+      return this.saveMeta(db);
+    }catch(e){ return this.fail(e); }
+  },
+  async del(coll, id, db){
+    try{
+      const { error } = await this.sb.from('cc_records').update({deleted:true}).eq('coll', coll).eq('id', id); if(error) throw error;
+      return this.saveMeta(db);
+    }catch(e){ return this.fail(e); }
+  },
+  /* Import di un backup: scrive tutti i record e segna come eliminati quelli che non ci sono più. */
+  async saveAll(db){
+    try{
+      const rows = [], keep = new Set();
+      COLLS.forEach(c => (db.colls[c]||[]).forEach(r => { rows.push({coll:c, id:r.id, data:r, deleted:false}); keep.add(c+'\n'+r.id); }));
+      for(let i=0; i<rows.length; i+=500){ const { error } = await this.sb.from('cc_records').upsert(rows.slice(i, i+500)); if(error) throw error; }
+      const gone = {};
+      (await this.liveRows('coll,id')).forEach(r => { if(!keep.has(r.coll+'\n'+r.id)) (gone[r.coll] = gone[r.coll] || []).push(r.id); });
+      for(const [c, ids] of Object.entries(gone)){
+        for(let i=0; i<ids.length; i+=200){ const { error } = await this.sb.from('cc_records').update({deleted:true}).eq('coll', c).in('id', ids.slice(i, i+200)); if(error) throw error; }
+      }
+      return this.saveMeta(db);
+    }catch(e){ return this.fail(e); }
+  }
+};
+const isShared = () => Repo.adapter === SupabaseAdapter;
+
+let DB = null;
+let saveOk = true;
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function nowIso(){ return new Date().toISOString(); }
+function todayIso(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function newId(prefix){ return prefix+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+function freshDb(){
+  const colls = {};
+  COLLS.forEach(c => colls[c] = clone(SEED[c]).map(r => ({...r, _seed:true})));
+  return {
+    app: APP_ID, schema: SCHEMA,
+    meta: { seedVersion: SEED_VERSION, created: nowIso(), updated: nowIso(), lastBackup: null, changesSinceBackup: 0, deletedSeed: [] },
+    settings: { docBase: '', quotaBelotti: 50, utente: '' },
+    immobile: clone(SEED.immobile),
+    colls
+  };
+}
+/* Aggiorna i dati di riferimento quando la pagina viene ripubblicata con un seed più nuovo:
+   aggiunge i record nuovi e sostituisce quelli di riferimento mai modificati. */
+function upgradeSeed(db){
+  if((db.meta.seedVersion||0) >= SEED_VERSION) return db;
+  const deleted = new Set(db.meta.deletedSeed||[]);
+  COLLS.forEach(c => {
+    const list = db.colls[c] = db.colls[c] || [];
+    SEED[c].forEach(sr => {
+      if(deleted.has(sr.id)) return;
+      const i = list.findIndex(r => r.id===sr.id);
+      if(i<0) list.push({...clone(sr), _seed:true});
+      else if(!list[i]._mod) list[i] = {...clone(sr), _seed:true};
+    });
+  });
+  db.immobile = clone(SEED.immobile);
+  db.meta.seedVersion = SEED_VERSION;
+  return db;
+}
+
+const Repo = {
+  adapter: LocalAdapter,
+  async init(){
+    this.adapter.test();
+    let d = await this.adapter.loadAll();
+    if(!d || d.app!==APP_ID){ d = freshDb(); DB = d; saveOk = await this.adapter.saveAll(d); }
+    else {
+      COLLS.forEach(c => { d.colls[c] = d.colls[c] || []; }); d.settings = {docBase:'', quotaBelotti:50, utente:'', ...(d.settings||{})};
+      const v = d.meta.seedVersion||0; DB = upgradeSeed(d);
+      // riscrive tutto solo se il seed è cambiato: con Supabase non sovrascrive le modifiche degli altri
+      saveOk = DB.meta.seedVersion!==v || !isShared() ? await this.adapter.saveAll(DB) : true;
+    }
+  },
+  list(c){ return DB.colls[c] || []; },
+  get(c, id){ return this.list(c).find(r => r.id===id); },
+  touch(){ DB.meta.updated = nowIso(); DB.meta.changesSinceBackup = (DB.meta.changesSinceBackup||0)+1; },
+  async put(c, rec){
+    const list = this.list(c);
+    rec._upd = nowIso(); if(DB.settings.utente) rec._by = DB.settings.utente;
+    const i = list.findIndex(r => r.id===rec.id);
+    if(i>=0){ if(list[i]._seed) rec._mod = true; list[i] = rec; } else list.push(rec);
+    this.touch(); saveOk = await this.adapter.put(c, rec, DB); renderStatus(); return rec;
+  },
+  async del(c, id){
+    const list = this.list(c); const i = list.findIndex(r => r.id===id); if(i<0) return;
+    if(list[i]._seed){ DB.meta.deletedSeed = DB.meta.deletedSeed||[]; DB.meta.deletedSeed.push(id); }
+    list.splice(i,1); this.touch(); saveOk = await this.adapter.del(c, id, DB); renderStatus();
+  },
+  async saveMeta(){ saveOk = await this.adapter.saveMeta(DB); renderStatus(); },
+  async replaceAll(d){ DB = d; saveOk = await this.adapter.saveAll(DB); renderStatus(); }
+};
+
+/* ---------- utilità ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = c => (c===null || c===undefined || c==='' || isNaN(c)) ? '—' : (c/100).toLocaleString('it-IT',{style:'currency',currency:'EUR'});
+const eur0 = c => (c===null || c===undefined || isNaN(c)) ? '—' : (c/100).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const MESI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+function fmtDate(s, testo){
+  if(testo) return testo;
+  if(!s) return '';
+  if(s==='?') return 'data da recuperare';
+  const m = String(s).match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/);
+  if(!m) return s;
+  if(m[3]) return m[3]+'/'+m[2]+'/'+m[1];
+  if(m[2]) return MESI[+m[2]-1]+' '+m[1];
+  return m[1];
+}
+function parseMoney(v){
+  if(v===null || v===undefined) return null;
+  let s = String(v).trim().replace(/[€\s]/g,'');
+  if(!s) return null;
+  if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+  const n = Number(s);
+  return isFinite(n) ? Math.round(n*100) : NaN;
+}
+const moneyInput = c => (c===null || c===undefined || c==='') ? '' : (c/100).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
+const RAMI = { belotti:'Belotti', pasinetti:'Pasinetti', comune:'Comune' };
+const ramoPill = r => r && RAMI[r] ? `<span class="pill ${r}">${RAMI[r]}</span>` : '';
+const slug = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const stPill = s => s ? `<span class="pill st-${slug(s)}">${esc(s)}</span>` : '';
+function subsList(str){ return String(str||'').split(/[^0-9]+/).filter(Boolean); }
+function hasSub(str, sub){ return subsList(str).includes(String(sub)); }
+function sortKey(d){ return d ? String(d) : '9999'; }
+
+function quote(spesa){
+  if(spesa.ramo==='belotti') return {b:100, p:0};
+  if(spesa.ramo==='pasinetti') return {b:0, p:100};
+  const b = (spesa.quotaBelotti===null || spesa.quotaBelotti===undefined || spesa.quotaBelotti==='') ? (DB.settings.quotaBelotti??50) : +spesa.quotaBelotti;
+  return {b, p:100-b};
+}
+function docHref(d){
+  if(!d) return '';
+  const base = (DB.settings.docBase||'').trim();
+  if(base && d.percorso) return base.replace(/\/+$/,'') + '/' + d.percorso.split('/').map(encodeURIComponent).join('/');
+  return d.url || '';
+}
+
+let toastTimer;
+function toast(msg){
+  let t = $('#toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; t.setAttribute('role','status'); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+}
+async function copyText(text, btn){
+  try{ await navigator.clipboard.writeText(text); toast('Copiato: '+text); }
+  catch(e){
+    const v = btn && btn.closest('.contact') ? btn.closest('.contact').querySelector('.v') : null;
+    if(v){ const r=document.createRange(); r.selectNodeContents(v); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Testo selezionato: copialo con Ctrl+C'); }
+    else toast('Copia non disponibile qui');
+  }
+}
+
+/* ---------- schemi dei moduli ---------- */
+const CAT_SPESE = ['Professionisti e pratiche','Notaio e atti','Imposte e tasse','Lavori','Manutenzione','Utenze','Assicurazione','Arredi e impianti','Altro'];
+const RAMO_OPTS = [['belotti','Belotti (piano terra)'],['pasinetti','Pasinetti (piano primo)'],['comune','Comune (ripartita)']];
+const SCHEMAS = {
+  spese: { label:'spesa', prefix:'s', fields:[
+    {k:'data', label:'Data', type:'date', req:true},
+    {k:'totale', label:'Importo totale (€)', type:'money', req:true, help:'IVA compresa'},
+    {k:'descrizione', label:'Descrizione', type:'text', req:true, wide:true},
+    {k:'categoria', label:'Categoria', type:'select', opts:CAT_SPESE},
+    {k:'fornitore', label:'Fornitore', type:'text', list:'dl-fornitori'},
+    {k:'ramo', label:'A carico di', type:'select', opts:RAMO_OPTS},
+    {k:'quotaBelotti', label:'Quota Belotti % (se comune)', type:'number', min:0, max:100, help:'Il resto va a Pasinetti'},
+    {k:'pagatoDa', label:'Pagato da', type:'text', list:'dl-persone'},
+    {k:'iva', label:'di cui IVA (€)', type:'money'},
+    {k:'detraibile', label:'Detraibile', type:'select', opts:[['no','No'],['si','Sì']]},
+    {k:'bonus', label:'Bonus / detrazione', type:'text', help:'Es. ristrutturazione 50%'},
+    {k:'documentoId', label:'Documento collegato', type:'doc'},
+    {k:'daVerificare', label:'Da verificare', type:'check'},
+    {k:'note', label:'Note', type:'textarea', wide:true}
+  ]},
+  preventivi: { label:'preventivo', prefix:'v', fields:[
+    {k:'data', label:'Data', type:'date', req:true},
+    {k:'fornitore', label:'Fornitore', type:'text', req:true, list:'dl-fornitori'},
+    {k:'oggetto', label:'Oggetto', type:'text', req:true, wide:true},
+    {k:'importo', label:'Importo (€)', type:'money', req:true, help:'Per una stima: il minimo'},
+    {k:'importoMax', label:'Importo massimo (€)', type:'money', help:'Solo per le stime a forbice'},
+    {k:'iva', label:'IVA', type:'select', opts:[['esclusa','IVA esclusa'],['inclusa','IVA inclusa']]},
+    {k:'stato', label:'Stato', type:'select', opts:['ricevuto','in valutazione','accettato','scartato','stima']},
+    {k:'categoria', label:'Categoria', type:'select', opts:CAT_SPESE},
+    {k:'ramo', label:'A carico di', type:'select', opts:RAMO_OPTS},
+    {k:'quotaBelotti', label:'Quota Belotti % (se comune)', type:'number', min:0, max:100},
+    {k:'documentoId', label:'Documento collegato', type:'doc'},
+    {k:'note', label:'Note', type:'textarea', wide:true}
+  ]},
+  soggetti: { label:'contatto', prefix:'p', fields:[
+    {k:'nome', label:'Nome', type:'text', req:true, wide:true},
+    {k:'gruppo', label:'Gruppo', type:'select', opts:['Proprietari e famiglia','Professionisti','Fornitori','Uffici','Storici']},
+    {k:'ramo', label:'Riguarda', type:'select', opts:[['comune','Entrambe / comune'],['belotti','Belotti'],['pasinetti','Pasinetti']]},
+    {k:'ruolo', label:'Ruolo', type:'text', wide:true},
+    {k:'cellulare', label:'Cellulare', type:'tel'},
+    {k:'telefono', label:'Telefono', type:'tel'},
+    {k:'email', label:'Email', type:'email'},
+    {k:'sito', label:'Sito web', type:'url'},
+    {k:'indirizzo', label:'Indirizzo', type:'text', wide:true},
+    {k:'note', label:'Note', type:'textarea', wide:true}
+  ]},
+  eventi: { label:'evento', prefix:'e', fields:[
+    {k:'data', label:'Data', type:'text', help:'AAAA-MM-GG, AAAA-MM o AAAA'},
+    {k:'dataTesto', label:'Data come testo', type:'text', help:'Facoltativo, es. "prima del 1960"'},
+    {k:'titolo', label:'Titolo', type:'text', req:true, wide:true},
+    {k:'tipo', label:'Tipo', type:'select', opts:['Atto','Catasto','Urbanistica','Lavori','Famiglia','Spesa','Previsto']},
+    {k:'stato', label:'Stato', type:'select', opts:[['avvenuto','Avvenuto'],['previsto','In programma']]},
+    {k:'ramo', label:'Riguarda', type:'select', opts:[['comune','Entrambe / comune'],['belotti','Belotti'],['pasinetti','Pasinetti']]},
+    {k:'subs', label:'Subalterni', type:'text', help:'Es. 704, 705'},
+    {k:'descrizione', label:'Descrizione', type:'textarea', wide:true},
+    {k:'riferimento', label:'Riferimento (atto, pratica, protocollo)', type:'text', wide:true}
+  ]},
+  documenti: { label:'documento', prefix:'d', fields:[
+    {k:'titolo', label:'Titolo', type:'text', req:true, wide:true},
+    {k:'data', label:'Data', type:'text', help:'AAAA-MM-GG, AAAA-MM o AAAA'},
+    {k:'categoria', label:'Categoria', type:'select', opts:['Atti e titoli','Catasto','Urbanistica','Progetti e disegni','Fatture e ricevute','Preventivi','Foto','Analisi','Altro']},
+    {k:'ramo', label:'Riguarda', type:'select', opts:[['comune','Entrambe / comune'],['belotti','Belotti'],['pasinetti','Pasinetti']]},
+    {k:'subs', label:'Subalterni', type:'text'},
+    {k:'contenuto', label:'Contenuto', type:'text', wide:true},
+    {k:'url', label:'Link attuale (Drive o altro)', type:'url', wide:true},
+    {k:'percorso', label:'Percorso nell\'archivio (NAS)', type:'text', wide:true, help:'Relativo alla cartella documenti, es. Catasto/2022 Visura.pdf'},
+    {k:'note', label:'Note', type:'textarea', wide:true}
+  ]},
+  criticita: { label:'criticità', prefix:'c', fields:[
+    {k:'titolo', label:'Titolo', type:'text', req:true, wide:true},
+    {k:'stato', label:'Stato', type:'select', opts:['aperta','in corso','risolta']},
+    {k:'priorita', label:'Priorità', type:'select', opts:['alta','media','bassa']},
+    {k:'ramo', label:'Riguarda', type:'select', opts:[['comune','Entrambe / comune'],['belotti','Belotti'],['pasinetti','Pasinetti']]},
+    {k:'subs', label:'Subalterni', type:'text'},
+    {k:'descrizione', label:'Problema', type:'textarea', wide:true},
+    {k:'azione', label:'Cosa fare', type:'textarea', wide:true},
+    {k:'chi', label:'Chi', type:'text'},
+    {k:'note', label:'Note e aggiornamenti', type:'textarea', wide:true}
+  ]},
+  checklist: { label:'documento da procurare', prefix:'k', fields:[
+    {k:'titolo', label:'Documento', type:'text', req:true, wide:true},
+    {k:'perche', label:'A cosa serve', type:'text', wide:true},
+    {k:'stato', label:'Stato', type:'select', opts:['da procurare','richiesto','ottenuto']},
+    {k:'note', label:'Note', type:'textarea', wide:true}
+  ]},
+  quote: { label:'riga di proprietà', prefix:'q', fields:[
+    {k:'ramo', label:'Ramo', type:'select', opts:[['belotti','Belotti'],['pasinetti','Pasinetti'],['comune','Comune']]},
+    {k:'subs', label:'Subalterni', type:'text'},
+    {k:'soggetto', label:'Intestatario', type:'text', req:true, list:'dl-persone'},
+    {k:'diritto', label:'Diritto', type:'select', opts:['Proprietà','Nuda proprietà','Usufrutto','Comproprietà','Comodato d\'uso','Locazione']},
+    {k:'quota', label:'Quota', type:'text', help:'Es. 1/1, 1/2'},
+    {k:'dal', label:'Dal', type:'text', help:'AAAA-MM-GG, oppure ? se ignota'},
+    {k:'al', label:'Al', type:'text', help:'Vuoto se ancora in corso'},
+    {k:'atto', label:'Atto', type:'text', wide:true},
+    {k:'note', label:'Note', type:'textarea', wide:true}
+  ]},
+  subalterni: { label:'subalterno', prefix:'sub', fields:[
+    {k:'sub', label:'Numero', type:'text', req:true},
+    {k:'ramo', label:'Ramo', type:'select', opts:[['belotti','Belotti'],['pasinetti','Pasinetti'],['comune','Comune']]},
+    {k:'piano', label:'Piano', type:'text'},
+    {k:'stato', label:'Stato', type:'select', opts:['attivo','soppresso']},
+    {k:'descrizione', label:'Descrizione', type:'text', wide:true},
+    {k:'categoria', label:'Categoria', type:'text'},
+    {k:'consistenza', label:'Consistenza', type:'text'},
+    {k:'superficie', label:'Superficie catastale', type:'text'},
+    {k:'rendita', label:'Rendita (€)', type:'money'},
+    {k:'dettagli', label:'Dettagli', type:'text', wide:true},
+    {k:'origine', label:'Ultimo atto catastale', type:'text', wide:true},
+    {k:'note', label:'Note', type:'textarea', wide:true}
+  ]}
+};
+
+/* ---------- dialog generico ---------- */
+const dlg = () => $('#dlg');
+let dlgCtx = null;
+function fieldHtml(f, v){
+  const id = 'f-'+f.k;
+  const req = f.req ? ' required' : '';
+  let input;
+  if(f.type==='select'){
+    input = `<select id="${id}" name="${f.k}">${f.opts.map(o => { const [val,lab] = Array.isArray(o)?o:[o,o]; return `<option value="${esc(val)}"${String(v??'')===String(val)?' selected':''}>${esc(lab)}</option>`; }).join('')}</select>`;
+  } else if(f.type==='textarea'){
+    input = `<textarea id="${id}" name="${f.k}">${esc(v)}</textarea>`;
+  } else if(f.type==='check'){
+    return `<label class="f" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="${id}" name="${f.k}"${v?' checked':''}> ${esc(f.label)}</label>`;
+  } else if(f.type==='doc'){
+    const docs = Repo.list('documenti').slice().sort((a,b)=>sortKey(b.data).localeCompare(sortKey(a.data)));
+    input = `<select id="${id}" name="${f.k}"><option value="">Nessuno</option>${docs.map(d => `<option value="${esc(d.id)}"${v===d.id?' selected':''}>${esc(fmtDate(d.data))} · ${esc(d.titolo)}</option>`).join('')}</select>`;
+  } else if(f.type==='spesa'){
+    const sp = Repo.list('spese').slice().sort((a,b)=>sortKey(b.data).localeCompare(sortKey(a.data)));
+    input = `<select id="${id}" name="${f.k}"><option value="">Nessuna</option>${sp.map(s => `<option value="${esc(s.id)}"${v===s.id?' selected':''}>${esc(fmtDate(s.data))} · ${esc(s.descrizione)} · ${esc(eur(s.totale))}</option>`).join('')}</select>`;
+  } else if(f.type==='money'){
+    input = `<input id="${id}" name="${f.k}" inputmode="decimal" placeholder="0,00" value="${esc(moneyInput(v))}"${req}>`;
+  } else {
+    const t = f.type==='date' ? 'date' : f.type==='number' ? 'number' : f.type==='tel' ? 'tel' : f.type==='email' ? 'email' : f.type==='url' ? 'url' : 'text';
+    const val = (t==='date' && v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) ? '' : v;
+    input = `<input id="${id}" name="${f.k}" type="${t}" value="${esc(val)}"${f.min!==undefined?` min="${f.min}"`:''}${f.max!==undefined?` max="${f.max}"`:''}${f.list?` list="${f.list}"`:''}${req}>`;
+    if(t==='date' && v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) input += `<small class="muted">Data attuale: ${esc(fmtDate(v))}. Lasciala vuota per non cambiarla.</small>`;
+  }
+  return `<label class="f${f.wide?' wide':''}" for="${id}">${esc(f.label)}${f.help?` <small>${esc(f.help)}</small>`:''}${input}</label>`;
+}
+function datalists(){
+  const fornitori = new Set(); const persone = new Set(Repo.list('quote').map(q => q.soggetto).filter(Boolean));
+  Repo.list('soggetti').forEach(s => { if(['Professionisti','Fornitori','Uffici'].includes(s.gruppo)) fornitori.add(s.nome); else if(s.gruppo!=='Storici') persone.add(s.nome); });
+  Repo.list('spese').forEach(s => { if(s.fornitore) fornitori.add(s.fornitore); if(s.pagatoDa) persone.add(s.pagatoDa); });
+  Repo.list('preventivi').forEach(s => { if(s.fornitore) fornitori.add(s.fornitore); });
+  const dl = (id, set) => `<datalist id="${id}">${[...set].map(v=>`<option value="${esc(v)}"></option>`).join('')}</datalist>`;
+  return dl('dl-fornitori', fornitori) + dl('dl-persone', persone);
+}
+function openForm(coll, rec, opts={}){
+  const sc = SCHEMAS[coll];
+  const isNew = !rec;
+  const data = rec ? clone(rec) : {...(opts.preset||{})};
+  dlgCtx = { coll, id: rec ? rec.id : null, data, onSaved: opts.onSaved };
+  const title = opts.title || (isNew ? 'Nuovo '+sc.label : 'Modifica '+sc.label);
+  dlg().innerHTML = `<form class="dlg" id="dlg-form" novalidate>
+    <header><h3>${esc(title)}</h3><button type="button" class="ghost" data-act="dlg-close" aria-label="Chiudi">Chiudi</button></header>
+    <div class="body">${opts.intro?`<p class="muted small">${opts.intro}</p>`:''}<div class="form-grid">${sc.fields.map(f => fieldHtml(f, data[f.k])).join('')}</div>${datalists()}<p class="err" id="dlg-err" hidden></p></div>
+    <footer><div class="actions">${!isNew?`<button type="button" class="danger" data-act="dlg-del">Elimina</button>`:''}</div>
+    <div class="actions"><button type="button" data-act="dlg-close">Annulla</button><button type="submit" class="primary">${isNew?'Aggiungi':'Salva'}</button></div></footer>
+  </form>`;
+  dlg().showModal();
+  const first = dlg().querySelector('input:not([type=checkbox]),select,textarea'); if(first) first.focus();
+}
+function readForm(coll, base){
+  const sc = SCHEMAS[coll]; const out = {...base}; const errs = [];
+  sc.fields.forEach(f => {
+    const el = $('#f-'+f.k); if(!el) return;
+    let v;
+    if(f.type==='check') v = el.checked;
+    else if(f.type==='money'){ v = parseMoney(el.value); if(Number.isNaN(v)){ errs.push(f.label+': importo non valido (es. 1.250,00)'); v = null; } }
+    else if(f.type==='number'){ v = el.value==='' ? null : Number(el.value); }
+    else if(f.type==='date'){ v = el.value || base[f.k] || ''; }
+    else v = el.value.trim();
+    if(f.req && (v===null || v==='' )) errs.push(f.label+' è obbligatorio');
+    out[f.k] = v;
+  });
+  return {out, errs};
+}
+async function submitForm(){
+  const {coll, id, data, onSaved} = dlgCtx;
+  const {out, errs} = readForm(coll, data);
+  if(errs.length){ const e=$('#dlg-err'); e.textContent = errs.join('. '); e.hidden=false; return; }
+  if(!id) out.id = newId(SCHEMAS[coll].prefix); else out.id = id;
+  await Repo.put(coll, out);
+  dlg().close();
+  toast(id ? 'Modifiche salvate' : 'Aggiunto');
+  if(onSaved) await onSaved(out);
+  render();
+}
+
+/* ---------- stato salvataggio ---------- */
+function backupAgeDays(){ if(!DB.meta.lastBackup) return null; return Math.floor((Date.now()-new Date(DB.meta.lastBackup).getTime())/86400000); }
+function renderStatus(){
+  const el = $('#save-state'); if(!el) return;
+  if(isShared()){ el.innerHTML = saveOk ? '<i class="dot"></i>Salvato su Supabase' : '<i class="dot bad"></i>Non salvato su Supabase'; return; }
+  if(!LocalAdapter.ok || !saveOk){ el.innerHTML = '<i class="dot bad"></i>Non salvato nel browser'; return; }
+  const n = DB.meta.changesSinceBackup||0;
+  el.innerHTML = n ? `<i class="dot warn"></i>${n} modific${n===1?'a':'he'} senza backup` : '<i class="dot"></i>Salvato nel browser';
+}
+function backupBanner(){
+  if(isShared()) return saveOk ? '' : `<div class="banner bad"><p><b>L'ultima modifica non è stata salvata su Supabase.</b> ${esc(SupabaseAdapter.err)} Ricarica la pagina prima di continuare.</p><button type="button" class="primary" data-nav="dati">Vedi lo stato</button></div>`;
+  if(!LocalAdapter.ok || !saveOk) return `<div class="banner bad"><p><b>La memoria del browser non è disponibile.</b> Le modifiche restano solo finché la pagina è aperta. Esporta un backup prima di chiuderla.</p><button type="button" class="primary" data-nav="dati">Vai al backup</button></div>`;
+  const n = DB.meta.changesSinceBackup||0; const age = backupAgeDays();
+  if(n===0) return '';
+  const when = age===null ? 'Non hai ancora esportato un backup.' : `Ultimo backup ${age===0?'oggi':age===1?'ieri':age+' giorni fa'}.`;
+  return `<div class="banner"><p><b>${n} modific${n===1?'a':'he'} solo in questo browser.</b> ${when} I dati inseriti qui non arrivano agli altri dispositivi finché non passiamo al NAS.</p><button type="button" data-nav="dati">Esporta backup</button></div>`;
+}
+
+/* ---------- viste ---------- */
+const TABS = [
+  ['panoramica','Panoramica'],['subalterni','Subalterni'],['proprieta','Proprietà'],['storia','Storia'],
+  ['persone','Persone'],['documenti','Documenti'],['criticita','Criticità'],['spese','Spese'],['preventivi','Preventivi'],['scadenze','Scadenze'],['detrazioni','Detrazioni'],['dati','Dati e backup']
+];
+let route = 'panoramica';
+let selSub = '704';
+const UI = { storiaRamo:'tutte', storiaTipo:'', personeQ:'', docQ:'', docCat:'', docRamo:'', critStato:'aperte', speseAnno:'', speseCat:'', speseRamo:'', spesePag:'' };
+
+function currentHolders(ramo){
+  return Repo.list('quote').filter(q => q.ramo===ramo && !q.al && q.diritto!=='Comodato d\'uso' && q.diritto!=='Locazione');
+}
+function previsti(){ return Repo.list('eventi').filter(e => e.stato==='previsto'); }
+
+function viewPanoramica(){
+  const subs = Repo.list('subalterni').filter(s => s.stato==='attivo');
+  const ownerCard = ramo => {
+    const ORD = ['704','702','705','4','703','2','706','701'];
+    const list = subs.filter(s => s.ramo===ramo).sort((a,b)=>((ORD.indexOf(a.sub)+99)%99)-((ORD.indexOf(b.sub)+99)%99));
+    const holders = currentHolders(ramo);
+    const uso = Repo.list('quote').filter(q => q.ramo===ramo && !q.al && (q.diritto==='Comodato d\'uso' || q.diritto==='Locazione'));
+    const next = previsti().filter(e => e.ramo===ramo);
+    const name = ramo==='comune' ? 'Parti comuni' : (holders.map(h=>h.soggetto).join(', ') || 'Intestatario da verificare');
+    const sub = ramo==='comune' ? 'di entrambi, metà ciascuno' : holders.map(h => `${h.diritto.toLowerCase()} ${h.quota}`).join(' · ') + (uso.length ? ' · ' + uso.map(u => `${u.diritto.toLowerCase()} a ${u.soggetto}`).join(', ') : '');
+    return `<div class="owner ${ramo}"><div class="eyebrow">${RAMI[ramo]}</div><h3>${esc(name)}<small>${esc(sub)}</small></h3>
+      <ul>${list.map(s => `<li><button type="button" class="linkish mono" data-act="pick-sub" data-sub="${esc(s.sub)}">${esc(s.sub)}</button><span>${esc(s.descrizione.split(':')[0])}${s.consistenza&&s.consistenza!=='—'?', '+esc(s.consistenza):''}</span></li>`).join('')}</ul>
+      ${ramo!=='comune'?'<div class="foot">Più la metà delle parti comuni 701 e 706.</div>':'<div class="foot">Anche tetto, facciate e struttura sono comuni (art. 1117 c.c.).</div>'}
+      ${next.length?`<div class="next"><b>In programma</b>${next.map(e=>esc(e.titolo)).join('<br>')}</div>`:''}</div>`;
+  };
+  const year = String(new Date().getFullYear());
+  const spese = Repo.list('spese');
+  const tot = spese.reduce((a,s)=>a+(s.totale||0),0);
+  const totYear = spese.filter(s => String(s.data||'').startsWith(year)).reduce((a,s)=>a+(s.totale||0),0);
+  const prevAperti = Repo.list('preventivi').filter(p => ['ricevuto','in valutazione'].includes(p.stato));
+  const prevTot = prevAperti.reduce((a,p)=>a+(p.importo||0),0);
+  const crit = Repo.list('criticita').filter(c => c.stato!=='risolta');
+  const critAlte = crit.filter(c => c.priorita==='alta');
+  const daProc = Repo.list('checklist').filter(k => k.stato!=='ottenuto');
+  const lastSpese = spese.slice().sort((a,b)=>sortKey(b.data).localeCompare(sortKey(a.data))).slice(0,5);
+  const im = DB.immobile;
+  return `
+  <section class="hero">
+    <div class="eyebrow">${esc(im.indirizzo)}</div>
+    <h1>Casa Carobbio</h1>
+    <div class="meta"><span>Catasto fabbricati <b>${esc(im.catastoFabbricati)}</b></span><span>Lotto <b>${esc(im.lotto)}</b></span><span>${esc(im.exMappale)}</span></div>
+    <p class="lead">Un fabbricato su quattro livelli diviso dal 1965 tra due proprietà: piano terra (Belotti) e piano primo (Pasinetti), con giardino, scala e sottotetto in comune.</p>
+  </section>
+  ${backupBanner()}
+  <section><div class="head"><h2>Chi possiede cosa oggi</h2><button type="button" data-nav="proprieta">Storico proprietà</button></div>
+    <div class="grid3">${ownerCard('belotti')}${ownerCard('pasinetti')}${ownerCard('comune')}</div></section>
+  <section class="kpis">
+    <button type="button" class="kpi" data-nav="criticita"><span class="l">Criticità aperte</span><span class="v">${crit.length}</span><span class="s">${critAlte.length} ad alta priorità</span></button>
+    <button type="button" class="kpi" data-nav="documenti"><span class="l">Documenti da procurare</span><span class="v">${daProc.length}</span><span class="s">su ${Repo.list('checklist').length} in elenco</span></button>
+    <button type="button" class="kpi" data-nav="spese"><span class="l">Spese registrate</span><span class="v">${eur0(tot)}</span><span class="s">${eur0(totYear)} nel ${year}</span></button>
+    <button type="button" class="kpi" data-nav="preventivi"><span class="l">Preventivi da decidere</span><span class="v">${eur0(prevTot)}</span><span class="s">${prevAperti.length} preventiv${prevAperti.length===1?'o':'i'}, IVA come da preventivo</span></button>
+  </section>
+  ${typeof panScadenze==='function' ? panScadenze() : ''}
+  <div class="grid2">
+    <section><div class="head"><h2>Priorità aperte</h2><button type="button" data-nav="criticita">Tutte</button></div>
+      <div class="list">${critAlte.length ? critAlte.map(c => `<div class="row"><div><div class="t">${esc(c.titolo)}</div><div class="d">${esc(c.azione)}</div></div><div class="side">${stPill(c.stato)}</div></div>`).join('') : '<div class="empty">Nessuna criticità ad alta priorità aperta.</div>'}</div></section>
+    <section><div class="head"><h2>Ultime spese</h2><button class="primary" data-act="add" data-coll="spese">Aggiungi spesa</button></div>
+      <div class="list">${lastSpese.length ? lastSpese.map(s => `<div class="row"><div><div class="t">${esc(s.descrizione)}</div><div class="d">${esc(fmtDate(s.data))} · ${esc(s.fornitore||s.categoria)}</div></div><div class="side"><span class="mono num">${eur(s.totale)}</span>${ramoPill(s.ramo)}</div></div>`).join('') : '<div class="empty">Ancora nessuna spesa.</div>'}</div></section>
+  </div>`;
+}
+
+function subDetail(sub){
+  const s = Repo.list('subalterni').find(x => x.sub===String(sub));
+  if(!s) return '<div class="panel">Seleziona un subalterno dallo schema.</div>';
+  const holders = s.ramo==='comune' ? [] : currentHolders(s.ramo);
+  const uso = Repo.list('quote').filter(q => q.ramo===s.ramo && !q.al && q.diritto==='Comodato d\'uso' && hasSub(q.subs, s.sub));
+  const docs = Repo.list('documenti').filter(d => hasSub(d.subs, s.sub));
+  const crit = Repo.list('criticita').filter(c => hasSub(c.subs, s.sub) && c.stato!=='risolta');
+  return `<div class="panel detail" id="sub-detail">
+    <div class="head"><div><div class="eyebrow">Subalterno · piano ${esc(s.piano)}</div><div class="big">${esc(s.sub)}</div></div><div class="actions">${ramoPill(s.ramo)}${s.stato==='soppresso'?'<span class="pill neutral">soppresso</span>':''}<button class="mini" data-act="edit" data-coll="subalterni" data-id="${esc(s.id)}">Modifica</button></div></div>
+    <p>${esc(s.descrizione)}</p>
+    <dl class="kv">
+      <dt>Categoria</dt><dd>${esc(s.categoria)}</dd>
+      <dt>Consistenza</dt><dd>${esc(s.consistenza)}</dd>
+      <dt>Sup. catastale</dt><dd>${esc(s.superficie)}</dd>
+      <dt>Rendita</dt><dd class="num">${s.rendita!==null && s.rendita!==undefined ? eur(s.rendita) : 'nessuna'}</dd>
+      ${s.dettagli?`<dt>Dettagli</dt><dd>${esc(s.dettagli)}</dd>`:''}
+      <dt>Ultimo atto</dt><dd>${esc(s.origine)}</dd>
+      <dt>Intestazione</dt><dd>${s.ramo==='comune' ? 'Comune ai due rami, metà ciascuno' : holders.map(h => `${esc(h.soggetto)} (${esc(h.diritto.toLowerCase())} ${esc(h.quota)})`).join(', ') || 'da verificare'}${uso.length?'<br><span class="muted">'+uso.map(u=>`In comodato a ${esc(u.soggetto)} dal ${esc(fmtDate(u.dal))}`).join('<br>')+'</span>':''}</dd>
+    </dl>
+    ${s.note?`<p class="small" style="color:var(--mid)">${esc(s.note)}</p>`:''}
+    ${crit.length?`<div><div class="eyebrow">Criticità aperte</div><ul class="steps">${crit.map(c=>`<li><button type="button" class="linkish" data-nav="criticita">${esc(c.titolo)}</button></li>`).join('')}</ul></div>`:''}
+    <div><div class="eyebrow">Documenti collegati</div>${docs.length?`<ul class="steps">${docs.map(d=>{const h=docHref(d); return `<li>${h?`<a href="${esc(h)}" target="_blank" rel="noopener">${esc(d.titolo)}</a>`:esc(d.titolo)} <span class="muted small">${esc(fmtDate(d.data))}</span></li>`;}).join('')}</ul>`:'<p class="muted small">Nessun documento collegato.</p>'}</div>
+  </div>`;
+}
+function viewSubalterni(){
+  const all = Repo.list('subalterni');
+  const order = {S1:0,'T':1,'T + S1':1,'T-1':2,'1':3,'1 (e 2)':3,'T-1-2':4,'2':5};
+  const rows = all.slice().sort((a,b) => (a.stato===b.stato?0:a.stato==='attivo'?-1:1) || ((order[a.piano]??9)-(order[b.piano]??9)) || a.sub.localeCompare(b.sub,undefined,{numeric:true}));
+  const rB = all.filter(s=>s.ramo==='belotti'&&s.stato==='attivo').reduce((a,s)=>a+(s.rendita||0),0);
+  const rP = all.filter(s=>s.ramo==='pasinetti'&&s.stato==='attivo').reduce((a,s)=>a+(s.rendita||0),0);
+  return `
+  <section><div class="head"><div><div class="eyebrow">${esc(DB.immobile.catastoFabbricati)}</div><h2>Subalterni e planimetrie</h2></div>
+    <div class="legend"><span><i class="sw belotti"></i>Belotti</span><span><i class="sw pasinetti"></i>Pasinetti</span><span><i class="sw comune"></i>Comune</span></div></div>
+    <p class="muted">Tocca una parte della casa per vedere i dati catastali, chi la possiede e i documenti collegati. Schemi non in scala, semplificati dall'elaborato planimetrico 2022.</p>
+  </section>
+  <div class="subwrap">
+    <div style="display:grid;gap:12px;min-width:0">
+      <div class="fig"><div class="eyebrow">Sezione per piani</div><div class="scroll">${SVG_SECTION}</div></div>
+      <div class="plans">${SVG_PLANS.map(p => `<figure class="plan">${p.svg}<figcaption>${esc(p.cap)}</figcaption></figure>`).join('')}</div>
+    </div>
+    ${subDetail(selSub)}
+  </div>
+  <section><div class="head"><h2>Tutti i dati catastali</h2><button data-act="add" data-coll="subalterni">Aggiungi subalterno</button></div>
+  <div class="table"><table>
+    <thead><tr><th>Sub</th><th>Piano</th><th>Cos'è</th><th>Categoria</th><th>Consistenza</th><th class="n">Sup. cat.</th><th class="n">Rendita</th><th>Ramo</th></tr></thead>
+    <tbody>${rows.map(s => `<tr class="click ${s.ramo}${s.stato!=='attivo'?' gone':''}" data-act="pick-sub" data-sub="${esc(s.sub)}"><td class="sub">${esc(s.sub)}</td><td>${esc(s.piano)}</td><td>${esc(s.descrizione)}${s.stato!=='attivo'?`<small>${esc(s.note)}</small>`:''}</td><td>${esc(s.categoria)}</td><td>${esc(s.consistenza)}</td><td class="n">${esc(s.superficie)}</td><td class="n">${s.rendita!=null?eur(s.rendita):'—'}</td><td>${s.stato==='attivo'?ramoPill(s.ramo):'<span class="pill neutral">soppresso</span>'}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="6">Rendite totali</td><td class="n" colspan="2">Belotti ${eur(rB)} · Pasinetti ${eur(rP)}</td></tr></tfoot>
+  </table></div></section>`;
+}
+
+function viewProprieta(){
+  const q = Repo.list('quote');
+  const block = ramo => {
+    const rows = q.filter(r => r.ramo===ramo).sort((a,b) => {
+      const ka = a.dal==='?' ? (a.al && a.al!=='?' ? a.al : '9998') : a.dal; const kb = b.dal==='?' ? (b.al && b.al!=='?' ? b.al : '9998') : b.dal;
+      return String(ka).localeCompare(String(kb));
+    });
+    return `<section><div class="head"><h3>${ramoPill(ramo)} ${ramo==='comune'?'Parti comuni':'Ramo '+RAMI[ramo]}</h3></div>
+    <div class="table"><table><thead><tr><th>Intestatario</th><th>Diritto</th><th>Subalterni</th><th>Dal</th><th>Al</th><th>Atto</th><th></th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="${r.al?'gone':''}"><td><b>${esc(r.soggetto)}</b>${r.note?`<small>${esc(r.note)}</small>`:''}</td><td>${esc(r.diritto)}${r.quota?` <span class="muted">${esc(r.quota)}</span>`:''}${!r.al?' <span class="pill st-accettato">in corso</span>':''}</td><td class="mono small">${esc(r.subs)}</td><td class="num">${esc(fmtDate(r.dal))}</td><td class="num">${r.al?esc(fmtDate(r.al)):'—'}</td><td class="small">${esc(r.atto)}</td><td><button class="mini ghost" data-act="edit" data-coll="quote" data-id="${esc(r.id)}">Modifica</button></td></tr>`).join('')}
+    </tbody></table></div></section>`;
+  };
+  const prev = previsti().filter(e => /donazione|acquista|vend/i.test(e.titolo));
+  return `
+  <section><div class="head"><div><h2>Proprietà nel tempo</h2><p class="muted">Ogni riga è un intestatario con il suo diritto e il periodo in cui lo ha avuto. Un cambio di proprietà chiude le righe in corso e ne apre una nuova.</p></div>
+    <div class="actions"><button class="primary" data-act="cambio">Registra cambio di proprietà</button><button data-act="add" data-coll="quote">Aggiungi riga</button></div></div>
+    ${prev.length?`<div class="list">${prev.map(e=>`<div class="row"><div><div class="t">${esc(e.titolo)}</div><div class="d">${esc(e.descrizione)}</div></div><div class="side"><span class="pill st-ricevuto">in programma ${esc(fmtDate(e.data))}</span>${ramoPill(e.ramo)}</div></div>`).join('')}</div>`:''}
+  </section>
+  ${block('belotti')}${block('pasinetti')}${block('comune')}`;
+}
+const subsDelRamo = ramo => Repo.list('subalterni').filter(s => s.ramo===ramo && s.stato==='attivo').map(s => s.sub).join(', ');
+function openCambio(){
+  dlgCtx = { coll:'cambio' };
+  const opts = ['belotti','pasinetti'].map(r => [r, `${RAMI[r]} (${subsDelRamo(r)})`]);
+  dlg().innerHTML = `<form class="dlg" id="cambio-form" novalidate>
+    <header><h3>Registra cambio di proprietà</h3><button type="button" class="ghost" data-act="dlg-close">Chiudi</button></header>
+    <div class="body"><p class="muted small">Le righe di proprietà in corso del ramo vengono chiuse alla data indicata e se ne apre una nuova. Viene aggiunto anche un evento nella storia.</p>
+    <div class="form-grid">
+      <label class="f" for="cb-ramo">Ramo<select id="cb-ramo">${opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>
+      <label class="f" for="cb-data">Data dell'atto<input id="cb-data" type="date" value="${todayIso()}"></label>
+      <label class="f wide" for="cb-sogg">Nuovo intestatario<input id="cb-sogg" list="dl-persone" placeholder="Cognome Nome"></label>
+      <label class="f" for="cb-dir">Diritto<select id="cb-dir"><option>Proprietà</option><option>Nuda proprietà</option><option>Usufrutto</option></select></label>
+      <label class="f" for="cb-quota">Quota<input id="cb-quota" value="1/1"></label>
+      <label class="f wide" for="cb-tipo">Tipo di atto<select id="cb-tipo"><option>Donazione</option><option>Compravendita</option><option>Successione</option><option>Altro</option></select></label>
+      <label class="f wide" for="cb-atto">Riferimenti dell'atto<input id="cb-atto" placeholder="Notaio, repertorio, trascrizione"></label>
+      <label class="f wide" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="cb-close" checked> Chiudi le righe di proprietà in corso del ramo</label>
+      <label class="f wide" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="cb-comodato"> Chiudi anche comodati e locazioni in corso</label>
+    </div>${datalists()}<p class="err" id="cb-err" hidden></p></div>
+    <footer><span></span><div class="actions"><button type="button" data-act="dlg-close">Annulla</button><button type="submit" class="primary">Registra</button></div></footer></form>`;
+  dlg().showModal();
+}
+async function submitCambio(){
+  const ramo = $('#cb-ramo').value, data = $('#cb-data').value, sogg = $('#cb-sogg').value.trim();
+  const dir = $('#cb-dir').value, quotaV = $('#cb-quota').value.trim(), tipo = $('#cb-tipo').value, atto = $('#cb-atto').value.trim();
+  if(!sogg || !data){ const e=$('#cb-err'); e.textContent='Indica il nuovo intestatario e la data.'; e.hidden=false; return; }
+  const subs = subsDelRamo(ramo);
+  const open = Repo.list('quote').filter(q => q.ramo===ramo && !q.al);
+  for(const q of open){
+    const isUso = q.diritto==='Comodato d\'uso' || q.diritto==='Locazione';
+    if((isUso && $('#cb-comodato').checked) || (!isUso && $('#cb-close').checked)) await Repo.put('quote', {...q, al:data});
+  }
+  await Repo.put('quote', { id:newId('q'), ramo, subs, soggetto:sogg, diritto:dir, quota:quotaV, dal:data, al:'', atto:(tipo+(atto?': '+atto:'')), note:'' });
+  await Repo.put('eventi', { id:newId('e'), data, dataTesto:'', ramo, tipo:'Atto', stato:'avvenuto', titolo:`${tipo}: ${sogg} diventa intestatario (${dir.toLowerCase()} ${quotaV})`, descrizione:'', riferimento:atto, subs });
+  dlg().close(); toast('Cambio di proprietà registrato'); render();
+}
+
+function viewStoria(){
+  const tipi = [...new Set(Repo.list('eventi').map(e=>e.tipo).filter(Boolean))].sort();
+  let ev = Repo.list('eventi').filter(e => (UI.storiaRamo==='tutte' || e.ramo===UI.storiaRamo || e.ramo==='comune') && (!UI.storiaTipo || e.tipo===UI.storiaTipo));
+  const prog = ev.filter(e => e.stato==='previsto');
+  const dated = ev.filter(e => e.stato!=='previsto' && e.data).sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+  const undated = ev.filter(e => e.stato!=='previsto' && !e.data);
+  const item = e => `<div class="tl-item ${e.ramo}${e.stato==='previsto'?' prev':''}">
+    <div class="y">${esc(fmtDate(e.data, e.dataTesto))}<small>${esc(e.tipo||'')}</small></div>
+    <div class="body"><h3>${esc(e.titolo)}</h3>${e.descrizione?`<p class="small">${esc(e.descrizione)}</p>`:''}${e.riferimento?`<div class="ref">${esc(e.riferimento)}</div>`:''}
+      <div class="tags">${ramoPill(e.ramo)}${subsList(e.subs).map(s=>`<span class="chip">sub ${esc(s)}</span>`).join('')}</div></div>
+    <div><button class="mini ghost" data-act="edit" data-coll="eventi" data-id="${esc(e.id)}">Modifica</button></div></div>`;
+  const decade = y => y ? (Math.floor(+String(y).slice(0,4)/10)*10)+'' : '';
+  let groups = ''; let cur = null;
+  dated.forEach(e => { const d = decade(e.data); if(d!==cur){ cur=d; groups += `<div class="tl-group">Anni ${d}</div>`; } groups += item(e); });
+  return `
+  <section><div class="head"><div><h2>Storia della casa</h2><p class="muted">Atti, pratiche catastali e urbanistiche, lavori ed eventi di famiglia dal 1965 a oggi.</p></div><button class="primary" data-act="add" data-coll="eventi">Aggiungi evento</button></div>
+    <div class="filters">
+      <div class="seg" role="group" aria-label="Ramo">${[['tutte','Tutti'],['belotti','Belotti'],['pasinetti','Pasinetti']].map(([v,l])=>`<button data-act="ui" data-k="storiaRamo" data-v="${v}" aria-pressed="${UI.storiaRamo===v}">${l}</button>`).join('')}</div>
+      <select id="flt-tipo" data-ui="storiaTipo" aria-label="Tipo"><option value="">Tutti i tipi</option>${tipi.map(t=>`<option${UI.storiaTipo===t?' selected':''}>${esc(t)}</option>`).join('')}</select>
+    </div></section>
+  ${prog.length?`<section><h3>In programma</h3><div class="tl">${prog.map(item).join('')}</div></section>`:''}
+  <section><h3>Cronologia</h3><div class="tl">${groups || '<div class="empty">Nessun evento con questi filtri.</div>'}</div></section>
+  ${undated.length?`<section><h3>Date da recuperare</h3><div class="tl">${undated.map(item).join('')}</div></section>`:''}`;
+}
+
+function viewPersone(){
+  const q = UI.personeQ.toLowerCase();
+  const all = Repo.list('soggetti').filter(s => !q || [s.nome,s.ruolo,s.note,s.email].join(' ').toLowerCase().includes(q));
+  const order = ['Proprietari e famiglia','Professionisti','Fornitori','Uffici','Storici'];
+  const contact = (k, v, href) => v ? `<div class="contact"><span class="k">${k}</span><span class="v">${href?`<a href="${esc(href)}"${href.startsWith('http')?' target="_blank" rel="noopener"':''}>${esc(v)}</a>`:esc(v)}</span><button class="mini ghost" data-act="copy" data-v="${esc(v)}" aria-label="Copia ${k}">Copia</button></div>` : '';
+  const card = s => {
+    const hasAny = s.cellulare||s.telefono||s.email;
+    const showMissing = !hasAny && ['Professionisti','Fornitori'].includes(s.gruppo);
+    return `<div class="person"><div class="top-line"><div><h3>${esc(s.nome)}</h3></div>${ramoPill(s.ramo)}</div>
+    ${s.ruolo?`<div class="role">${esc(s.ruolo)}</div>`:''}
+    <div class="contacts">${contact('Cellulare', s.cellulare, 'tel:'+String(s.cellulare).replace(/[^+0-9]/g,''))}${contact('Telefono', s.telefono, 'tel:'+String(s.telefono).replace(/[^+0-9]/g,''))}${contact('Email', s.email, 'mailto:'+s.email)}${contact('Indirizzo', s.indirizzo)}${contact('Sito', s.sito ? s.sito.replace(/^https?:\/\//,'').replace(/\/$/,'') : '', s.sito)}</div>
+    ${showMissing?'<div class="missing">Recapiti da aggiungere</div>':''}
+    ${s.note?`<div class="small muted">${esc(s.note)}</div>`:''}
+    <div><button class="mini" data-act="edit" data-coll="soggetti" data-id="${esc(s.id)}">Modifica</button></div></div>`;
+  };
+  return `
+  <section><div class="head"><div><h2>Persone e contatti</h2><p class="muted">Proprietari, famiglia, professionisti, fornitori e uffici. I numeri si possono copiare con un tocco.</p></div><button class="primary" data-act="add" data-coll="soggetti">Aggiungi contatto</button></div>
+    <div class="filters"><input type="search" id="flt-persone" data-ui="personeQ" placeholder="Cerca per nome, ruolo, email" value="${esc(UI.personeQ)}" aria-label="Cerca"></div></section>
+  ${order.map(g => { const list = all.filter(s => (s.gruppo||'Professionisti')===g); return list.length ? `<section><h3>${esc(g)} <span class="muted small">${list.length}</span></h3><div class="people">${list.map(card).join('')}</div></section>` : ''; }).join('')}
+  ${all.length?'':'<div class="empty">Nessun contatto trovato.</div>'}`;
+}
+
+function viewDocumenti(){
+  const q = UI.docQ.toLowerCase();
+  const cats = ['Atti e titoli','Catasto','Urbanistica','Progetti e disegni','Fatture e ricevute','Preventivi','Foto','Analisi','Altro'];
+  const docs = Repo.list('documenti').filter(d => (!q || [d.titolo,d.contenuto,d.note,d.subs].join(' ').toLowerCase().includes(q)) && (!UI.docCat || d.categoria===UI.docCat) && (!UI.docRamo || d.ramo===UI.docRamo || d.ramo==='comune'));
+  const base = (DB.settings.docBase||'').trim();
+  const row = d => { const h = docHref(d); return `<div class="row"><div><div class="t">${h?`<a href="${esc(h)}" target="_blank" rel="noopener">${esc(d.titolo)}</a>`:esc(d.titolo)}</div><div class="d">${esc(fmtDate(d.data))}${d.contenuto?' · '+esc(d.contenuto):''}</div>${d.subs?`<div class="d">${subsList(d.subs).map(s=>`<span class="chip">sub ${esc(s)}</span>`).join(' ')}</div>`:''}<div class="d mono small">${esc(d.percorso)}</div>${d.note && !/^DWG/.test(d.note)?`<div class="d">${esc(d.note)}</div>`:''}</div>
+    <div class="side">${ramoPill(d.ramo)}${h?'':'<span class="pill st-da-procurare">non collegato</span>'}<button class="mini ghost" data-act="edit" data-coll="documenti" data-id="${esc(d.id)}">Modifica</button></div></div>`; };
+  const kl = Repo.list('checklist');
+  return `
+  <section><div class="head"><div><h2>Documenti</h2><p class="muted">${base?`I link puntano all'archivio <span class="mono">${esc(base)}</span>.`:'I link aprono i file su Google Drive. Quando l\'archivio sarà sul NAS, imposta il suo indirizzo in Dati e backup: i link useranno il percorso indicato sotto ogni documento.'}</p></div><button class="primary" data-act="add" data-coll="documenti">Aggiungi documento</button></div>
+    <div class="filters"><input type="search" id="flt-doc" data-ui="docQ" placeholder="Cerca titolo, contenuto, subalterno" value="${esc(UI.docQ)}" aria-label="Cerca documenti">
+      <select id="flt-doccat" data-ui="docCat" aria-label="Categoria"><option value="">Tutte le categorie</option>${cats.map(c=>`<option${UI.docCat===c?' selected':''}>${c}</option>`).join('')}</select>
+      <select id="flt-docramo" data-ui="docRamo" aria-label="Ramo"><option value="">Tutti i rami</option><option value="belotti"${UI.docRamo==='belotti'?' selected':''}>Belotti</option><option value="pasinetti"${UI.docRamo==='pasinetti'?' selected':''}>Pasinetti</option></select></div></section>
+  <section><div class="head"><h3>Da procurare</h3><button data-act="add" data-coll="checklist">Aggiungi</button></div>
+    <div class="list">${kl.map(k => `<div class="row"><div><div class="t">${esc(k.titolo)}</div><div class="d">${esc(k.perche)}${k.note?' · '+esc(k.note):''}</div></div><div class="side"><select class="inline-state" data-coll="checklist" data-id="${esc(k.id)}" aria-label="Stato di ${esc(k.titolo)}" style="width:auto">${['da procurare','richiesto','ottenuto'].map(s=>`<option${k.stato===s?' selected':''}>${s}</option>`).join('')}</select><button class="mini ghost" data-act="edit" data-coll="checklist" data-id="${esc(k.id)}">Modifica</button></div></div>`).join('')}</div></section>
+  ${cats.map(c => { const l = docs.filter(d => d.categoria===c).sort((a,b)=>sortKey(a.data).localeCompare(sortKey(b.data))); return l.length?`<section><h3>${c} <span class="muted small">${l.length}</span></h3><div class="list">${l.map(row).join('')}</div></section>`:''; }).join('')}
+  ${docs.length?'':'<div class="empty">Nessun documento trovato.</div>'}`;
+}
+
+function viewCriticita(){
+  const all = Repo.list('criticita');
+  const pr = {alta:0, media:1, bassa:2}; const st = {aperta:0,'in corso':1,risolta:2};
+  const list = all.filter(c => UI.critStato==='tutte' || (UI.critStato==='aperte' ? c.stato!=='risolta' : c.stato==='risolta'))
+    .sort((a,b) => (st[a.stato]-st[b.stato]) || (pr[a.priorita]-pr[b.priorita]) || ((a.n||99)-(b.n||99)));
+  const counts = { aperta: all.filter(c=>c.stato==='aperta').length, 'in corso': all.filter(c=>c.stato==='in corso').length, risolta: all.filter(c=>c.stato==='risolta').length };
+  return `
+  <section><div class="head"><div><h2>Criticità</h2><p class="muted">Cosa blocca donazione, rogito e lavori. La conformità urbanistica dell'intero edificio viene prima di tutto.</p></div><button class="primary" data-act="add" data-coll="criticita">Aggiungi criticità</button></div>
+    <div class="filters"><div class="seg" role="group" aria-label="Filtro">${[['aperte',`Da risolvere (${counts.aperta+counts['in corso']})`],['risolte',`Risolte (${counts.risolta})`],['tutte','Tutte']].map(([v,l])=>`<button data-act="ui" data-k="critStato" data-v="${v}" aria-pressed="${UI.critStato===v}">${l}</button>`).join('')}</div></div></section>
+  <div class="issues">${list.map(c => `<article class="issue ${c.priorita}${c.stato==='risolta'?' done':''}">
+    <div class="hd"><h3>${c.n?`<span class="mono">#${c.n}</span>`:''}${esc(c.titolo)}</h3><div class="actions">${stPill(c.priorita)}${ramoPill(c.ramo)}</div></div>
+    ${c.descrizione?`<p class="what">${esc(c.descrizione)}</p>`:''}
+    <div class="todo">${c.azione?`<b>Cosa fare</b><span>${esc(c.azione)}</span>`:''}${c.chi?`<b>Chi</b><span>${esc(c.chi)}</span>`:''}${c.note?`<b>Note</b><span>${esc(c.note)}</span>`:''}</div>
+    <div class="ft"><label class="small muted" for="st-${esc(c.id)}">Stato <select id="st-${esc(c.id)}" class="inline-state" data-coll="criticita" data-id="${esc(c.id)}">${['aperta','in corso','risolta'].map(s=>`<option${c.stato===s?' selected':''}>${s}</option>`).join('')}</select></label>
+    <button class="mini" data-act="edit" data-coll="criticita" data-id="${esc(c.id)}">Modifica</button></div></article>`).join('') || '<div class="empty">Nessuna criticità in questo filtro.</div>'}</div>`;
+}
+
+function speseFiltrate(){
+  return Repo.list('spese').filter(s =>
+    (!UI.speseAnno || String(s.data||'').startsWith(UI.speseAnno)) && (!UI.speseCat || s.categoria===UI.speseCat) &&
+    (!UI.speseRamo || s.ramo===UI.speseRamo) && (!UI.spesePag || (s.pagatoDa||'')===UI.spesePag)
+  ).sort((a,b)=>sortKey(b.data).localeCompare(sortKey(a.data)));
+}
+function viewSpese(){
+  const all = Repo.list('spese');
+  const anni = [...new Set(all.map(s=>String(s.data||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const pag = [...new Set(all.map(s=>s.pagatoDa).filter(Boolean))].sort();
+  const list = speseFiltrate();
+  const tot = list.reduce((a,s)=>a+(s.totale||0),0);
+  let qb = 0, qp = 0; list.forEach(s => { const q = quote(s); qb += (s.totale||0)*q.b/100; qp += (s.totale||0)*q.p/100; });
+  const byCat = {}; list.forEach(s => { const k = s.categoria||'Altro'; byCat[k] = (byCat[k]||0)+(s.totale||0); });
+  const cats = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const max = cats.length ? cats[0][1] : 0;
+  const pctB = tot ? Math.round(qb/tot*100) : 0;
+  return `
+  <section><div class="head"><div><h2>Spese</h2><p class="muted">Ogni spesa ha chi la paga e su chi ricade: Belotti, Pasinetti o parti comuni divise in percentuale (predefinito ${DB.settings.quotaBelotti??50}% Belotti).</p></div>
+    <div class="actions"><button data-act="csv-spese">Esporta CSV</button><button class="primary" data-act="add" data-coll="spese">Aggiungi spesa</button></div></div>
+    <div class="filters">
+      <select id="flt-anno" data-ui="speseAnno" aria-label="Anno"><option value="">Tutti gli anni</option>${anni.map(a=>`<option${UI.speseAnno===a?' selected':''}>${a}</option>`).join('')}</select>
+      <select id="flt-cat" data-ui="speseCat" aria-label="Categoria"><option value="">Tutte le categorie</option>${CAT_SPESE.map(c=>`<option${UI.speseCat===c?' selected':''}>${c}</option>`).join('')}</select>
+      <select id="flt-ramo" data-ui="speseRamo" aria-label="A carico di"><option value="">Tutti i rami</option>${RAMO_OPTS.map(([v,l])=>`<option value="${v}"${UI.speseRamo===v?' selected':''}>${l}</option>`).join('')}</select>
+      <select id="flt-pag" data-ui="spesePag" aria-label="Pagato da"><option value="">Pagato da chiunque</option>${pag.map(p=>`<option${UI.spesePag===p?' selected':''}>${esc(p)}</option>`).join('')}</select>
+    </div></section>
+  <section class="summary">
+    <div class="kpi"><span class="l">Totale</span><span class="v">${eur0(tot)}</span><span class="s">${list.length} spes${list.length===1?'a':'e'}</span></div>
+    <div class="kpi"><span class="l">A carico Belotti</span><span class="v">${eur0(qb)}</span><span class="s">${pctB}% del totale</span></div>
+    <div class="kpi"><span class="l">A carico Pasinetti</span><span class="v">${eur0(qp)}</span><span class="s">${tot?100-pctB:0}% del totale</span></div>
+    <div class="kpi"><span class="l">Da verificare</span><span class="v">${list.filter(s=>s.daVerificare).length}</span><span class="s">spese con dubbi aperti</span></div>
+  </section>
+  ${list.length?`<div class="grid2">
+    <div class="panel" style="display:grid;gap:12px"><h3>Per categoria</h3><div class="bars">${cats.map(([k,v])=>`<div class="bar-row" title="${esc(k)}: ${eur(v)}"><span class="lab">${esc(k)}</span><div class="bar-track"><div class="bar-fill" style="width:${max?Math.max(1,v/max*100):0}%"></div></div><span class="val">${eur(v)}</span></div>`).join('')}</div></div>
+    <div class="panel" style="display:grid;gap:12px;align-content:start"><h3>Ripartizione tra i due rami</h3>
+      <div class="split" role="img" aria-label="Belotti ${pctB}%, Pasinetti ${100-pctB}%">${qb?`<div class="sb" style="flex:${qb}" title="Belotti ${eur(qb)}"></div>`:''}${qp?`<div class="sp" style="flex:${qp}" title="Pasinetti ${eur(qp)}"></div>`:''}</div>
+      <div class="split-leg"><span><i style="background:var(--b)"></i>Belotti ${eur(qb)} · ${pctB}%</span><span><i style="background:var(--p)"></i>Pasinetti ${eur(qp)} · ${100-pctB}%</span></div>
+      <p class="small muted">Le spese comuni sono divise secondo la quota indicata in ogni spesa.</p></div>
+  </div>`:''}
+  <section><div class="table"><table>
+    <thead><tr><th>Data</th><th>Descrizione</th><th>Categoria</th><th>A carico di</th><th>Pagato da</th><th class="n">Importo</th></tr></thead>
+    <tbody>${list.map(s => { const q = quote(s); return `<tr class="click" data-act="edit" data-coll="spese" data-id="${esc(s.id)}"><td class="num" style="white-space:nowrap">${esc(fmtDate(s.data))}</td><td><b>${esc(s.descrizione)}</b><small>${esc(s.fornitore||'')}${s.detraibile==='si'?' · detraibile'+(s.bonus?' ('+esc(s.bonus)+')':''):''}</small>${s.daVerificare?'<span class="flag">Da verificare</span>':''}</td><td>${esc(s.categoria)}</td><td>${ramoPill(s.ramo)}${s.ramo==='comune'?`<small>${q.b}% / ${q.p}%</small>`:''}</td><td>${esc(s.pagatoDa||'—')}</td><td class="n">${eur(s.totale)}</td></tr>`; }).join('') || '<tr><td colspan="6" class="empty">Nessuna spesa con questi filtri.</td></tr>'}</tbody>
+    ${list.length?`<tfoot><tr><td colspan="5">Totale</td><td class="n">${eur(tot)}</td></tr></tfoot>`:''}
+  </table></div></section>`;
+}
+
+function viewPreventivi(){
+  const all = Repo.list('preventivi').slice().sort((a,b)=>sortKey(b.data).localeCompare(sortKey(a.data)));
+  const spese = Repo.list('spese');
+  const groups = [['Da decidere', p => ['ricevuto','in valutazione'].includes(p.stato)], ['Accettati', p => p.stato==='accettato'], ['Stime di massima', p => p.stato==='stima'], ['Scartati', p => p.stato==='scartato']];
+  const card = p => {
+    const linked = spese.filter(s => s.preventivoId===p.id);
+    const speso = linked.reduce((a,s)=>a+(s.totale||0),0);
+    const doc = p.documentoId ? Repo.get('documenti', p.documentoId) : null; const h = docHref(doc);
+    return `<div class="row"><div><div class="t">${esc(p.fornitore)}</div><div class="d">${esc(p.oggetto)}</div><div class="d">${esc(fmtDate(p.data))}${p.note?' · '+esc(p.note):''}${h?` · <a href="${esc(h)}" target="_blank" rel="noopener">Apri il preventivo</a>`:''}</div>
+      ${linked.length?`<div class="d">Spese registrate: <b class="num">${eur(speso)}</b> (${linked.length})</div>`:''}</div>
+      <div class="side"><span class="mono num"><b>${eur0(p.importo)}${p.importoMax?' – '+eur0(p.importoMax):''}</b></span><span class="muted small">IVA ${esc(p.iva||'')}</span>${stPill(p.stato)}${ramoPill(p.ramo)}
+      ${p.stato!=='stima' && p.stato!=='scartato'?`<button class="mini" data-act="prev-spesa" data-id="${esc(p.id)}">Registra spesa</button>`:''}<button class="mini ghost" data-act="edit" data-coll="preventivi" data-id="${esc(p.id)}">Modifica</button></div></div>`;
+  };
+  return `
+  <section><div class="head"><div><h2>Preventivi</h2><p class="muted">Quando un lavoro parte, "Registra spesa" crea la spesa collegata al preventivo e lo segna come accettato. Così si confronta il previsto con lo speso.</p></div><button class="primary" data-act="add" data-coll="preventivi">Aggiungi preventivo</button></div></section>
+  ${groups.map(([t, fn]) => { const l = all.filter(fn); return l.length?`<section><h3>${t} <span class="muted small">${l.length}</span></h3><div class="list">${l.map(card).join('')}</div></section>`:''; }).join('')}
+  ${all.length?'':'<div class="empty">Ancora nessun preventivo.</div>'}`;
+}
+
+function viewDati(){
+  const counts = COLLS.map(c => [c, Repo.list(c).length]);
+  const labels = {subalterni:'Subalterni',quote:'Righe di proprietà',soggetti:'Contatti',eventi:'Eventi',documenti:'Documenti',criticita:'Criticità',checklist:'Da procurare',spese:'Spese',preventivi:'Preventivi',detrazioni:'Piani di detrazione',scadenze:'Scadenze'};
+  const age = backupAgeDays();
+  return `
+  <section><div class="head"><div><h2>Dati e backup</h2><p class="muted">${isShared() ? 'I dati sono su Supabase e condivisi con i familiari abilitati. Il backup JSON resta utile come copia di sicurezza.' : 'In questa prima fase i dati vivono nella memoria di questo browser. Non sono condivisi con altri dispositivi o familiari e si perdono se si cancellano i dati di navigazione: esporta spesso il backup.'}</p></div></div></section>
+  ${isShared() ? `<section class="panel"><h3>Connessione</h3>
+      <div class="storage"><div><b>Accesso:</b> ${esc(SupabaseAdapter.user.email)}${SupabaseAdapter.nome ? ' ('+esc(SupabaseAdapter.nome)+')' : ''}</div>
+      <div><b>Ruolo:</b> ${SupabaseAdapter.ruolo==='editor' ? 'può modificare' : 'solo lettura'}</div>
+      <div><b>Stato:</b> ${saveOk ? 'connesso, salvataggio attivo' : `<span style="color:var(--warn)">errore: ${esc(SupabaseAdapter.err)}</span>`}</div></div>
+      <div class="actions"><button data-act="logout">Esci</button></div></section>` : ''}
+  <div class="grid2">
+    <section class="panel"><h3>Dove sono i dati</h3>
+      <div class="storage"><div><b>Archivio:</b> ${esc(Repo.adapter.name)}</div>
+      <div><b>Stato:</b> ${isShared() ? (saveOk ? 'salvataggio attivo' : '<span style="color:var(--warn)">salvataggio non riuscito</span>') : LocalAdapter.ok && saveOk ? 'salvataggio attivo' : '<span style="color:var(--warn)">memoria del browser non disponibile</span>'}</div>
+      <div><b>Ultima modifica:</b> ${esc(new Date(DB.meta.updated).toLocaleString('it-IT'))}</div>
+      <div><b>Ultimo backup:</b> ${DB.meta.lastBackup ? esc(new Date(DB.meta.lastBackup).toLocaleString('it-IT'))+(age!==null?` (${age===0?'oggi':age+' giorni fa'})`:'') : 'mai'}</div>
+      <div><b>Modifiche dall'ultimo backup:</b> ${DB.meta.changesSinceBackup||0}</div></div>
+      <div class="table"><table><tbody>${counts.map(([c,n])=>`<tr><td>${labels[c]}</td><td class="n">${n}</td></tr>`).join('')}</tbody></table></div>
+    </section>
+    <section class="panel"><h3>Backup</h3>
+      <p class="small">Il backup è un file JSON con tutti i dati. Serve per non perderli, per spostarli su un altro dispositivo e per importarli nel database del NAS.</p>
+      <div class="actions"><button class="primary" data-act="export-json">Esporta backup JSON</button><button data-act="csv-spese">Spese in CSV</button><button data-act="csv-prev">Preventivi in CSV</button></div>
+      <label class="f" for="imp-file">Importa un backup <small>${isShared() ? 'Sostituisce i dati condivisi per tutti (i record tolti restano nello storico)' : 'Sostituisce tutti i dati di questo browser'}</small><input type="file" id="imp-file" accept=".json,application/json"></label>
+      <p class="err" id="imp-msg" hidden></p>
+      <div id="imp-confirm" hidden class="banner bad"><p id="imp-text"></p><div class="actions"><button data-act="imp-cancel">Annulla</button><button class="danger armed" data-act="imp-do">Sostituisci i dati</button></div></div>
+    </section>
+  </div>
+  <section class="panel"><h3>Impostazioni</h3>
+    <form id="settings-form" class="form-grid" novalidate>
+      <label class="f wide" for="set-docbase">Indirizzo dell'archivio documenti <small>Vuoto = link Google Drive. Sul NAS, ad esempio http://nas.local/casa-carobbio/documenti</small><input id="set-docbase" type="url" value="${esc(DB.settings.docBase)}" placeholder="http://nas.local/casa-carobbio/documenti"></label>
+      <label class="f" for="set-quota">Quota Belotti predefinita per le spese comuni (%)<input id="set-quota" type="number" min="0" max="100" value="${esc(DB.settings.quotaBelotti??50)}"></label>
+      <label class="f" for="set-utente">Chi usa questo dispositivo <small>Viene registrato su ogni modifica</small><input id="set-utente" value="${esc(DB.settings.utente)}" placeholder="Il tuo nome"${isShared() ? ' readonly' : ''}></label>
+      <div class="actions wide"><button type="submit" class="primary">Salva impostazioni</button></div>
+    </form></section>
+  ${isShared() ? '' : `<section class="panel"><h3>Verso il NAS</h3>
+    <ol class="steps">
+      <li>Sul NAS: database (per esempio PocketBase o PostgreSQL in Docker) e cartella documenti con le sottocartelle Atti, Catasto, Urbanistica, Progetti, Fatture, Preventivi, Foto, Analisi.</li>
+      <li>Copia i file dei documenti nei percorsi indicati in ogni scheda (pagina Documenti), poi imposta qui sopra l'indirizzo dell'archivio.</li>
+      <li>Importa nel database il backup JSON: ogni chiave di <span class="mono">colls</span> diventa una tabella, ogni record ha un <span class="mono">id</span> stabile.</li>
+      <li>Questa stessa pagina, servita dal NAS, passa dal salvataggio nel browser a quello sul database cambiando solo l'adattatore dei dati.</li>
+    </ol></section>
+  <section class="panel"><h3>Ripristina i dati iniziali</h3>
+    <p class="small">Cancella spese, preventivi e modifiche fatte in questo browser e ricarica i dati di riferimento. Esporta prima un backup se vuoi conservarli.</p>
+    <div class="actions"><button class="danger" data-act="reset">Ripristina</button></div></section>`}`;
+}
+
+/* ---------- export / import ---------- */
+let downloadsNs;
+async function getDownloads(){
+  if(downloadsNs !== undefined) return downloadsNs;
+  try{ if(window.claude && typeof window.claude.use==='function'){ downloadsNs = await window.claude.use('downloads'); return downloadsNs; } }catch(e){ downloadsNs = null; return null; }
+  return undefined; // fuori da Claude (es. servita dal NAS)
+}
+async function offerFile(filename, text, mime){
+  const dl = await getDownloads();
+  if(dl){
+    try{ await dl.save({filename, data:text}); toast('File pronto: '+filename); return true; }
+    catch(e){ if(e && e.code==='declined'){ toast('Salvataggio annullato'); return false; } }
+  } else if(dl===undefined && window.self===window.top){
+    try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:mime})); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); return true; }catch(e){}
+  }
+  dlg().innerHTML = `<div class="dlg"><header><h3>${esc(filename)}</h3><button type="button" class="ghost" data-act="dlg-close">Chiudi</button></header>
+    <div class="body"><p class="small">Il salvataggio del file non è disponibile qui. Copia il contenuto e incollalo in un file di testo chiamato <span class="mono">${esc(filename)}</span>.</p><textarea id="fallback-text" style="min-height:240px;font-family:var(--f-mono);font-size:12px" readonly>${esc(text)}</textarea></div>
+    <footer><span></span><div class="actions"><button class="primary" data-act="copy-fallback">Copia tutto</button></div></footer></div>`;
+  dlg().showModal();
+  return false;
+}
+async function exportJson(){
+  const out = { app:APP_ID, schema:SCHEMA, exportedAt:nowIso(), seedVersion:DB.meta.seedVersion, meta:DB.meta, settings:DB.settings, immobile:DB.immobile, colls:DB.colls };
+  const ok = await offerFile(`casa-carobbio-backup-${todayIso()}.json`, JSON.stringify(out, null, 2), 'application/json');
+  if(ok){ DB.meta.lastBackup = nowIso(); DB.meta.changesSinceBackup = 0; await Repo.saveMeta(); render(); }
+}
+function csvCell(v){ const s = String(v ?? ''); return /[";\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+const csvNum = c => (c===null || c===undefined || c==='') ? '' : (c/100).toFixed(2).replace('.',',');
+async function exportCsvSpese(){
+  const rows = [['Data','Descrizione','Categoria','Fornitore','A carico di','Quota Belotti %','Quota Pasinetti %','Pagato da','Totale','di cui IVA','Detraibile','Bonus','Da verificare','Note']];
+  speseFiltrate().forEach(s => { const q = quote(s); rows.push([s.data, s.descrizione, s.categoria, s.fornitore, RAMI[s.ramo]||'', q.b, q.p, s.pagatoDa, csvNum(s.totale), csvNum(s.iva), s.detraibile==='si'?'sì':'no', s.bonus, s.daVerificare?'sì':'', s.note]); });
+  await offerFile(`casa-carobbio-spese-${todayIso()}.csv`, '﻿'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n'), 'text/csv');
+}
+async function exportCsvPrev(){
+  const rows = [['Data','Fornitore','Oggetto','Categoria','A carico di','Importo','Importo massimo','IVA','Stato','Note']];
+  Repo.list('preventivi').forEach(p => rows.push([p.data, p.fornitore, p.oggetto, p.categoria, RAMI[p.ramo]||'', csvNum(p.importo), csvNum(p.importoMax), p.iva, p.stato, p.note]));
+  await offerFile(`casa-carobbio-preventivi-${todayIso()}.csv`, '﻿'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n'), 'text/csv');
+}
+let pendingImport = null;
+function handleImportFile(file){
+  const msg = $('#imp-msg'); msg.hidden = true;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if(d.app!==APP_ID || !d.colls) throw new Error('Il file non è un backup di Casa Carobbio.');
+      pendingImport = d;
+      const n = COLLS.reduce((a,c)=>a+((d.colls[c]||[]).length),0);
+      $('#imp-text').textContent = `Backup del ${d.exportedAt ? new Date(d.exportedAt).toLocaleString('it-IT') : 'data sconosciuta'} con ${n} record (${(d.colls.spese||[]).length} spese). Sostituirà tutti i dati di questo browser.`;
+      $('#imp-confirm').hidden = false;
+    }catch(e){ msg.textContent = e.message || 'File non leggibile.'; msg.hidden = false; }
+  };
+  r.onerror = () => { msg.textContent = 'File non leggibile.'; msg.hidden = false; };
+  r.readAsText(file);
+}
+async function doImport(){
+  const d = pendingImport; if(!d) return;
+  const db = { app:APP_ID, schema:SCHEMA, meta:{...(d.meta||{}), updated:nowIso(), lastBackup: d.exportedAt || nowIso(), changesSinceBackup:0, deletedSeed:(d.meta&&d.meta.deletedSeed)||[], seedVersion: d.seedVersion || (d.meta&&d.meta.seedVersion) || 0}, settings:{docBase:'', quotaBelotti:50, utente:'', ...(d.settings||{})}, immobile: d.immobile || clone(SEED.immobile), colls:{} };
+  COLLS.forEach(c => db.colls[c] = Array.isArray(d.colls[c]) ? d.colls[c] : []);
+  await Repo.replaceAll(upgradeSeed(db)); pendingImport = null; toast('Backup importato'); render();
+}
+
+/* ---------- render e navigazione ---------- */
+const VIEWS = { panoramica:viewPanoramica, subalterni:viewSubalterni, proprieta:viewProprieta, storia:viewStoria, persone:viewPersone, documenti:viewDocumenti, criticita:viewCriticita, spese:viewSpese, preventivi:viewPreventivi, dati:viewDati };
+function renderTabs(){
+  const open = Repo.list('criticita').filter(c=>c.stato!=='risolta' && c.priorita==='alta').length;
+  const late = Repo.list('scadenze').filter(z => z.stato!=='completata' && /^\d{4}-\d{2}-\d{2}$/.test(z.prossima||'') && z.prossima < todayIso()).length;
+  $('#tabs').innerHTML = TABS.map(([k,l]) => `<button type="button" data-nav="${k}"${route===k?' aria-current="page"':''}>${l}${k==='criticita'&&open?`<span class="count">${open}</span>`:''}${k==='scadenze'&&late?`<span class="count">${late}</span>`:''}</button>`).join('');
+  $('#nav-select').innerHTML = TABS.map(([k,l]) => `<option value="${k}"${route===k?' selected':''}>${l}${k==='criticita'&&open?` (${open} prioritarie)`:''}${k==='scadenze'&&late?` (${late} scadute)`:''}</option>`).join('') + (route==='cerca' ? '<option value="cerca" selected disabled>Risultati della ricerca</option>' : '');
+}
+function render(keepFocusId){
+  const active = keepFocusId || (document.activeElement && document.activeElement.id);
+  const pos = active && document.activeElement && document.activeElement.selectionStart;
+  renderTabs(); renderStatus();
+  $('#view').innerHTML = (VIEWS[route]||viewPanoramica)();
+  if(route==='subalterni') markSelected();
+  if(active){ const el = document.getElementById(active); if(el && el.closest('#view') && el.matches('input[type=search]')){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(e){} } }
+}
+function markSelected(){ $$('#view svg [data-sub]').forEach(el => el.classList.toggle('sel', el.dataset.sub===String(selSub))); }
+function go(){
+  if(!DB) return; // schermata di accesso
+  const h = (location.hash||'').replace('#','');
+  route = VIEWS[h] ? h : 'panoramica';
+  render(); window.scrollTo(0,0);
+}
+/* Navigazione interna senza link: dentro la cornice della pagina i link "#" non sono affidabili. */
+function navigate(r){
+  if(!VIEWS[r]) return;
+  if(r!=='cerca'){ UI.q = ''; const g = $('#global-q'); if(g) g.value = ''; }
+  route = r;
+  try{ history.replaceState(null, '', '#'+r); }catch(e){}
+  render(); window.scrollTo(0,0);
+  const m = $('#view'); if(m) m.focus({preventScroll:true});
+}
+
+/* ---------- eventi ---------- */
+document.addEventListener('click', async ev => {
+  const nav = ev.target.closest('[data-nav]');
+  if(nav){ ev.preventDefault(); navigate(nav.dataset.nav); return; }
+  const t = ev.target.closest('[data-act], svg [data-sub]');
+  if(!t) return;
+  const act = t.dataset.act || (t.dataset.sub ? 'pick-sub' : '');
+  const coll = t.dataset.coll, id = t.dataset.id;
+  switch(act){
+    case 'pick-sub':
+      selSub = t.dataset.sub;
+      if(route!=='subalterni'){ ev.preventDefault(); navigate('subalterni'); return; }
+      ev.preventDefault();
+      { const d = $('#sub-detail'); if(d){ d.outerHTML = subDetail(selSub); markSelected(); if(window.innerWidth<=900){ const nd=$('#sub-detail'); if(nd) nd.scrollIntoView({behavior:'smooth', block:'start'}); } } }
+      break;
+    case 'add': openForm(coll, null, { preset: (typeof EXTRA_PRESETS!=='undefined' && EXTRA_PRESETS[coll]) ? EXTRA_PRESETS[coll]() : coll==='spese' ? {data:todayIso(), ramo:'comune', quotaBelotti:DB.settings.quotaBelotti??50, categoria:'Lavori', detraibile:'no', pagatoDa:DB.settings.utente||''} : coll==='preventivi' ? {data:todayIso(), stato:'ricevuto', iva:'esclusa', ramo:'comune', quotaBelotti:DB.settings.quotaBelotti??50, categoria:'Lavori'} : coll==='eventi' ? {data:todayIso(), stato:'avvenuto', tipo:'Lavori', ramo:'comune'} : coll==='criticita' ? {stato:'aperta', priorita:'media', ramo:'comune'} : coll==='checklist' ? {stato:'da procurare'} : coll==='soggetti' ? {gruppo:'Professionisti', ramo:'comune'} : coll==='documenti' ? {categoria:'Altro', ramo:'comune'} : coll==='quote' ? {ramo:'belotti', diritto:'Proprietà', quota:'1/1'} : {} }); break;
+    case 'edit': { const r = Repo.get(coll, id); if(r) openForm(coll, r); break; }
+    case 'dlg-close': dlg().close(); break;
+    case 'dlg-del':
+      if(!t.classList.contains('armed')){ t.classList.add('armed'); t.textContent = 'Conferma eliminazione'; return; }
+      await Repo.del(dlgCtx.coll, dlgCtx.id); dlg().close(); toast('Eliminato'); render(); break;
+    case 'ui': UI[t.dataset.k] = t.dataset.v; render(); break;
+    case 'copy': copyText(t.dataset.v, t); break;
+    case 'copy-fallback': { const ta = $('#fallback-text'); try{ await navigator.clipboard.writeText(ta.value); toast('Copiato'); }catch(e){ ta.focus(); ta.select(); toast('Testo selezionato: copialo con Ctrl+C'); } break; }
+    case 'cambio': openCambio(); break;
+    case 'prev-spesa': {
+      const p = Repo.get('preventivi', id); if(!p) return;
+      openForm('spese', null, { title:'Registra spesa da preventivo', intro:`Preventivo ${esc(p.fornitore)}: ${esc(p.oggetto)}. Indica l'importo effettivamente pagato (acconto o saldo).`,
+        preset:{ data:todayIso(), descrizione:p.oggetto, fornitore:p.fornitore, categoria:p.categoria||'Lavori', ramo:p.ramo, quotaBelotti:p.quotaBelotti, totale:p.importo, preventivoId:p.id, documentoId:p.documentoId||'', detraibile:'no', pagatoDa:DB.settings.utente||'' },
+        onSaved: async () => { if(p.stato!=='accettato') await Repo.put('preventivi', {...p, stato:'accettato'}); } });
+      break; }
+    case 'export-json': exportJson(); break;
+    case 'csv-spese': exportCsvSpese(); break;
+    case 'csv-prev': exportCsvPrev(); break;
+    case 'imp-cancel': pendingImport = null; $('#imp-confirm').hidden = true; $('#imp-file').value=''; break;
+    case 'imp-do': doImport(); break;
+    case 'logout': await SupabaseAdapter.sb.auth.signOut(); location.replace(location.pathname); break;
+    case 'reset':
+      if(!t.classList.contains('armed')){ t.classList.add('armed'); t.textContent = 'Conferma: cancella e ripristina'; return; }
+      await Repo.replaceAll(freshDb()); toast('Dati iniziali ripristinati'); render(); break;
+  }
+});
+document.addEventListener('submit', ev => {
+  ev.preventDefault();
+  if(ev.target.id==='login-form') sendLoginLink();
+  else if(ev.target.id==='dlg-form') submitForm();
+  else if(ev.target.id==='cambio-form') submitCambio();
+  else if(ev.target.id==='settings-form'){
+    DB.settings.docBase = $('#set-docbase').value.trim();
+    const q = Number($('#set-quota').value); DB.settings.quotaBelotti = isFinite(q) ? Math.min(100, Math.max(0, q)) : 50;
+    DB.settings.utente = $('#set-utente').value.trim();
+    Repo.saveMeta(); toast('Impostazioni salvate'); render();
+  }
+});
+document.addEventListener('change', async ev => {
+  const t = ev.target;
+  if(t.id==='nav-select'){ navigate(t.value); return; }
+  if(t.matches('select.inline-state')){ const r = Repo.get(t.dataset.coll, t.dataset.id); if(r){ await Repo.put(t.dataset.coll, {...r, stato:t.value}); toast('Stato aggiornato'); render(); } }
+  else if(t.matches('select[data-ui]')){ UI[t.dataset.ui] = t.value; render(); }
+  else if(t.id==='imp-file' && t.files && t.files[0]) handleImportFile(t.files[0]);
+});
+document.addEventListener('input', ev => { const t = ev.target; if(t.matches('input[data-ui]')){ UI[t.dataset.ui] = t.value; render(t.id); } });
+document.addEventListener('keydown', ev => { const t = ev.target; if((ev.key==='Enter' || ev.key===' ') && t.matches && t.matches('svg [data-sub]')){ ev.preventDefault(); t.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });
+window.addEventListener('hashchange', go);
+
+/* ===================================================================
+   Scadenze, detrazioni e ricerca unica
+   =================================================================== */
+const RICORRENZE = [['','Una volta'],['1','Ogni mese'],['3','Ogni 3 mesi'],['6','Ogni 6 mesi'],['12','Ogni anno'],['24','Ogni 2 anni'],['48','Ogni 4 anni']];
+const ricLabel = v => (RICORRENZE.find(r => r[0]===String(v ?? '')) || ['',''])[1];
+
+const EXTRA_PRESETS = {
+  scadenze: () => ({ stato:'attiva', ricorrenza:'12', categoria:'Manutenzione', ramo:'comune', prossima:todayIso() }),
+  detrazioni: () => ({ annoInizio:new Date().getFullYear(), percentuale:36, rate:10, tipo:'Ristrutturazione', ramo:'belotti' })
+};
+
+SCHEMAS.scadenze = { label:'scadenza', prefix:'z', fields:[
+  {k:'titolo', label:'Cosa', type:'text', req:true, wide:true},
+  {k:'prossima', label:'Prossima scadenza', type:'date', req:true},
+  {k:'ricorrenza', label:'Si ripete', type:'select', opts:RICORRENZE},
+  {k:'categoria', label:'Categoria', type:'select', opts:['Imposte e tasse','Manutenzione','Assicurazione','Utenze','Pratiche','Altro']},
+  {k:'ramo', label:'Riguarda', type:'select', opts:[['comune','Entrambe / comune'],['belotti','Belotti'],['pasinetti','Pasinetti']]},
+  {k:'importo', label:'Importo previsto (€)', type:'money'},
+  {k:'fornitore', label:'Fornitore o ente', type:'text', list:'dl-fornitori'},
+  {k:'ultima', label:'Ultima volta fatta', type:'date'},
+  {k:'stato', label:'Stato', type:'select', opts:[['attiva','Attiva'],['completata','Completata']]},
+  {k:'note', label:'Note', type:'textarea', wide:true}
+]};
+SCHEMAS.detrazioni = { label:'piano di detrazione', prefix:'t', fields:[
+  {k:'titolo', label:'Lavoro', type:'text', req:true, wide:true},
+  {k:'beneficiario', label:'Chi detrae', type:'text', req:true, list:'dl-persone'},
+  {k:'ramo', label:'Unità', type:'select', opts:[['belotti','Belotti (piano terra)'],['pasinetti','Pasinetti (piano primo)']]},
+  {k:'tipo', label:'Tipo di detrazione', type:'select', opts:['Ristrutturazione','Ecobonus','Bonus mobili','Sismabonus','Altro']},
+  {k:'annoInizio', label:'Anno della spesa', type:'number', req:true, min:2000, max:2100, help:'Anno d\'imposta della prima rata'},
+  {k:'spesa', label:'Spesa ammessa (€)', type:'money', req:true},
+  {k:'percentuale', label:'Percentuale %', type:'number', req:true, min:0, max:110},
+  {k:'rate', label:'Numero di rate annuali', type:'number', min:1, max:20},
+  {k:'spesaId', label:'Spesa collegata', type:'spesa'},
+  {k:'note', label:'Note', type:'textarea', wide:true}
+]};
+
+/* ---------- date ---------- */
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+function addMonths(iso, n){
+  const [y,m,d] = iso.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m-1+n, 1));
+  const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth()+1, 0)).getUTCDate();
+  t.setUTCDate(Math.min(d, last));
+  return t.toISOString().slice(0,10);
+}
+function daysTo(iso){
+  if(!ISO.test(iso||'')) return null;
+  const [y,m,d] = iso.split('-').map(Number);
+  const n = new Date();
+  return Math.round((Date.UTC(y,m-1,d) - Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()))/86400000);
+}
+function whenLabel(days){
+  if(days===null) return '';
+  if(days<0) return `scaduta da ${-days} giorn${days===-1?'o':'i'}`;
+  if(days===0) return 'oggi';
+  if(days===1) return 'domani';
+  return `tra ${days} giorni`;
+}
+function scadState(z){
+  if(z.stato==='completata') return 'done';
+  const d = daysTo(z.prossima);
+  if(d===null) return 'later';
+  if(d<0) return 'late';
+  if(d<=30) return 'soon';
+  return 'later';
+}
+function scadenzeAttive(){ return Repo.list('scadenze').filter(z => z.stato!=='completata').sort((a,b) => sortKey(a.prossima).localeCompare(sortKey(b.prossima))); }
+
+/* ---------- scadenze ---------- */
+function scadRow(z){
+  const st = scadState(z), days = daysTo(z.prossima);
+  const pill = st==='late' ? 'st-aperta' : st==='soon' ? 'st-in-corso' : st==='done' ? 'st-risolta' : 'neutral';
+  return `<div class="scad ${st}">
+    <div class="when">${esc(fmtDate(z.prossima))}<small>${st==='done' ? 'completata' : esc(whenLabel(days))}</small></div>
+    <div><div class="t" style="font-weight:600">${esc(z.titolo)}</div>
+      <div class="d small muted">${esc(z.categoria||'')}${z.ricorrenza?' · '+esc(ricLabel(z.ricorrenza).toLowerCase()):''}${z.fornitore?' · '+esc(z.fornitore):''}${z.importo?' · circa '+eur(z.importo):''}${z.ultima?' · ultima volta '+esc(fmtDate(z.ultima)):''}</div>
+      ${z.note?`<div class="d small muted">${esc(z.note)}</div>`:''}</div>
+    <div class="side"><span class="pill ${pill}">${st==='late'?'scaduta':st==='soon'?'a breve':st==='done'?'fatta':'in programma'}</span>${ramoPill(z.ramo)}
+      ${st!=='done'?`<button class="mini primary" data-act="scad-done" data-id="${esc(z.id)}">Fatta</button><button class="mini" data-act="scad-spesa" data-id="${esc(z.id)}">Registra spesa</button>`:''}
+      <button class="mini ghost" data-act="edit" data-coll="scadenze" data-id="${esc(z.id)}">Modifica</button></div></div>`;
+}
+function viewScadenze(){
+  const all = Repo.list('scadenze').slice().sort((a,b) => sortKey(a.prossima).localeCompare(sortKey(b.prossima)));
+  const groups = [['Scadute','late'],['Entro 30 giorni','soon'],['Più avanti','later'],['Completate','done']];
+  return `
+  <section><div class="head"><div><h2>Scadenze e manutenzioni</h2><p class="muted">Tasse, controlli e pratiche ricorrenti. "Fatta" sposta la data alla prossima ricorrenza; una scadenza che non si ripete passa tra le completate.</p></div><button class="primary" data-act="add" data-coll="scadenze">Aggiungi scadenza</button></div></section>
+  ${groups.map(([t,k]) => { const l = all.filter(z => scadState(z)===k); return l.length ? `<section><h3>${t} <span class="muted small">${l.length}</span></h3><div class="list">${l.map(scadRow).join('')}</div></section>` : ''; }).join('')}
+  ${all.length ? '' : '<div class="empty">Nessuna scadenza. Aggiungi IMU, assicurazione, manutenzione della caldaia e simili.</div>'}`;
+}
+function panScadenze(){
+  const next = scadenzeAttive().slice(0,4);
+  return `<section><div class="head"><h2>Prossime scadenze</h2><button type="button" data-nav="scadenze">Tutte</button></div>
+    <div class="list">${next.length ? next.map(scadRow).join('') : '<div class="empty">Nessuna scadenza in programma.</div>'}</div></section>`;
+}
+async function scadDone(id){
+  const z = Repo.get('scadenze', id); if(!z) return;
+  const upd = {...z, ultima: todayIso()};
+  const n = parseInt(z.ricorrenza, 10);
+  if(n && ISO.test(z.prossima||'')){
+    let next = addMonths(z.prossima, n), guard = 0;
+    while(daysTo(next) < 0 && guard++ < 200) next = addMonths(next, n);
+    upd.prossima = next;
+    await Repo.put('scadenze', upd); toast('Prossima scadenza: '+fmtDate(next));
+  } else {
+    upd.stato = 'completata';
+    await Repo.put('scadenze', upd); toast('Scadenza completata');
+  }
+  render();
+}
+function scadSpesa(id){
+  const z = Repo.get('scadenze', id); if(!z) return;
+  const catMap = {'Imposte e tasse':'Imposte e tasse','Manutenzione':'Manutenzione','Assicurazione':'Assicurazione','Utenze':'Utenze','Pratiche':'Professionisti e pratiche'};
+  openForm('spese', null, { title:'Registra spesa della scadenza', intro:`${esc(z.titolo)} del ${esc(fmtDate(z.prossima))}.`,
+    preset:{ data:todayIso(), descrizione:z.titolo, fornitore:z.fornitore||'', categoria:catMap[z.categoria]||'Altro', ramo:z.ramo||'comune', quotaBelotti:DB.settings.quotaBelotti??50, totale:z.importo, detraibile:'no', pagatoDa:DB.settings.utente||'' } });
+}
+
+/* ---------- detrazioni ---------- */
+function piano(d){
+  const spesa = d.spesa||0, pct = +d.percentuale||0, n = Math.max(1, +d.rate||10), y0 = +d.annoInizio || new Date().getFullYear();
+  const tot = Math.round(spesa*pct/100);
+  return { tot, rata: tot/n, n, y0, y1: y0+n-1 };
+}
+function viewDetrazioni(){
+  const Y = new Date().getFullYear();
+  const all = Repo.list('detrazioni').slice().sort((a,b) => (+a.annoInizio||0)-(+b.annoInizio||0));
+  const piani = all.map(d => ({d, p:piano(d)}));
+  const tot = piani.reduce((a,x)=>a+x.p.tot,0);
+  const restante = piani.reduce((a,{p}) => a + p.rata*Math.max(0, p.y1 - Math.max(p.y0, Y) + 1), 0);
+  const rataY = piani.reduce((a,{p}) => a + (Y>=p.y0 && Y<=p.y1 ? p.rata : 0), 0);
+  const benef = [...new Set(all.map(d => d.beneficiario || '—'))].sort();
+  let anni = [];
+  if(piani.length){ const a0 = Math.min(...piani.map(x=>x.p.y0)), a1 = Math.max(...piani.map(x=>x.p.y1)); for(let y=a0; y<=a1; y++) anni.push(y); }
+  const cell = (y, b) => piani.filter(x => (x.d.beneficiario||'—')===b && y>=x.p.y0 && y<=x.p.y1).reduce((a,x)=>a+x.p.rata,0);
+  const maxY = anni.length ? Math.max(...anni.map(y => benef.reduce((a,b)=>a+cell(y,b),0))) : 0;
+  const senza = Repo.list('spese').filter(s => s.detraibile==='si' && !all.some(d => d.spesaId===s.id));
+  return `
+  <section><div class="head"><div><h2>Detrazioni fiscali</h2><p class="muted">Ogni piano divide la detrazione in rate annuali. La rata di un anno d'imposta si recupera con la dichiarazione dell'anno dopo.</p></div><button class="primary" data-act="add" data-coll="detrazioni">Aggiungi piano</button></div>
+    <div class="note-box">Regole verificate a ottobre 2026 per le spese dal 2027: 36% sull'abitazione principale e 30% sugli altri immobili, in 10 rate, con un tetto di 96.000 € di spesa per unità. La legge di bilancio 2027 può cambiarle: controlla con il commercialista e aggiorna la percentuale nei piani.</div></section>
+  <section class="summary">
+    <div class="kpi"><span class="l">Detrazioni totali</span><span class="v">${eur0(tot)}</span><span class="s">${all.length} pian${all.length===1?'o':'i'}</span></div>
+    <div class="kpi"><span class="l">Rata anno d'imposta ${Y}</span><span class="v">${eur0(rataY)}</span><span class="s">si recupera nel ${Y+1}</span></div>
+    <div class="kpi"><span class="l">Ancora da recuperare</span><span class="v">${eur0(restante)}</span><span class="s">dal ${Y} in poi</span></div>
+    <div class="kpi"><span class="l">Spese detraibili senza piano</span><span class="v">${senza.length}</span><span class="s">segnate "detraibile" nelle spese</span></div>
+  </section>
+  ${senza.length ? `<section><h3>Spese detraibili senza piano</h3><div class="list">${senza.map(s => `<div class="row"><div><div class="t">${esc(s.descrizione)}</div><div class="d">${esc(fmtDate(s.data))} · ${eur(s.totale)}${s.bonus?' · '+esc(s.bonus):''}</div></div><div class="side">${ramoPill(s.ramo)}<button class="mini primary" data-act="detr-from-spesa" data-id="${esc(s.id)}">Crea piano</button></div></div>`).join('')}</div></section>` : ''}
+  ${piani.length ? `
+  <section><h3>Rate per anno d'imposta</h3><div class="table"><table>
+    <thead><tr><th>Anno</th>${benef.map(b=>`<th class="n">${esc(b)}</th>`).join('')}<th class="n">Totale</th><th style="width:30%"></th></tr></thead>
+    <tbody>${anni.map(y => { const t = benef.reduce((a,b)=>a+cell(y,b),0); return `<tr class="${y===Y?'now':''}"><td class="num">${y}${y===Y?' <small>anno in corso</small>':''}</td>${benef.map(b=>`<td class="n">${eur(Math.round(cell(y,b)))}</td>`).join('')}<td class="n"><b>${eur(Math.round(t))}</b></td><td><div class="bar-track"><div class="bar-fill" style="width:${maxY?Math.max(1,t/maxY*100):0}%"></div></div></td></tr>`; }).join('')}</tbody>
+  </table></div></section>
+  <section><h3>Piani</h3><div class="list">${piani.map(({d,p}) => { const godute = Math.min(p.n, Math.max(0, Y - p.y0)); const sp = d.spesaId ? Repo.get('spese', d.spesaId) : null; return `<div class="row"><div style="display:grid;gap:4px"><div class="t">${esc(d.titolo)}</div>
+      <div class="d">${esc(d.beneficiario||'')} · ${esc(d.tipo||'')} ${esc(d.percentuale)}% di ${eur(d.spesa)} · ${p.n} rate da ${eur(Math.round(p.rata))} · anni d'imposta ${p.y0}–${p.y1}</div>
+      ${sp?`<div class="d">Spesa collegata: ${esc(sp.descrizione)} (${esc(fmtDate(sp.data))})</div>`:''}${d.note?`<div class="d">${esc(d.note)}</div>`:''}
+      <div class="prog" role="img" aria-label="${godute} rate su ${p.n} con anno d'imposta già chiuso"><i style="width:${godute/p.n*100}%"></i></div><div class="d small">${godute} di ${p.n} anni d'imposta chiusi</div></div>
+      <div class="side"><span class="mono num"><b>${eur0(p.tot)}</b></span>${ramoPill(d.ramo)}<button class="mini ghost" data-act="edit" data-coll="detrazioni" data-id="${esc(d.id)}">Modifica</button></div></div>`; }).join('')}</div></section>` :
+  `<div class="empty">Nessun piano ancora. Quando registri una spesa detraibile (campo "Detraibile: sì"), la trovi qui pronta per creare il piano.</div>`}`;
+}
+function detrFromSpesa(id){
+  const s = Repo.get('spese', id); if(!s) return;
+  const y = parseInt(String(s.data||'').slice(0,4), 10) || new Date().getFullYear();
+  const ramo = s.ramo==='pasinetti' ? 'pasinetti' : 'belotti';
+  const spesa = s.ramo==='comune' ? Math.round((s.totale||0) * quote(s).b/100) : s.totale;
+  openForm('detrazioni', null, { title:'Nuovo piano di detrazione', intro: s.ramo==='comune' ? 'Spesa comune: la spesa ammessa proposta è la quota Belotti. Per la quota Pasinetti crea un secondo piano.' : '',
+    preset:{ titolo:s.descrizione, beneficiario:s.pagatoDa||'', ramo, tipo:'Ristrutturazione', annoInizio:y, spesa, percentuale:36, rate:10, spesaId:s.id } });
+}
+
+/* ---------- ricerca unica ---------- */
+const SEARCH_DEF = {
+  spese:      { label:'Spese', nav:'spese', title:r=>r.descrizione, sub:r=>[fmtDate(r.data), r.fornitore, eur(r.totale)] },
+  preventivi: { label:'Preventivi', nav:'preventivi', title:r=>r.fornitore, sub:r=>[r.oggetto, eur0(r.importo)] },
+  scadenze:   { label:'Scadenze', nav:'scadenze', title:r=>r.titolo, sub:r=>[fmtDate(r.prossima), r.fornitore] },
+  detrazioni: { label:'Detrazioni', nav:'detrazioni', title:r=>r.titolo, sub:r=>[r.beneficiario, r.annoInizio] },
+  documenti:  { label:'Documenti', nav:'documenti', title:r=>r.titolo, sub:r=>[fmtDate(r.data), r.contenuto] },
+  checklist:  { label:'Documenti da procurare', nav:'documenti', title:r=>r.titolo, sub:r=>[r.stato, r.perche] },
+  soggetti:   { label:'Persone', nav:'persone', title:r=>r.nome, sub:r=>[r.cellulare, r.telefono, r.email, r.ruolo] },
+  criticita:  { label:'Criticità', nav:'criticita', title:r=>r.titolo, sub:r=>[r.stato, r.azione] },
+  eventi:     { label:'Storia', nav:'storia', title:r=>r.titolo, sub:r=>[fmtDate(r.data, r.dataTesto), r.riferimento] },
+  subalterni: { label:'Subalterni', nav:'subalterni', title:r=>'Sub '+r.sub+' · '+r.descrizione, sub:r=>[r.categoria, r.piano?'piano '+r.piano:''] },
+  quote:      { label:'Proprietà', nav:'proprieta', title:r=>r.soggetto+' · '+r.diritto, sub:r=>[r.subs, r.atto] }
+};
+const MONEY_KEYS = ['totale','importo','importoMax','iva','rendita','spesa'];
+const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+function recText(r){
+  return norm(Object.entries(r).filter(([k]) => !k.startsWith('_') && k!=='id' && k!=='url').map(([k,v]) =>
+    (typeof v==='number' && MONEY_KEYS.includes(k)) ? moneyInput(v)+' '+(v/100) : (k==='data'||k==='prossima'||k==='dal'||k==='al') ? v+' '+fmtDate(v) : v
+  ).join(' '));
+}
+function hl(text, tokens){
+  let out = esc(text);
+  tokens.forEach(t => { if(t.length<2) return; const re = new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'); out = out.replace(re, '<mark>$1</mark>'); });
+  return out;
+}
+function viewCerca(){
+  const q = (UI.q||'').trim();
+  const tokens = norm(q).split(/\s+/).filter(Boolean);
+  let total = 0;
+  const blocks = Object.entries(SEARCH_DEF).map(([coll, def]) => {
+    const hits = Repo.list(coll).filter(r => { const t = recText(r); return tokens.every(k => t.includes(k)); });
+    total += hits.length;
+    if(!hits.length) return '';
+    return `<section><h3>${def.label} <span class="muted small">${hits.length}</span></h3><div class="list">${hits.slice(0,30).map(r => {
+      const sub = def.sub(r).filter(Boolean).join(' · ');
+      const doc = coll==='documenti' ? docHref(r) : '';
+      const open = coll==='subalterni' ? `<button class="mini" data-act="pick-sub" data-sub="${esc(r.sub)}">Apri</button>` : `<button class="mini" data-nav="${def.nav}">Vai a ${esc(def.label)}</button>`;
+      return `<div class="row"><div><div class="t">${hl(def.title(r)||'', q.split(/\s+/))}</div>${sub?`<div class="d">${hl(sub, q.split(/\s+/))}</div>`:''}</div>
+        <div class="side">${ramoPill(r.ramo)}${doc?`<a class="btn mini" href="${esc(doc)}" target="_blank" rel="noopener">Apri file</a>`:''}${open}<button class="mini ghost" data-act="edit" data-coll="${coll}" data-id="${esc(r.id)}">Modifica</button></div></div>`;
+    }).join('')}</div></section>`;
+  }).join('');
+  return `<section><div class="head"><div><div class="eyebrow">Ricerca in tutta la casa</div><h2>${total} risultat${total===1?'o':'i'} per “${esc(q)}”</h2></div><button data-act="clear-search">Chiudi la ricerca</button></div></section>
+  ${blocks || '<div class="empty">Nessun risultato. Prova con un nome, un numero di subalterno, un importo (es. 1716) o un anno.</div>'}`;
+}
+
+VIEWS.scadenze = viewScadenze;
+VIEWS.detrazioni = viewDetrazioni;
+VIEWS.cerca = viewCerca;
+
+function clearSearch(){
+  const g = $('#global-q'); if(g) g.value = '';
+  UI.q = ''; route = UI.prevRoute || 'panoramica'; render();
+}
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if(!t) return;
+  const id = t.dataset.id;
+  if(t.dataset.act==='scad-done') scadDone(id);
+  else if(t.dataset.act==='scad-spesa') scadSpesa(id);
+  else if(t.dataset.act==='detr-from-spesa') detrFromSpesa(id);
+  else if(t.dataset.act==='clear-search') clearSearch();
+});
+document.addEventListener('input', ev => {
+  if(ev.target.id!=='global-q') return;
+  const v = ev.target.value;
+  UI.q = v;
+  if(v.trim()){ if(route!=='cerca') UI.prevRoute = route; route = 'cerca'; }
+  else route = UI.prevRoute || 'panoramica';
+  render(); window.scrollTo(0,0);
+});
+document.addEventListener('keydown', ev => { if(ev.target.id==='global-q' && ev.key==='Escape'){ clearSearch(); } });
+
+/* ---------- accesso (solo pagina pubblicata con Supabase) ---------- */
+function viewLogin(msg){
+  ['#tabs','.nav-pick','#global-q'].forEach(s => { const el = $(s); if(el) el.hidden = true; });
+  const u = SupabaseAdapter.user;
+  $('#view').innerHTML = `<section class="panel" style="max-width:440px;margin:40px auto"><h2>Accesso</h2>
+    ${u ? `<p>Hai fatto l'accesso come <b>${esc(u.email)}</b>.</p>` : `<p class="muted">I dati della casa sono visibili solo ai familiari abilitati. Inserisci la tua email: riceverai un link per entrare.</p>
+    <form id="login-form" novalidate><label class="f" for="login-email">Email<input id="login-email" type="email" autocomplete="email" required></label>
+    <div class="actions"><button type="submit" class="primary" id="login-btn">Invia il link di accesso</button></div></form>`}
+    <p class="small" id="login-msg" aria-live="polite">${esc(msg||'')}</p>
+    ${u ? '<div class="actions"><button data-act="logout">Esci</button></div>' : ''}</section>`;
+}
+async function sendLoginLink(){
+  const email = $('#login-email').value.trim(), msg = $('#login-msg'), btn = $('#login-btn');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ msg.textContent = 'Inserisci un indirizzo email valido.'; return; }
+  btn.disabled = true; msg.textContent = 'Invio in corso…';
+  // shouldCreateUser:false: entra solo chi è stato invitato dalla dashboard di Supabase
+  const { error } = await SupabaseAdapter.sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
+  btn.disabled = false;
+  msg.textContent = !error ? 'Link inviato: apri l\'email da questo dispositivo e tocca il link.'
+    : /signups? not allowed/i.test(error.message) ? 'Questo indirizzo non è abilitato. Chiedi di essere invitato.'
+    : 'Invio non riuscito: ' + error.message;
+}
+
+(async function start(){
+  $('#defs').innerHTML = SVG_DEFS;
+  if(typeof CC_SUPABASE !== 'undefined'){
+    Repo.adapter = SupabaseAdapter;
+    try{ await SupabaseAdapter.connect(); }catch(e){ return viewLogin('Connessione a Supabase non riuscita: ' + (e.message||e)); }
+    if(!SupabaseAdapter.user) return viewLogin();
+    if(!SupabaseAdapter.ruolo) return viewLogin('Questo account non è ancora tra i membri abilitati.');
+    try{ await Repo.init(); }catch(e){ return viewLogin('Caricamento dei dati non riuscito: ' + (e.message||e)); }
+    history.replaceState(null, '', location.pathname + location.search + (location.hash.includes('access_token') ? '' : location.hash));
+  }
+  else await Repo.init();
+  $('#brand-sub').textContent = (DB.immobile && DB.immobile.intestazione) || '';
+  go();
+  getDownloads();
+})();
+</script></body></html>
