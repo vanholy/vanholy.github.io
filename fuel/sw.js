@@ -1,4 +1,4 @@
-const CACHE = 'galaxy-v6';
+const CACHE = 'galaxy-v7';
 const ASSETS = ['./'];
 
 self.addEventListener('install', e => {

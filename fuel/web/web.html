@@ -15,14 +15,15 @@ html,body{background:#050a18;color:#e5e5e5;font-family:'Outfit',sans-serif;overf
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
 <script>window.react = window.React;</script>
 <script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 <script crossorigin src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
-<script crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="../stats.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -32,10 +33,9 @@ const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, B
 const { Home, PlusCircle, List, Wrench, Car, Database, BarChart3, TrendingUp, Fuel, DollarSign, Activity, Calendar, ChevronRight, Download, Upload, Trash2, Edit3, Check, X, Info, PieChart: PieIcon, Target, Gauge, Route, Clock, Zap, Droplets, RefreshCw } = LucideReact;
 
 // ═══ CONSTANTS ═══
-const FUEL_TYPES = ["B7", "HVO", "Diesel+", "Mix"];
 const MAINT_TYPES = ["Tagliando", "Riparazione", "Pneumatici", "Revisione", "Carrozzeria", "Altro"];
 const FC = { HVO:"#00d4ff", B7:"#f0c000", "Diesel+":"#ff8c00", Mix:"#c080ff" };
-const CETANE = { B7:51, HVO:75, "Diesel+":60, Mix:55 };
+const { FUEL_TYPES, CETANE, today, isMissed, itToIso, computeStats } = FuelStats;   // motore condiviso: fuel/stats.js
 const MONTHS_IT = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 
 const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -92,55 +92,6 @@ const saveK = async (k, v, ch = {}) => {
   return flushPend(k);
 };
 
-const TANK_CAP = 71;
-const isMissed = (e) => /\[missed\]/i.test(e.notes || "");
-const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
-
-// Consumo "full-to-full": accumula i rifornimenti parziali e misura la distanza dall'ultimo pieno completo.
-// Segmento con un rifornimento non registrato (nota "[MISSED]", da Fuelio) → consumo non calcolabile.
-// calc.fuel = carburante bruciato nel segmento (quello presente nel serbatoio mentre si guida, ≥80% del volume), null se misto.
-const enrich = (sorted) => {
-  const out = sorted.map(e => ({ ...e, calc: null }));
-  const seg = sorted.map(() => -1);                                   // pieno che chiude il segmento in cui ricadono i km prima di e
-  let lastFull = -1, L = 0, cost = 0, missed = false;
-  for (let i = 0; i < sorted.length; i++) {
-    const e = sorted[i];
-    if (lastFull >= 0) { L += e.liters; cost += e.totalCost; if (isMissed(e)) missed = true; }   // include anche i parziali
-    if (e.fullTank) {
-      const km = lastFull >= 0 ? e.odometer - sorted[lastFull].odometer : 0;
-      if (km > 0) {
-        if (!missed) out[i].calc = { kmDriven: km, lPer100: L / km * 100, costPerKm: cost / km, liters: L, cost, fuel: null };
-        for (let j = lastFull + 1; j <= i; j++) seg[j] = i;
-        lastFull = i; L = 0; cost = 0; missed = false;
-      } else if (lastFull < 0) { lastFull = i; }                    // primo pieno = baseline
-    }
-  }
-  // Simula la composizione del serbatoio per sapere quale carburante è stato bruciato in ogni segmento
-  const done = out.filter(e => e.calc), sumKm = done.reduce((s, e) => s + e.calc.kmDriven, 0);
-  const avgRate = sumKm > 0 ? done.reduce((s, e) => s + e.calc.liters, 0) / sumKm * 100 : 7;
-  const tank = {}, burned = {};
-  const tot = () => Object.values(tank).reduce((a, b) => a + b, 0);
-  for (let i = 0; i < sorted.length; i++) {
-    const e = sorted[i];
-    if (i === 0) { tank[e.fuelType] = e.fullTank ? TANK_CAP : e.liters; continue; }   // residuo iniziale ignoto: si assume stesso carburante
-    const t = tot(), s = seg[i];
-    const rate = s >= 0 && out[s].calc ? out[s].calc.lPer100 : avgRate;
-    const want = e.fullTank ? t - (TANK_CAP - e.liters) : (e.odometer - sorted[i - 1].odometer) * rate / 100;
-    const b = Math.min(t, Math.max(0, want));
-    if (t > 0 && b > 0) {
-      const r = b / t;
-      for (const f in tank) { const x = tank[f] * r; tank[f] -= x; if (s >= 0) { burned[s] = burned[s] || {}; burned[s][f] = (burned[s][f] || 0) + x; } }
-    }
-    tank[e.fuelType] = (tank[e.fuelType] || 0) + e.liters;
-    const t2 = tot(); if (t2 > TANK_CAP) for (const f in tank) tank[f] *= TANK_CAP / t2;
-  }
-  out.forEach((e, i) => {
-    if (!e.calc) return;
-    const b = Object.entries(burned[i] || {}).sort((x, y) => y[1] - x[1]), sum = b.reduce((a, x) => a + x[1], 0);
-    e.calc.fuel = sum > 0 && b[0][1] / sum >= 0.8 ? b[0][0] : null;
-  });
-  return out;
-};
 const dl = (content, name, type) => { const b = new Blob([content], { type }); const u = URL.createObjectURL(b); const a = Object.assign(document.createElement("a"), { href: u, download: name }); document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u); };
 const detectFuel = (n) => { if (!n) return "B7"; const l = n.toLowerCase(); return l.includes("hvo") ? "HVO" : l.includes("diesel+") || l.includes("premium") || l.includes("v-power") || l.includes("excellium") ? "Diesel+" : l.includes("mix") ? "Mix" : "B7"; };
 
@@ -253,6 +204,24 @@ const StatBox = ({label, value, unit, highlight, color="#fff", small}) => (
 // ═══ AXIS STYLE ═══
 const AX = {tick:{fill:"rgba(255,255,255,0.55)",fontSize:10,fontFamily:"'JetBrains Mono',monospace"}};
 const GRID = <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/>;
+const fmtT = (t) => new Date(t).toLocaleDateString("it-IT",{day:"2-digit",month:"short"});
+const TIME_AXIS = {dataKey:"t",type:"number",scale:"time",domain:["dataMin - 172800000","dataMax + 172800000"],tickFormatter:fmtT};
+const segLabel = (t,p) => p&&p[0] ? `${p[0].payload.from} → ${p[0].payload.date} · ${p[0].payload.km} km` : "";
+const signEur = (v) => (v>=0?"+":"−")+"€"+fmtN(Math.abs(v),0);
+const REL = { alta:["#00c88a","affidabile"], media:["#f0c000","indicativo"], bassa:["#ff6b6b","pochi dati"] };
+const RelBadge = ({level}) => level ? <span style={{fontSize:10,padding:"1px 7px",borderRadius:4,marginLeft:8,color:REL[level][0],border:`1px solid ${REL[level][0]}55`,fontFamily:"'JetBrains Mono',monospace",whiteSpace:"nowrap"}}>{REL[level][1]}</span> : null;
+const NotEnough = ({text="Servono almeno 3 pieni completi per un andamento significativo"}) => <div style={{textAlign:"center",padding:"60px 20px",color:"rgba(255,255,255,0.45)",fontFamily:"'JetBrains Mono',monospace",fontSize:11}}>{text}</div>;
+// Andamento per tratto pieno→pieno: asse = tempo reale, pallino proporzionale ai km, colore = carburante bruciato
+const TrendChart = ({data, dataKey, color, avg, digits=1, height=260}) => (<>
+  <ResponsiveContainer width="100%" height={height}><ComposedChart data={data} margin={{top:10,right:15,left:-10,bottom:5}}>
+    {GRID}<XAxis {...TIME_AXIS} {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
+    <Tooltip {...TT(color,color)} labelFormatter={segLabel}/>
+    {avg!=null && <ReferenceLine y={avg} stroke={color} strokeOpacity={0.45} strokeDasharray="8 4" label={{value:`media ${avg.toFixed(digits)}`,fill:color,fontSize:10,position:"insideTopRight",fontFamily:"'JetBrains Mono',monospace"}}/>}
+    <Line type="linear" dataKey={dataKey} stroke={color} strokeOpacity={0.45} strokeWidth={1.5} isAnimationActive={false} activeDot={false}
+      dot={(p)=><circle key={"d"+p.index} cx={p.cx} cy={p.cy} r={p.payload.r} fill={FC[p.payload.fuel]||color} fillOpacity={0.85} stroke="rgba(0,0,0,0.35)"/>}/>
+  </ComposedChart></ResponsiveContainer>
+  <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontFamily:"'JetBrains Mono',monospace",marginTop:6}}>● grandezza = km del tratto · colore = carburante bruciato (viola = misto) · tratteggio = media pesata sui km</div>
+</>);
 
 // ═══ MAIN APP ═══
 function App() {
@@ -275,143 +244,10 @@ function App() {
   const showMsg = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
   const handleRefresh = async () => { setRefreshing(true); const [f,m,a] = await Promise.all([loadK("ft-v3"),loadK("ft-maint-v3"),loadK("ft-adblue-v1")]); setEntries(f); setMaint(m); setAdblue(a); setRefreshing(false); showMsg(true,"Dati aggiornati da Supabase"); };
 
-  // ═══ CALCULATIONS ═══
-  const sorted = useMemo(() => [...entries].sort((a,b) => a.odometer - b.odometer), [entries]);
-  const enriched = useMemo(() => enrich(sorted), [sorted]);
-  const withCalc = useMemo(() => enriched.filter(e => e.calc), [enriched]);
-
-  const stats = useMemo(() => {
-    const cost = entries.reduce((s,e) => s+e.totalCost, 0);
-    const months = entries.map(e=>e.date.slice(0,7)).sort();
-    const monthCount = months.length ? (+months.at(-1).slice(0,4) - +months[0].slice(0,4))*12 + (+months.at(-1).slice(5) - +months[0].slice(5)) + 1 : 0;
-    return {
-      n: entries.length, liters: entries.reduce((s,e) => s+e.liters, 0), cost,
-      km: withCalc.reduce((s,e) => s+e.calc.kmDriven, 0), avgL: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.liters, 0)/withCalc.reduce((s,e) => s+e.calc.kmDriven, 0)*100 : null,
-      avgC: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.cost, 0)/withCalc.reduce((s,e) => s+e.calc.kmDriven, 0) : null,
-      minL: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.lPer100)) : null,
-      maxL: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.lPer100)) : null,
-      minC: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.costPerKm)) : null,
-      maxC: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.costPerKm)) : null,
-      avgLiters: entries.length ? entries.reduce((s,e)=>s+e.liters,0)/entries.length : null,
-      avgPrice: entries.length ? cost/entries.reduce((s,e)=>s+e.liters,0) : null,
-      avgDist: withCalc.length ? withCalc.reduce((s,e)=>s+e.calc.kmDriven,0)/withCalc.length : null,
-      avgMonthly: monthCount > 0 ? cost / monthCount : null,
-    };
-  }, [entries, withCalc]);
-
-  const byFuel = useMemo(() => FUEL_TYPES.map(ft => {
-    const f=withCalc.filter(e=>e.calc.fuel===ft), all=entries.filter(e=>e.fuelType===ft);
-    return { type:ft, count:all.length, avgL:f.length?f.reduce((s,e)=>s+e.calc.liters,0)/f.reduce((s,e)=>s+e.calc.kmDriven,0)*100:null, avgC:f.length?f.reduce((s,e)=>s+e.calc.cost,0)/f.reduce((s,e)=>s+e.calc.kmDriven,0):null, liters:all.reduce((s,e)=>s+e.liters,0), cost:all.reduce((s,e)=>s+e.totalCost,0), minL:f.length?Math.min(...f.map(e=>e.calc.lPer100)):null, maxL:f.length?Math.max(...f.map(e=>e.calc.lPer100)):null };
-  }).filter(s => s.count > 0), [entries, withCalc]);
-
-  const totalMaintCost = useMemo(() => maint.reduce((s,m) => s + m.cost, 0), [maint]);
-
-  // Tank composition — simulate fill/consume cycle
-  const tankComp = useMemo(() => {
-    const CAP = 71;
-    const tank = { B7:0, HVO:0, "Diesel+":0, Mix:0 };
-    const avgCons = stats.avgL || 7;
-    const getTot = () => tank.B7 + tank.HVO + tank["Diesel+"] + tank.Mix;
-    const scale = (r) => { tank.B7 *= r; tank.HVO *= r; tank["Diesel+"] *= r; tank.Mix *= r; };
-    for (let i = 0; i < sorted.length; i++) {
-      const e = sorted[i];
-      if (i > 0) {
-        const km = e.odometer - sorted[i-1].odometer;
-        if (e.fullTank) {
-          const remaining = Math.max(0, CAP - e.liters);
-          const tot = getTot();
-          if (tot > 0) scale(remaining / tot); else { tank.B7=0; tank.HVO=0; tank["Diesel+"]=0; tank.Mix=0; }
-        } else {
-          const consumed = km * avgCons / 100;
-          const tot = getTot();
-          if (tot > 0) scale(Math.max(0, tot - consumed) / tot);
-        }
-      }
-      tank[e.fuelType] = (tank[e.fuelType] || 0) + e.liters;
-      const tot = getTot();
-      if (tot > CAP) scale(CAP / tot);
-    }
-    const tot = getTot();
-    const cetane = tot > 0 ? (tank.B7 * CETANE.B7 + tank.HVO * CETANE.HVO + tank["Diesel+"] * CETANE["Diesel+"] + tank.Mix * CETANE.Mix) / tot : 0;
-    return { B7: tank.B7, HVO: tank.HVO, "Diesel+": tank["Diesel+"], Mix: tank.Mix, total: tot, cetane,
-      pctB7: tot>0?tank.B7/tot*100:0, pctHVO: tot>0?tank.HVO/tot*100:0, "pctDiesel+": tot>0?tank["Diesel+"]/tot*100:0, pctMix: tot>0?tank.Mix/tot*100:0 };
-  }, [sorted, stats.avgL]);
-
-  // Chart data
-  const chartData = useMemo(() => withCalc.map(e => ({ date:fmtDate(e.date), dateFull:e.date, "l/100km":+e.calc.lPer100.toFixed(2), "€/km":+e.calc.costPerKm.toFixed(3), km:e.calc.kmDriven, liters:e.calc.liters, cost:e.calc.cost, fuel:e.calc.fuel||"Mix" })), [withCalc]);
-
-  // Rolling average (5-point)
-  const rollingAvg = useMemo(() => {
-    const w=5; return chartData.map((d,i) => {
-      const slice = chartData.slice(Math.max(0,i-w+1),i+1);
-      return {...d, avg:+(slice.reduce((s,x)=>s+x["l/100km"],0)/slice.length).toFixed(2)};
-    });
-  }, [chartData]);
-
-  // Monthly
-  const monthlyData = useMemo(() => {
-    const m = {};
-    entries.forEach(e => { const k = e.date.slice(0,7); if(!m[k]) m[k]={month:k,liters:0,cost:0,count:0,types:{}}; m[k].liters+=e.liters; m[k].cost+=e.totalCost; m[k].count++; m[k].types[e.fuelType]=(m[k].types[e.fuelType]||0)+e.liters; });
-    withCalc.forEach(e => { const k = e.date.slice(0,7); if(m[k]){if(!m[k].km)m[k].km=0;if(!m[k].totL)m[k].totL=0;if(!m[k].totC)m[k].totC=0; m[k].km+=e.calc.kmDriven; m[k].totL+=e.calc.liters; m[k].totC+=e.calc.cost;} });
-    return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).map(x=>({
-      ...x, label: new Date(x.month+"-15").toLocaleDateString("it-IT",{month:"short",year:"2-digit"}),
-      "l/100km": x.km>0?+(x.totL/x.km*100).toFixed(2):null,
-      "€/km": x.km>0?+((x.totC||0)/x.km).toFixed(3):null,
-      "€/L": x.liters>0?+(x.cost/x.liters).toFixed(3):null,
-      B7:x.types["B7"]||0, HVO:x.types["HVO"]||0, "Diesel+":x.types["Diesel+"]||0, Mix:x.types["Mix"]||0,
-    }));
-  }, [entries, withCalc]);
-
-  // Price trend
-  const priceData = useMemo(() => [...entries].sort((a,b)=>new Date(a.date)-new Date(b.date)).map(e=>({date:fmtDate(e.date),"€/L":+e.pricePerLiter.toFixed(3),fuel:e.fuelType})), [entries]);
-
-  // Cumulative
-  const cumulative = useMemo(() => {
-    let totCost=0, totLiters=0, totKm=0;
-    return [...entries].sort((a,b)=>new Date(a.date)-new Date(b.date)).map((e,i) => {
-      totCost+=e.totalCost; totLiters+=e.liters;
-      const wc = withCalc.find(w=>w.id===e.id);
-      if(wc) totKm+=wc.calc.kmDriven;
-      return {date:fmtDate(e.date),"€ Totali":+totCost.toFixed(0),"Litri Totali":+totLiters.toFixed(0),"Km Totali":totKm};
-    });
-  }, [entries, withCalc]);
-
-  // Day of week analysis
-  const dowData = useMemo(() => {
-    const days = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-    const d = Array(7).fill(null).map(()=>({count:0,totL:0}));
-    withCalc.forEach(e => { const dow = new Date(e.date).getDay(); d[dow].count++; d[dow].totL+=e.calc.lPer100; });
-    return days.map((name,i) => ({name, "l/100km":d[i].count>0?+(d[i].totL/d[i].count).toFixed(2):0, count:d[i].count}));
-  }, [withCalc]);
-
-  // Distance between fills
-  const distData = useMemo(() => withCalc.map(e => ({date:fmtDate(e.date),km:e.calc.kmDriven,fuel:e.calc.fuel||"Mix"})), [withCalc]);
-
-  // Fill size distribution
-  const fillSizes = useMemo(() => {
-    const buckets = [0,20,30,40,50,60,Infinity];
-    const counts = Array(buckets.length-1).fill(0);
-    entries.forEach(e => { for(let i=0;i<buckets.length-1;i++){if(e.liters>=buckets[i]&&e.liters<buckets[i+1]){counts[i]++;break;}} });
-    return buckets.slice(0,-1).map((b,i) => ({range:isFinite(buckets[i+1])?`${b}-${buckets[i+1]}L`:`${b}+L`,count:counts[i]}));
-  }, [entries]);
-
-  // Maintenance by type
-  const maintByType = useMemo(() => {
-    const m = {};
-    maint.forEach(e => { if(!m[e.type]) m[e.type]={type:e.type,cost:0,count:0}; m[e.type].cost+=e.cost; m[e.type].count++; });
-    return Object.values(m).sort((a,b)=>b.cost-a.cost);
-  }, [maint]);
-
-  // Cost breakdown
-  const costBreakdown = useMemo(() => [
-    {name:"Carburante",value:+stats.cost.toFixed(0),color:"#0099ff"},
-    {name:"Manutenzione",value:+totalMaintCost.toFixed(0),color:"#ffa832"},
-    {name:"Assicurazione",value:1086,color:"#c080ff"}
-  ].filter(x=>x.value>0), [stats.cost, totalMaintCost]);
-  const totalOwnership = costBreakdown.reduce((s,x)=>s+x.value,0);
-
-  // Efficiency scatter (km driven vs l/100km)
-  const scatterData = useMemo(() => withCalc.map(e=>({km:e.calc.kmDriven,"l/100km":+e.calc.lPer100.toFixed(2),fuel:e.calc.fuel||"Mix",date:fmtDate(e.date)})), [withCalc]);
+  // ═══ CALCULATIONS: motore condiviso fuel/stats.js ═══
+  const R = useMemo(() => computeStats(entries, maint, { insuranceAnnual: INSURANCE.totale, insuranceStart: itToIso(INSURANCE.decorrenza), ownershipStart: itToIso(VEHICLE.acquisto) }), [entries, maint]);
+  const { sorted, enriched, withCalc, stats, byFuel, tankComp, series, priceSeries, cumulative, fillSizes, maintByType, ownership, projection, hvoVsB7, enough } = R;
+  const monthlyData = R.monthly, totalMaintCost = R.maintCost, distData = series, scatterData = series;
 
   // ═══ HANDLERS ═══
   const handleSubmit = async () => {
@@ -561,27 +397,20 @@ function App() {
             ) : (<>
               {/* KPI Grid */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:10,marginBottom:24}}>
-                <StatBox label="RIFORNIMENTI" value={stats.n} highlight={false}/>
                 <StatBox label="CONSUMO MEDIO" value={stats.avgL?fmtN(stats.avgL,1):"—"} unit="l/100km" highlight={true}/>
-                <StatBox label="COSTO/KM" value={stats.avgC?fmtN(stats.avgC,3):"—"} unit="€/km" highlight={false}/>
-                <StatBox label="DISTANZA" value={stats.km>0?stats.km.toLocaleString("it-IT"):"—"} unit="km" highlight={false}/>
-                <StatBox label="SPESA FUEL" value={"€"+fmtN(stats.cost,0)} highlight={false}/>
+                <StatBox label="CARBURANTE" value={stats.per100?"€"+fmtN(stats.per100,2):"—"} unit="ogni 100 km" highlight={false}/>
+                <StatBox label="AUTONOMIA PIENO" value={stats.autonomy?fmtN(stats.autonomy,0):"—"} unit="km stimati" highlight={false}/>
+                <StatBox label="DISTANZA" value={stats.km>0?stats.km.toLocaleString("it-IT"):"—"} unit={stats.odometer?`km · odo ${stats.odometer.toLocaleString("it-IT")}`:"km"} highlight={false}/>
+                <StatBox label="SPESA FUEL" value={"€"+fmtN(stats.cost,0)} unit={`${stats.n} rifornimenti`} highlight={false}/>
                 <StatBox label="SPESA MENSILE" value={stats.avgMonthly?"€"+fmtN(stats.avgMonthly,0):"—"} unit="media/mese" highlight={false}/>
-                <StatBox label="ODOMETRO" value={sorted.length?sorted[sorted.length-1].odometer.toLocaleString("it-IT"):"—"} unit="km" highlight={false}/>
+                <StatBox label="PROIEZIONE ANNUA" value={projection&&projection.totalYear!=null?"€"+fmtN(projection.totalYear,0):"—"} unit="carburante + assic." highlight={false}/>
               </div>
 
               {/* Main charts row */}
               <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:16}}>
-                {chartData.length>=2 && (
+                {series.length>=1 && (
                   <ChartCard title="Andamento Consumi" icon={TrendingUp} span={1}>
-                    <ResponsiveContainer width="100%" height={260}><ComposedChart data={rollingAvg} margin={{top:5,right:15,left:-10,bottom:5}}>
-                      <defs><linearGradient id="gD" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0099ff" stopOpacity={0.2}/><stop offset="100%" stopColor="#0099ff" stopOpacity={0}/></linearGradient></defs>
-                      {GRID}<XAxis dataKey="date" {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
-                      <Tooltip {...TT()}/>
-                      {stats.avgL && <ReferenceLine y={stats.avgL} stroke="rgba(0,153,255,0.15)" strokeDasharray="8 4" label={{value:`media ${fmtN(stats.avgL,1)}`,fill:"rgba(0,153,255,0.25)",fontSize:9,fontFamily:"'JetBrains Mono',monospace"}}/>}
-                      <Area type="monotone" dataKey="l/100km" stroke="#0099ff" strokeWidth={1.5} fill="url(#gD)" dot={{fill:"#0099ff",r:3,strokeWidth:0}} activeDot={{r:5,stroke:"rgba(0,153,255,0.4)",strokeWidth:4}}/>
-                      <Line type="monotone" dataKey="avg" stroke="#ff6b6b" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Media Mobile (5)"/>
-                    </ComposedChart></ResponsiveContainer>
+                    {enough.trend ? <TrendChart data={series} dataKey="l/100km" color="#0099ff" avg={stats.avgL} digits={1} height={240}/> : <NotEnough/>}
                   </ChartCard>
                 )}
                 {/* Quick fuel comparison */}
@@ -590,7 +419,7 @@ function App() {
                     <div key={f.type} style={{marginBottom:16,padding:"12px 14px",background:"rgba(255,255,255,0.015)",borderRadius:10,borderLeft:`3px solid ${FC[f.type]}`}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                         <span style={{fontSize:12,fontWeight:700,color:FC[f.type],fontFamily:"'JetBrains Mono',monospace"}}>{f.type}</span>
-                        <span style={{fontSize:12,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace"}}>{f.count} pieni</span>
+                        <span style={{fontSize:12,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace"}}>{f.count} pieni<RelBadge level={f.reliability}/></span>
                       </div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                         <div><div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{f.avgL?fmtN(f.avgL,1):"—"}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.55)"}}>l/100km</div></div>
@@ -676,32 +505,20 @@ function App() {
               </div>
 
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
-                {/* Consumption with rolling avg */}
-                <ChartCard title="Consumo + Media Mobile (5)" icon={TrendingUp} height={340}>
-                  <ResponsiveContainer width="100%" height={280}><ComposedChart data={rollingAvg} margin={{top:5,right:10,left:-10,bottom:5}}>
-                    <defs><linearGradient id="gA1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0099ff" stopOpacity={0.15}/><stop offset="100%" stopColor="#0099ff" stopOpacity={0}/></linearGradient></defs>
-                    {GRID}<XAxis dataKey="date" {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
-                    <Tooltip {...TT()}/>
-                    {stats.avgL && <ReferenceLine y={stats.avgL} stroke="rgba(0,153,255,0.15)" strokeDasharray="8 4"/>}
-                    <Area type="monotone" dataKey="l/100km" stroke="#0099ff" strokeWidth={1.5} fill="url(#gA1)" dot={{fill:"#0099ff",r:2.5}} activeDot={{r:5}}/>
-                    <Line type="monotone" dataKey="avg" stroke="#ff6b6b" strokeWidth={2.5} dot={false} name="Media Mobile"/>
-                  </ComposedChart></ResponsiveContainer>
+                {/* Consumo per tratto pieno→pieno */}
+                <ChartCard title="Consumo per Pieno (l/100km)" icon={TrendingUp} height={340}>
+                  {enough.trend ? <TrendChart data={series} dataKey="l/100km" color="#0099ff" avg={stats.avgL} digits={1}/> : <NotEnough/>}
                 </ChartCard>
 
-                {/* €/km over time */}
+                {/* €/km per tratto */}
                 <ChartCard title="Costo per Km nel Tempo" icon={DollarSign} color="#c080ff" height={340}>
-                  <ResponsiveContainer width="100%" height={280}><AreaChart data={chartData} margin={{top:5,right:10,left:-10,bottom:5}}>
-                    <defs><linearGradient id="gA2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c080ff" stopOpacity={0.15}/><stop offset="100%" stopColor="#c080ff" stopOpacity={0}/></linearGradient></defs>
-                    {GRID}<XAxis dataKey="date" {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
-                    <Tooltip {...TT("#c080ff","#c080ff")}/>
-                    <Area type="monotone" dataKey="€/km" stroke="#c080ff" strokeWidth={2} fill="url(#gA2)" dot={{fill:"#c080ff",r:2.5}} activeDot={{r:5,stroke:"rgba(192,128,255,0.4)",strokeWidth:4}}/>
-                  </AreaChart></ResponsiveContainer>
+                  {enough.trend ? <TrendChart data={series} dataKey="€/km" color="#c080ff" avg={stats.avgC} digits={3}/> : <NotEnough/>}
                 </ChartCard>
               </div>
 
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
                 {/* Monthly avg consumption */}
-                {monthlyData.length>=2 && (
+                {enough.monthlyCons && (
                   <ChartCard title="Consumo Medio Mensile" icon={Calendar} color="#f0c000" height={340}>
                     <ResponsiveContainer width="100%" height={280}><ComposedChart data={monthlyData.filter(m=>m["l/100km"])} margin={{top:5,right:10,left:-10,bottom:5}}>
                       <defs><linearGradient id="gA3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f0c000" stopOpacity={0.15}/><stop offset="100%" stopColor="#f0c000" stopOpacity={0}/></linearGradient></defs>
@@ -714,7 +531,7 @@ function App() {
                 )}
 
                 {/* Monthly km */}
-                {monthlyData.length>=2 && (
+                {enough.monthlyCons && (
                   <ChartCard title="Km Percorsi al Mese" icon={Route} height={340}>
                     <ResponsiveContainer width="100%" height={280}><BarChart data={monthlyData.filter(m=>m.km>0)} margin={{top:5,right:10,left:-10,bottom:5}}>
                       {GRID}<XAxis dataKey="label" {...AX}/><YAxis {...AX}/>
@@ -728,16 +545,16 @@ function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
                 {/* Price per liter trend */}
                 <ChartCard title="Prezzo al Litro nel Tempo" icon={Gauge} color="#ff6b6b" height={340}>
-                  <ResponsiveContainer width="100%" height={280}><AreaChart data={priceData} margin={{top:5,right:10,left:-10,bottom:5}}>
+                  <ResponsiveContainer width="100%" height={280}><AreaChart data={priceSeries} margin={{top:5,right:10,left:-10,bottom:5}}>
                     <defs><linearGradient id="gA4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ff6b6b" stopOpacity={0.12}/><stop offset="100%" stopColor="#ff6b6b" stopOpacity={0}/></linearGradient></defs>
-                    {GRID}<XAxis dataKey="date" {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
-                    <Tooltip {...TT("#ff6b6b","#ff6b6b")}/>
-                    <Area type="monotone" dataKey="€/L" stroke="#ff6b6b" strokeWidth={2} fill="url(#gA4)" dot={{fill:"#ff6b6b",r:2.5}}/>
+                    {GRID}<XAxis {...TIME_AXIS} {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
+                    <Tooltip {...TT("#ff6b6b","#ff6b6b")} labelFormatter={(t,p)=>p&&p[0]?`${p[0].payload.date} · ${p[0].payload.fuel}`:""}/>
+                    <Area type="linear" dataKey="€/L" stroke="#ff6b6b" strokeWidth={2} fill="url(#gA4)" dot={{fill:"#ff6b6b",r:2.5}}/>
                   </AreaChart></ResponsiveContainer>
                 </ChartCard>
 
                 {/* Distance between fills */}
-                <ChartCard title="Km tra Rifornimenti" icon={Activity} color="#00c88a" height={340}>
+                <ChartCard title="Km per Pieno (tratto pieno→pieno)" icon={Activity} color="#00c88a" height={340}>
                   <ResponsiveContainer width="100%" height={280}><BarChart data={distData} margin={{top:5,right:10,left:-10,bottom:5}}>
                     {GRID}<XAxis dataKey="date" {...AX}/><YAxis {...AX}/>
                     <Tooltip {...TT("#00c88a","#00c88a")} formatter={v=>[v+" km","Distanza"]}/>
@@ -749,9 +566,9 @@ function App() {
                 </ChartCard>
               </div>
 
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginBottom:16}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
                 {/* Efficiency scatter */}
-                {scatterData.length>=3 && (
+                {enough.scatter && (
                   <ChartCard title="Efficienza: Km vs Consumo" icon={Target} height={320}>
                     <ResponsiveContainer width="100%" height={260}><ScatterChart margin={{top:5,right:10,left:-10,bottom:5}}>
                       {GRID}<XAxis dataKey="km" name="km" {...AX} label={{value:"km",fill:"rgba(255,255,255,0.15)",fontSize:9,position:"bottom"}}/><YAxis dataKey="l/100km" name="l/100km" {...AX} domain={["auto","auto"]}/>
@@ -763,15 +580,6 @@ function App() {
                     </ScatterChart></ResponsiveContainer>
                   </ChartCard>
                 )}
-
-                {/* Day of week */}
-                <ChartCard title="Consumo per Giorno Settimana" icon={Calendar} color="#c080ff" height={320}>
-                  <ResponsiveContainer width="100%" height={260}><BarChart data={dowData} margin={{top:5,right:10,left:-10,bottom:5}}>
-                    {GRID}<XAxis dataKey="name" {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
-                    <Tooltip {...TT("#c080ff","#c080ff")}/>
-                    <Bar dataKey="l/100km" fill="#c080ff" radius={[4,4,0,0]} fillOpacity={0.6}/>
-                  </BarChart></ResponsiveContainer>
-                </ChartCard>
 
                 {/* Fill size distribution */}
                 <ChartCard title="Distribuzione Litri per Pieno" icon={Fuel} color="#ffa832" height={320}>
@@ -816,7 +624,7 @@ function App() {
                       <linearGradient id="gCum1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0099ff" stopOpacity={0.12}/><stop offset="100%" stopColor="#0099ff" stopOpacity={0}/></linearGradient>
                       <linearGradient id="gCum2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00c88a" stopOpacity={0.12}/><stop offset="100%" stopColor="#00c88a" stopOpacity={0}/></linearGradient>
                     </defs>
-                    {GRID}<XAxis dataKey="date" {...AX}/><YAxis yAxisId="left" {...AX} tickFormatter={v=>"€"+v}/><YAxis yAxisId="right" orientation="right" {...AX} tickFormatter={v=>v+"L"}/>
+                    {GRID}<XAxis {...TIME_AXIS} {...AX}/><YAxis yAxisId="left" {...AX} tickFormatter={v=>"€"+v}/><YAxis yAxisId="right" orientation="right" {...AX} tickFormatter={v=>v+"L"}/>
                     <Tooltip {...TT()}/>
                     <Area yAxisId="left" type="monotone" dataKey="€ Totali" stroke="#0099ff" strokeWidth={2} fill="url(#gCum1)"/>
                     <Area yAxisId="right" type="monotone" dataKey="Litri Totali" stroke="#00c88a" strokeWidth={2} fill="url(#gCum2)"/>
@@ -827,7 +635,7 @@ function App() {
               {/* B7 vs HVO detailed comparison */}
               {byFuel.length>=2 && (
                 <div style={{marginTop:16}}>
-                  <ChartCard title="Confronto Dettagliato B7 vs HVO" icon={Zap}>
+                  <ChartCard title="Confronto Carburanti" icon={Zap}>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                       <ResponsiveContainer width="100%" height={220}><BarChart data={byFuel.filter(f=>f.avgL).map(f=>({name:f.type,"l/100km":+f.avgL.toFixed(2),"€/km":f.avgC?+f.avgC.toFixed(3):0}))} margin={{top:5,right:10,left:-10,bottom:5}}>
                         {GRID}<XAxis dataKey="name" {...AX}/><YAxis {...AX} domain={["auto","auto"]}/>
@@ -839,8 +647,8 @@ function App() {
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,alignContent:"start"}}>
                         {byFuel.map(f=>(
                           <div key={f.type} style={{padding:14,background:"rgba(255,255,255,0.015)",borderRadius:10,borderTop:`3px solid ${FC[f.type]}`}}>
-                            <div style={{fontSize:12,fontWeight:700,color:FC[f.type],fontFamily:"'JetBrains Mono',monospace",marginBottom:10}}>{f.type}</div>
-                            {[["Consumo medio",f.avgL?fmtN(f.avgL,2)+" l/100":"—"],["Costo/km",f.avgC?"€"+fmtN(f.avgC,3):"—"],["Range",f.minL?fmtN(f.minL,1)+"–"+fmtN(f.maxL,1):"—"],["Pieni",""+f.count],["Litri totali",fmtN(f.liters,0)+" L"],["Spesa totale","€"+fmtN(f.cost,0)]].map(([l,v],i)=>(
+                            <div style={{fontSize:12,fontWeight:700,color:FC[f.type],fontFamily:"'JetBrains Mono',monospace",marginBottom:10}}>{f.type}<RelBadge level={f.reliability}/></div>
+                            {[["Consumo medio",f.avgL?fmtN(f.avgL,2)+" l/100":"—"],["Costo/km",f.avgC?"€"+fmtN(f.avgC,3):"—"],["Tratti puri",`${f.segments} · ${f.km.toLocaleString("it-IT")} km`],["Range",f.minL?fmtN(f.minL,1)+"–"+fmtN(f.maxL,1):"—"],["€/L medio",f.price?fmtN(f.price,3):"—"],["Pieni",""+f.count],["Litri totali",fmtN(f.liters,0)+" L"],["Spesa totale","€"+fmtN(f.cost,0)]].map(([l,v],i)=>(
                               <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.02)"}}>
                                 <span style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>{l}</span>
                                 <span style={{fontSize:10,fontWeight:600,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{v}</span>
@@ -850,6 +658,7 @@ function App() {
                         ))}
                       </div>
                     </div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontFamily:"'JetBrains Mono',monospace",marginTop:12}}>Il consumo di un carburante conta solo i tratti in cui almeno l'80% del gasolio bruciato era di quel tipo: i tratti misti sono esclusi.</div>
                   </ChartCard>
                 </div>
               )}
@@ -866,13 +675,14 @@ function App() {
               <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>NESSUN DATO</div>
             ) : (<>
               {/* Cost KPIs */}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:24}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:8}}>
                 <StatBox label="SPESA FUEL" value={"€"+fmtN(stats.cost,0)} highlight={true}/>
                 <StatBox label="MANUTENZIONE" value={"€"+fmtN(totalMaintCost,0)} color="#ffa832"/>
-                <StatBox label="ASSICURAZIONE" value={"€1.086"} color="#c080ff"/>
-                <StatBox label="TOTALE POSSESSO" value={"€"+totalOwnership.toLocaleString("it-IT")} highlight={true}/>
-                <StatBox label="€/KM TOTALE" value={stats.km>0?fmtN(totalOwnership/stats.km,3):"—"} unit="€/km"/>
+                <StatBox label="ASSICURAZIONE" value={"€"+fmtN(ownership?ownership.insurance:0,0)} unit="quota maturata" color="#c080ff"/>
+                <StatBox label="TOTALE POSSESSO" value={"€"+fmtN(ownership?ownership.total:0,0)} highlight={true}/>
+                <StatBox label="COSTO TOTALE" value={ownership&&ownership.per100?"€"+fmtN(ownership.per100,1):"—"} unit="ogni 100 km"/>
               </div>
+              {ownership && <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontFamily:"'JetBrains Mono',monospace",marginBottom:24}}>Periodo {fmtDate(ownership.from)} → {fmtDate(ownership.to)} ({Math.round(ownership.days)} giorni coperti dai rifornimenti) · assicurazione {fmtN(INSURANCE.totale,0)} €/anno ripartita per giorni</div>}
 
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
                 {/* Monthly spending */}
@@ -903,27 +713,26 @@ function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
                 {/* Cost of ownership breakdown */}
                 <ChartCard title="Costo Totale di Possesso" icon={PieIcon} height={360}>
+                  {ownership && (<>
                   <div style={{textAlign:"center",marginBottom:20}}>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>TOTALE</div>
-                    <div style={{fontSize:36,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>€ {totalOwnership.toLocaleString("it-IT")}</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>TOTALE NEL PERIODO</div>
+                    <div style={{fontSize:36,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>€ {fmtN(ownership.total,0)}</div>
                   </div>
                   <ResponsiveContainer width="100%" height={140}>
-                    <PieChart><Pie data={costBreakdown} cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={4} dataKey="value" label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`} style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",fill:"rgba(255,255,255,0.5)"}}>
-                      {costBreakdown.map((c,i)=><Cell key={i} fill={c.color} fillOpacity={0.75}/>)}
+                    <PieChart><Pie data={ownership.items} cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={4} dataKey="value" label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`} style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",fill:"rgba(255,255,255,0.5)"}}>
+                      {ownership.items.map((c,i)=><Cell key={i} fill={c.color} fillOpacity={0.75}/>)}
                     </Pie><Tooltip {...TT()} formatter={v=>["€"+v.toLocaleString("it-IT"),"Costo"]}/></PieChart>
                   </ResponsiveContainer>
                   <div style={{marginTop:16}}>
-                    {costBreakdown.map((c,i)=>{
-                      const pct = totalOwnership>0?(c.value/totalOwnership*100):0;
-                      return (<div key={i} style={{marginBottom:10}}>
+                    {ownership.items.map((c,i)=>(<div key={i} style={{marginBottom:10}}>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                          <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{c.name}</span>
-                          <span style={{fontSize:12,fontWeight:600,color:c.color,fontFamily:"'JetBrains Mono',monospace"}}>€{c.value.toLocaleString("it-IT")} <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>({fmtN(pct,0)}%)</span></span>
+                          <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{c.name}{c.note?` (${c.note})`:""}</span>
+                          <span style={{fontSize:12,fontWeight:600,color:c.color,fontFamily:"'JetBrains Mono',monospace"}}>€{c.value.toLocaleString("it-IT")} <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>({fmtN(c.pct,0)}%)</span></span>
                         </div>
-                        <div style={{width:"100%",height:6,borderRadius:3,background:"rgba(255,255,255,0.03)",overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",borderRadius:3,background:c.color,opacity:0.6}}/></div>
-                      </div>);
-                    })}
+                        <div style={{width:"100%",height:6,borderRadius:3,background:"rgba(255,255,255,0.03)",overflow:"hidden"}}><div style={{width:c.pct+"%",height:"100%",borderRadius:3,background:c.color,opacity:0.6}}/></div>
+                      </div>))}
                   </div>
+                  </>)}
                 </ChartCard>
 
                 {/* Maintenance breakdown */}
@@ -945,6 +754,37 @@ function App() {
                       ))}
                     </div>
                   </>)}
+                </ChartCard>
+              </div>
+
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
+                {/* Proiezione annua */}
+                <ChartCard title="Proiezione Annua" icon={Calendar} color="#00c88a">
+                  {projection ? (<>
+                    {[["Km all'anno",fmtN(projection.kmYear,0)+" km"],["Km al mese",fmtN(projection.kmMonth,0)+" km"],["Carburante",projection.fuelYear!=null?"€"+fmtN(projection.fuelYear,0):"—"],["Assicurazione","€"+fmtN(projection.insuranceYear,0)],["Totale all'anno",projection.totalYear!=null?"€"+fmtN(projection.totalYear,0):"—"],["Totale al mese",projection.totalMonth!=null?"€"+fmtN(projection.totalMonth,0):"—"]].map(([l,v],i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
+                        <span style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>{l}</span>
+                        <span style={{fontSize:13,fontWeight:700,color:i>=4?"#00c88a":"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{v}</span>
+                      </div>))}
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontFamily:"'JetBrains Mono',monospace",marginTop:10}}>Al ritmo dei {Math.round(projection.basisDays)} giorni registrati · manutenzione esclusa (spese irregolari)</div>
+                  </>) : <NotEnough text="Servono almeno 30 giorni di rifornimenti per la proiezione"/>}
+                </ChartCard>
+
+                {/* HVO vs B7 */}
+                <ChartCard title="HVO vs B7: quanto costa" icon={Zap} color="#00d4ff">
+                  {hvoVsB7 ? (<>
+                    {[["Prezzo medio HVO",fmtN(hvoVsB7.hvoPrice,3)+" €/L"],["Prezzo medio B7",fmtN(hvoVsB7.b7Price,3)+" €/L"],["Differenza",(hvoVsB7.premium>=0?"+":"")+fmtN(hvoVsB7.premium,3)+" €/L"],["A parità di consumo",hvoVsB7.extraYearByPrice!=null?signEur(hvoVsB7.extraYearByPrice)+" all'anno":"—"]].map(([l,v],i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
+                        <span style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>{l}</span>
+                        <span style={{fontSize:13,fontWeight:700,color:i===3?"#00d4ff":"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{v}</span>
+                      </div>))}
+                    {hvoVsB7.measured && (
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0"}}>
+                        <span style={{fontSize:12,color:"rgba(255,255,255,0.6)",fontFamily:"'JetBrains Mono',monospace"}}>Misurato sui tratti puri<RelBadge level={hvoVsB7.measured.reliability}/></span>
+                        <span style={{fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{hvoVsB7.measured.extraYear!=null?signEur(hvoVsB7.measured.extraYear)+" all'anno":"—"}</span>
+                      </div>)}
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontFamily:"'JetBrains Mono',monospace",marginTop:10}}>"+" = l'HVO ti costa di più. {hvoVsB7.measured?`Il dato misurato considera anche la differenza di consumo, su ${fmtN(hvoVsB7.measured.hvoKm,0)} km HVO e ${fmtN(hvoVsB7.measured.b7Km,0)} km B7.`:"Per il dato misurato servono tratti con un solo carburante."}</div>
+                  </>) : <NotEnough text="Servono rifornimenti sia HVO sia B7"/>}
                 </ChartCard>
               </div>
 
