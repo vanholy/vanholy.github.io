@@ -48,59 +48,97 @@ const SB_URL = 'https://cfejkhmrphjiccyrkblc.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmZWpraG1ycGhqaWNjeXJrYmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNjUzOTEsImV4cCI6MjA4Nzg0MTM5MX0.v2hdI9ZGaKlYi2EwNBWyjGpHSlGpQkaWk3nHEDRI1pM';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// Storage — Supabase con fallback localStorage (stesso schema dell'app mobile)
+// Storage — Supabase con cache localStorage e coda delle modifiche non ancora sincronizzate
+const TABLE = (k) => k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
+const toRow = (k, e) => k === 'ft-v3'
+  ? { id: e.id, date: e.date, liters: e.liters, price_per_liter: e.pricePerLiter, odometer: e.odometer, total_cost: e.totalCost, fuel_type: e.fuelType, full_tank: e.fullTank, notes: e.notes || '' }
+  : { id: e.id, date: e.date, type: e.type, description: e.desc, cost: e.cost, odometer: e.odometer || 0, notes: e.notes || '' };
+const getPend = (k) => { try { return JSON.parse(localStorage.getItem(k + ':pending')) || { up: {}, del: [] }; } catch { return { up: {}, del: [] }; } };
+// Invia a Supabase solo le righe modificate/eliminate (mai "cancella tutto ciò che non conosco": non tocca le righe inserite da un altro dispositivo)
+const flushPend = async (k) => {
+  const p = getPend(k), up = Object.values(p.up);
+  if (!up.length && !p.del.length) return true;
+  try {
+    if (up.length) { const { error } = await sb.from(TABLE(k)).upsert(up.map(e => toRow(k, e)), { onConflict: 'id' }); if (error) throw error; }
+    if (p.del.length) { const { error } = await sb.from(TABLE(k)).delete().in('id', p.del); if (error) throw error; }
+    localStorage.removeItem(k + ':pending');
+    return true;
+  } catch(e) { console.warn('Supabase sync in sospeso:', e.message); return false; }
+};
+
 const loadK = async (k) => {
   try {
     if (k === 'ft-adblue-v1') { const r = localStorage.getItem(k); return r ? JSON.parse(r) : []; }
-    const table = k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
-    const { data, error } = await sb.from(table).select('*').order('date', { ascending: true });
+    const synced = await flushPend(k);
+    const { data, error } = await sb.from(TABLE(k)).select('*').order('date', { ascending: true });
     if (error) throw error;
-    if (k === 'ft-v3') {
-      return data.map(r => ({ id: r.id, date: r.date, liters: Number(r.liters), pricePerLiter: Number(r.price_per_liter), odometer: r.odometer, totalCost: Number(r.total_cost), fuelType: r.fuel_type, fullTank: r.full_tank, notes: r.notes || '' }));
-    } else {
-      return data.map(r => ({ id: r.id, date: r.date, type: r.type, desc: r.description, cost: Number(r.cost), odometer: r.odometer || 0, notes: r.notes || '' }));
-    }
+    let rows = k === 'ft-v3' ? data.map(r => ({ id: r.id, date: r.date, liters: Number(r.liters), pricePerLiter: Number(r.price_per_liter), odometer: r.odometer, totalCost: Number(r.total_cost), fuelType: r.fuel_type, fullTank: r.full_tank, notes: r.notes || '' })) : data.map(r => ({ id: r.id, date: r.date, type: r.type, desc: r.description, cost: Number(r.cost), odometer: r.odometer || 0, notes: r.notes || '' }));
+    if (!synced) { const p = getPend(k); rows = rows.filter(r => !p.del.includes(r.id) && !p.up[r.id]).concat(Object.values(p.up)); }
+    return rows;
   } catch(e) {
     console.warn('Supabase load fallback:', e.message);
     try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : []; } catch { return []; }
   }
 };
 
-const saveK = async (k, v) => {
-  try {
-    if (k === 'ft-adblue-v1') { localStorage.setItem(k, JSON.stringify(v)); return; }
-    const table = k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
-    const rows = k === 'ft-v3'
-      ? v.map(e => ({ id: e.id, date: e.date, liters: e.liters, price_per_liter: e.pricePerLiter, odometer: e.odometer, total_cost: e.totalCost, fuel_type: e.fuelType, full_tank: e.fullTank, notes: e.notes || '' }))
-      : v.map(e => ({ id: e.id, date: e.date, type: e.type, description: e.desc, cost: e.cost, odometer: e.odometer || 0, notes: e.notes || '' }));
-    if (rows.length > 0) {
-      const { error } = await sb.from(table).upsert(rows, { onConflict: 'id' });
-      if (error) throw error;
-      const ids = v.map(e => e.id);
-      await sb.from(table).delete().not('id', 'in', `(${ids.map(i => `"${i}"`).join(',')})`);
-    } else {
-      await sb.from(table).delete().neq('id', '___none___');
-    }
-    localStorage.setItem(k, JSON.stringify(v));
-  } catch(e) {
-    console.warn('Supabase save fallback:', e.message);
-    try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
-  }
+// ch = { up: [righe nuove/modificate], del: [id eliminati] }
+const saveK = async (k, v, ch = {}) => {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+  if (k === 'ft-adblue-v1') return true;
+  const p = getPend(k);
+  (ch.up || []).forEach(e => { p.up[e.id] = e; p.del = p.del.filter(id => id !== e.id); });
+  (ch.del || []).forEach(id => { delete p.up[id]; if (!p.del.includes(id)) p.del.push(id); });
+  try { localStorage.setItem(k + ':pending', JSON.stringify(p)); } catch {}
+  return flushPend(k);
 };
 
+const TANK_CAP = 71;
+const isMissed = (e) => /\[missed\]/i.test(e.notes || "");
+const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+
 // Consumo "full-to-full": accumula i rifornimenti parziali e misura la distanza dall'ultimo pieno completo.
+// Segmento con un rifornimento non registrato (nota "[MISSED]", da Fuelio) → consumo non calcolabile.
+// calc.fuel = carburante bruciato nel segmento (quello presente nel serbatoio mentre si guida, ≥80% del volume), null se misto.
 const enrich = (sorted) => {
   const out = sorted.map(e => ({ ...e, calc: null }));
-  let lastFull = -1, L = 0, cost = 0;
+  const seg = sorted.map(() => -1);                                   // pieno che chiude il segmento in cui ricadono i km prima di e
+  let lastFull = -1, L = 0, cost = 0, missed = false;
   for (let i = 0; i < sorted.length; i++) {
     const e = sorted[i];
-    if (lastFull >= 0) { L += e.liters; cost += e.totalCost; }       // include anche i parziali nel segmento
+    if (lastFull >= 0) { L += e.liters; cost += e.totalCost; if (isMissed(e)) missed = true; }   // include anche i parziali
     if (e.fullTank) {
       const km = lastFull >= 0 ? e.odometer - sorted[lastFull].odometer : 0;
-      if (km > 0) { out[i].calc = { kmDriven: km, lPer100: L / km * 100, costPerKm: cost / km, liters: L, cost }; lastFull = i; L = 0; cost = 0; }
-      else if (lastFull < 0) { lastFull = i; }                        // primo pieno = baseline
+      if (km > 0) {
+        if (!missed) out[i].calc = { kmDriven: km, lPer100: L / km * 100, costPerKm: cost / km, liters: L, cost, fuel: null };
+        for (let j = lastFull + 1; j <= i; j++) seg[j] = i;
+        lastFull = i; L = 0; cost = 0; missed = false;
+      } else if (lastFull < 0) { lastFull = i; }                    // primo pieno = baseline
     }
   }
+  // Simula la composizione del serbatoio per sapere quale carburante è stato bruciato in ogni segmento
+  const done = out.filter(e => e.calc), sumKm = done.reduce((s, e) => s + e.calc.kmDriven, 0);
+  const avgRate = sumKm > 0 ? done.reduce((s, e) => s + e.calc.liters, 0) / sumKm * 100 : 7;
+  const tank = {}, burned = {};
+  const tot = () => Object.values(tank).reduce((a, b) => a + b, 0);
+  for (let i = 0; i < sorted.length; i++) {
+    const e = sorted[i];
+    if (i === 0) { tank[e.fuelType] = e.fullTank ? TANK_CAP : e.liters; continue; }   // residuo iniziale ignoto: si assume stesso carburante
+    const t = tot(), s = seg[i];
+    const rate = s >= 0 && out[s].calc ? out[s].calc.lPer100 : avgRate;
+    const want = e.fullTank ? t - (TANK_CAP - e.liters) : (e.odometer - sorted[i - 1].odometer) * rate / 100;
+    const b = Math.min(t, Math.max(0, want));
+    if (t > 0 && b > 0) {
+      const r = b / t;
+      for (const f in tank) { const x = tank[f] * r; tank[f] -= x; if (s >= 0) { burned[s] = burned[s] || {}; burned[s][f] = (burned[s][f] || 0) + x; } }
+    }
+    tank[e.fuelType] = (tank[e.fuelType] || 0) + e.liters;
+    const t2 = tot(); if (t2 > TANK_CAP) for (const f in tank) tank[f] *= TANK_CAP / t2;
+  }
+  out.forEach((e, i) => {
+    if (!e.calc) return;
+    const b = Object.entries(burned[i] || {}).sort((x, y) => y[1] - x[1]), sum = b.reduce((a, x) => a + x[1], 0);
+    e.calc.fuel = sum > 0 && b[0][1] / sum >= 0.8 ? b[0][0] : null;
+  });
   return out;
 };
 const dl = (content, name, type) => { const b = new Blob([content], { type }); const u = URL.createObjectURL(b); const a = Object.assign(document.createElement("a"), { href: u, download: name }); document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u); };
@@ -114,20 +152,20 @@ const parseFuelioCSV = (text) => {
   const pL = (line) => { const r=[]; let c="",q=false; for(let i=0;i<line.length;i++){const ch=line[i]; if(ch==='"')q=!q; else if(ch===','&&!q){r.push(c.trim());c="";}else c+=ch;} r.push(c.trim()); return r; };
   const h=pL(lines[logStart+1]).map(x=>x.toLowerCase()); const entries=[];
   const iD=h.findIndex(x=>x.includes("data")),iO=h.findIndex(x=>x.includes("odo")),iF=h.findIndex(x=>x.includes("fuel")&&!x.includes("type")),
-    iFl=h.findIndex(x=>x.includes("full")),iP=h.findIndex(x=>x.includes("price")&&!x.includes("volume")),iN=h.findIndex(x=>x.includes("notes")),iVP=h.findIndex(x=>x.includes("volumeprice"));
+    iFl=h.findIndex(x=>x.includes("full")),iP=h.findIndex(x=>x.includes("price")&&!x.includes("volume")),iN=h.findIndex(x=>x.includes("notes")),iVP=h.findIndex(x=>x.includes("volumeprice")),iM=h.findIndex(x=>x==="missed");
   if(iD===-1||iO===-1||iF===-1) return null;
   let logEnd=lines.length; for(let i=logStart+2;i<lines.length;i++){if(lines[i].replace(/"/g,"").trim().startsWith("##")){logEnd=i;break;}}
   for(let i=logStart+2;i<logEnd;i++){const cols=pL(lines[i]); if(cols.length<3)continue;
-    const date=cols[iD],odo=parseFloat(cols[iO]),lit=parseFloat(cols[iF]),full=iFl>=0?cols[iFl]==="1":true,notes=iN>=0?(cols[iN]||""):"";
+    const date=cols[iD],odo=parseFloat(cols[iO]),lit=parseFloat(cols[iF]),full=iFl>=0?cols[iFl]==="1":true,notes0=iN>=0?(cols[iN]||""):"",notes=iM>=0&&cols[iM]==="1"?`[MISSED] ${notes0}`.trim():notes0;
     if(!date||isNaN(odo)||isNaN(lit)||lit<=0)continue; let ppl=0;
     if(iVP>=0&&cols[iVP]){const vp=parseFloat(cols[iVP]);if(!isNaN(vp)&&vp>0&&vp<10)ppl=vp;}
     if(ppl===0&&iP>=0&&cols[iP]){const tp=parseFloat(cols[iP]);if(!isNaN(tp)&&tp>0)ppl=tp>lit*5?tp/lit:tp<5?tp:tp/lit;}
     entries.push({id:genId(),date:date.slice(0,10),odometer:Math.round(odo),liters:Math.round(lit*1000)/1000,pricePerLiter:Math.round(ppl*1000)/1000,totalCost:Math.round(lit*ppl*100)/100,fullTank:full,fuelType:detectFuel(notes),notes});
   } return entries.length>0?entries:null;
 };
-const exportFuelio=(entries)=>{const s=[...entries].sort((a,b)=>a.odometer-b.odometer);const l=['"## Vehicle"','"Name","Description","DistUnit","FuelUnit","ConsumptionUnit","ImportCSVDateFormat","VIN","Insurance","Plate","Make","Model","Year","TankCount","Tank1Type","Tank2Type","Active","Tank1Capacity","Tank2Capacity"','"Ford Galaxy 2.0 EcoBlue","","1","1","1","yyyy-MM-dd","WF0KXXWPCKJP17573","","FV695GW","Ford","Galaxy","2019","1","100","0","1","71.0","0.0"','"## Log"','"Data","Odo (km)","Fuel (litres)","Full","Price (optional)","l/100km (optional)","latitude (optional)","longitude (optional)","City (optional)","Notes (optional)","Missed","TankNumber","FuelType","VolumePrice","StationID (optional)","ExcludeDistance","UniqueId","TankCalc"'];s.forEach(e=>{const n=e.fuelType!=="B7"?`[${e.fuelType}] ${e.notes||""}`.trim():(e.notes||"");l.push(`"${e.date}","${e.odometer}","${e.liters.toFixed(3)}","${e.fullTank?1:0}","${e.totalCost.toFixed(2)}","0.0","","","","${n}","0","1","102","${e.pricePerLiter.toFixed(3)}","0","0.0","0","0.0"`);});dl(l.join("\n"),`galaxy_fuelio_${new Date().toISOString().slice(0,10)}.csv`,"text/csv;charset=utf-8");};
-const exportCSV=(entries)=>{const s=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));dl(["Data;Tipo;Litri;Prezzo/L;Totale;Odometro;Pieno;Note",...s.map(e=>`${e.date};${e.fuelType};${e.liters};${e.pricePerLiter};${e.totalCost.toFixed(2)};${e.odometer};${e.fullTank?"Si":"No"};${(e.notes||"").replace(/;/g,",")}`)].join("\n"),`galaxy_consumi_${new Date().toISOString().slice(0,10)}.csv`,"text/csv;charset=utf-8");};
-const exportJSON=(entries,maint)=>{dl(JSON.stringify({app:"Ford Galaxy Fuel Tracker",v:3,date:new Date().toISOString(),entries,maintenance:maint},null,2),`galaxy_backup_${new Date().toISOString().slice(0,10)}.json`,"application/json");};
+const exportFuelio=(entries)=>{const s=[...entries].sort((a,b)=>a.odometer-b.odometer);const l=['"## Vehicle"','"Name","Description","DistUnit","FuelUnit","ConsumptionUnit","ImportCSVDateFormat","VIN","Insurance","Plate","Make","Model","Year","TankCount","Tank1Type","Tank2Type","Active","Tank1Capacity","Tank2Capacity"','"Ford Galaxy 2.0 EcoBlue","","1","1","1","yyyy-MM-dd","WF0KXXWPCKJP17573","","FV695GW","Ford","Galaxy","2019","1","100","0","1","71.0","0.0"','"## Log"','"Data","Odo (km)","Fuel (litres)","Full","Price (optional)","l/100km (optional)","latitude (optional)","longitude (optional)","City (optional)","Notes (optional)","Missed","TankNumber","FuelType","VolumePrice","StationID (optional)","ExcludeDistance","UniqueId","TankCalc"'];s.forEach(e=>{const n=e.fuelType!=="B7"?`[${e.fuelType}] ${e.notes||""}`.trim():(e.notes||"");l.push(`"${e.date}","${e.odometer}","${e.liters.toFixed(3)}","${e.fullTank?1:0}","${e.totalCost.toFixed(2)}","0.0","","","","${n}","${isMissed(e)?1:0}","1","102","${e.pricePerLiter.toFixed(3)}","0","0.0","0","0.0"`);});dl(l.join("\n"),`galaxy_fuelio_${today()}.csv`,"text/csv;charset=utf-8");};
+const exportCSV=(entries)=>{const s=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));dl(["Data;Tipo;Litri;Prezzo/L;Totale;Odometro;Pieno;Note",...s.map(e=>`${e.date};${e.fuelType};${e.liters};${e.pricePerLiter};${e.totalCost.toFixed(2)};${e.odometer};${e.fullTank?"Si":"No"};${(e.notes||"").replace(/;/g,",")}`)].join("\n"),`galaxy_consumi_${today()}.csv`,"text/csv;charset=utf-8");};
+const exportJSON=(entries,maint)=>{dl(JSON.stringify({app:"Ford Galaxy Fuel Tracker",v:3,date:new Date().toISOString(),entries,maintenance:maint},null,2),`galaxy_backup_${today()}.json`,"application/json");};
 
 // Vehicle data
 const VEHICLE = {
@@ -212,67 +250,6 @@ const StatBox = ({label, value, unit, highlight, color="#fff", small}) => (
   </div>
 );
 
-// ═══ CETANE CALCULATOR ═══
-const CetaneCalc = ({tankComp}) => {
-  const [targetCetane, setTargetCetane] = React.useState("60");
-  const CAP = 71;
-  const space = CAP - tankComp.total;
-  const target = parseFloat(targetCetane);
-  const currentCetane = tankComp.cetane;
-  const results = React.useMemo(() => {
-    if (!target || target < 40 || target > 80 || tankComp.total <= 0) return null;
-    const calc = (fuelCetane, name) => {
-      if (Math.abs(currentCetane - target) < 0.01) return { name, liters: 0, possible: true, note: "Cetano già al target" };
-      if (Math.abs(fuelCetane - target) < 0.01) return { name, liters: 0, possible: false, note: "Target non raggiungibile" };
-      const needed = tankComp.total * (target - currentCetane) / (fuelCetane - target);
-      if (needed < 0) return { name, liters: 0, possible: false, note: fuelCetane < target ? "CN troppo basso" : "CN troppo alto" };
-      return { name, liters: Math.min(needed, space), possible: needed <= space, full: needed, note: needed > space ? `Servirebbero ${fmtN(needed,1)}L (spazio: ${fmtN(space,1)}L)` : null };
-    };
-    return [calc(CETANE.HVO, "HVO"), calc(CETANE["Diesel+"], "Diesel+"), calc(CETANE.B7, "B7")];
-  }, [target, tankComp, currentCetane, space]);
-  return (
-    <ChartCard title="Calcolatore Cetano" icon={Target} color="#00c88a">
-      <div style={{marginBottom:14}}>
-        <div style={{fontSize:12,color:"rgba(0,200,140,0.8)",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",fontWeight:600,marginBottom:6}}>CETANO DESIDERATO</div>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <input type="range" min="45" max="75" step="0.5" value={targetCetane} onChange={e=>setTargetCetane(e.target.value)} style={{flex:1,accentColor:"#00c88a"}}/>
-          <input type="number" min="40" max="80" step="0.5" value={targetCetane} onChange={e=>setTargetCetane(e.target.value)} style={{width:70,padding:"6px 10px",background:"rgba(0,200,140,0.06)",border:"1px solid rgba(0,200,140,0.2)",borderRadius:6,color:"#00c88a",fontSize:16,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",outline:"none"}}/>
-        </div>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"'JetBrains Mono',monospace"}}><span>45</span><span>Cetano attuale: {fmtN(currentCetane,1)}</span><span>75</span></div>
-      </div>
-      {results && (
-        <div style={{display:"grid",gap:8}}>
-          {results.map(r => (
-            <div key={r.name} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:`rgba(${r.name==="HVO"?"0,212,255":r.name==="Diesel+"?"255,140,0":"240,192,0"},0.03)`,borderRadius:8,border:`1px solid rgba(${r.name==="HVO"?"0,212,255":r.name==="Diesel+"?"255,140,0":"240,192,0"},0.08)`}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:3,height:28,borderRadius:2,background:FC[r.name]}}/>
-                <div>
-                  <div style={{fontSize:12,fontWeight:700,color:FC[r.name],fontFamily:"'JetBrains Mono',monospace"}}>{r.name}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace",marginTop:1}}>Cetano: {CETANE[r.name]}</div>
-                </div>
-              </div>
-              <div style={{textAlign:"right"}}>
-                {r.possible && r.liters > 0 ? (
-                  <><div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(r.liters,1)} L</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",fontFamily:"'JetBrains Mono',monospace"}}>da aggiungere</div></>
-                ) : r.liters === 0 && r.possible ? (
-                  <div style={{fontSize:10,color:"rgba(0,200,140,0.5)",fontFamily:"'JetBrains Mono',monospace"}}>{r.note}</div>
-                ) : !r.possible && r.full ? (
-                  <><div style={{fontSize:14,fontWeight:700,color:"rgba(255,255,255,0.4)",fontFamily:"'JetBrains Mono',monospace"}}>{fmtN(Math.min(r.full,space),1)} L</div>
-                  <div style={{fontSize:11,color:"rgba(255,80,80,0.5)",fontFamily:"'JetBrains Mono',monospace"}}>{r.note}</div></>
-                ) : (
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.15)",fontFamily:"'JetBrains Mono',monospace"}}>{r.note}</div>
-                )}
-              </div>
-            </div>
-          ))}
-          <div style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"'JetBrains Mono',monospace",marginTop:4}}>Spazio disponibile: {fmtN(space,1)} L</div>
-        </div>
-      )}
-    </ChartCard>
-  );
-};
-
 // ═══ AXIS STYLE ═══
 const AX = {tick:{fill:"rgba(255,255,255,0.55)",fontSize:10,fontFamily:"'JetBrains Mono',monospace"}};
 const GRID = <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,100,200,0.06)"/>;
@@ -287,10 +264,10 @@ function App() {
   const [editId, setEditId] = useState(null);
   const [editMaintId, setEditMaintId] = useState(null);
   const [msg, setMsg] = useState(null);
-  const [form, setForm] = useState({ date: new Date().toISOString().slice(0,10), liters:"", price:"", odo:"", fuel:"HVO", full:true, notes:"" });
-  const [mForm, setMForm] = useState({ date: new Date().toISOString().slice(0,10), type:"Tagliando", desc:"", cost:"", odo:"", notes:"" });
+  const [form, setForm] = useState({ date: today(), liters:"", price:"", odo:"", fuel:"HVO", full:true, notes:"" });
+  const [mForm, setMForm] = useState({ date: today(), type:"Tagliando", desc:"", cost:"", odo:"", notes:"" });
   const [adblue, setAdblue] = useState([]);
-  const [abForm, setAbForm] = useState({ date: new Date().toISOString().slice(0,10), liters:"", cost:"", odo:"", notes:"" });
+  const [abForm, setAbForm] = useState({ date: today(), liters:"", cost:"", odo:"", notes:"" });
   const [editAbId, setEditAbId] = useState(null);
   const [infoTab, setInfoTab] = useState("veicolo");
 
@@ -305,7 +282,8 @@ function App() {
 
   const stats = useMemo(() => {
     const cost = entries.reduce((s,e) => s+e.totalCost, 0);
-    const monthCount = new Set(entries.map(e=>e.date.slice(0,7))).size;
+    const months = entries.map(e=>e.date.slice(0,7)).sort();
+    const monthCount = months.length ? (+months.at(-1).slice(0,4) - +months[0].slice(0,4))*12 + (+months.at(-1).slice(5) - +months[0].slice(5)) + 1 : 0;
     return {
       n: entries.length, liters: entries.reduce((s,e) => s+e.liters, 0), cost,
       km: withCalc.reduce((s,e) => s+e.calc.kmDriven, 0), avgL: withCalc.length ? withCalc.reduce((s,e) => s+e.calc.liters, 0)/withCalc.reduce((s,e) => s+e.calc.kmDriven, 0)*100 : null,
@@ -315,14 +293,14 @@ function App() {
       minC: withCalc.length ? Math.min(...withCalc.map(e=>e.calc.costPerKm)) : null,
       maxC: withCalc.length ? Math.max(...withCalc.map(e=>e.calc.costPerKm)) : null,
       avgLiters: entries.length ? entries.reduce((s,e)=>s+e.liters,0)/entries.length : null,
-      avgPrice: entries.length ? entries.reduce((s,e)=>s+e.pricePerLiter,0)/entries.length : null,
+      avgPrice: entries.length ? cost/entries.reduce((s,e)=>s+e.liters,0) : null,
       avgDist: withCalc.length ? withCalc.reduce((s,e)=>s+e.calc.kmDriven,0)/withCalc.length : null,
       avgMonthly: monthCount > 0 ? cost / monthCount : null,
     };
   }, [entries, withCalc]);
 
   const byFuel = useMemo(() => FUEL_TYPES.map(ft => {
-    const f=withCalc.filter(e=>e.fuelType===ft), all=entries.filter(e=>e.fuelType===ft);
+    const f=withCalc.filter(e=>e.calc.fuel===ft), all=entries.filter(e=>e.fuelType===ft);
     return { type:ft, count:all.length, avgL:f.length?f.reduce((s,e)=>s+e.calc.liters,0)/f.reduce((s,e)=>s+e.calc.kmDriven,0)*100:null, avgC:f.length?f.reduce((s,e)=>s+e.calc.cost,0)/f.reduce((s,e)=>s+e.calc.kmDriven,0):null, liters:all.reduce((s,e)=>s+e.liters,0), cost:all.reduce((s,e)=>s+e.totalCost,0), minL:f.length?Math.min(...f.map(e=>e.calc.lPer100)):null, maxL:f.length?Math.max(...f.map(e=>e.calc.lPer100)):null };
   }).filter(s => s.count > 0), [entries, withCalc]);
 
@@ -360,7 +338,7 @@ function App() {
   }, [sorted, stats.avgL]);
 
   // Chart data
-  const chartData = useMemo(() => withCalc.map(e => ({ date:fmtDate(e.date), dateFull:e.date, "l/100km":+e.calc.lPer100.toFixed(2), "€/km":+e.calc.costPerKm.toFixed(3), km:e.calc.kmDriven, liters:e.calc.liters, cost:e.calc.cost, fuel:e.fuelType })), [withCalc]);
+  const chartData = useMemo(() => withCalc.map(e => ({ date:fmtDate(e.date), dateFull:e.date, "l/100km":+e.calc.lPer100.toFixed(2), "€/km":+e.calc.costPerKm.toFixed(3), km:e.calc.kmDriven, liters:e.calc.liters, cost:e.calc.cost, fuel:e.calc.fuel||"Mix" })), [withCalc]);
 
   // Rolling average (5-point)
   const rollingAvg = useMemo(() => {
@@ -380,7 +358,7 @@ function App() {
       "l/100km": x.km>0?+(x.totL/x.km*100).toFixed(2):null,
       "€/km": x.km>0?+((x.totC||0)/x.km).toFixed(3):null,
       "€/L": x.liters>0?+(x.cost/x.liters).toFixed(3):null,
-      B7:x.types["B7"]||0, HVO:x.types["HVO"]||0, Mix:x.types["Mix"]||0,
+      B7:x.types["B7"]||0, HVO:x.types["HVO"]||0, "Diesel+":x.types["Diesel+"]||0, Mix:x.types["Mix"]||0,
     }));
   }, [entries, withCalc]);
 
@@ -407,14 +385,14 @@ function App() {
   }, [withCalc]);
 
   // Distance between fills
-  const distData = useMemo(() => withCalc.map(e => ({date:fmtDate(e.date),km:e.calc.kmDriven,fuel:e.fuelType})), [withCalc]);
+  const distData = useMemo(() => withCalc.map(e => ({date:fmtDate(e.date),km:e.calc.kmDriven,fuel:e.calc.fuel||"Mix"})), [withCalc]);
 
   // Fill size distribution
   const fillSizes = useMemo(() => {
-    const buckets = [0,20,30,40,50,60,71];
+    const buckets = [0,20,30,40,50,60,Infinity];
     const counts = Array(buckets.length-1).fill(0);
     entries.forEach(e => { for(let i=0;i<buckets.length-1;i++){if(e.liters>=buckets[i]&&e.liters<buckets[i+1]){counts[i]++;break;}} });
-    return buckets.slice(0,-1).map((b,i) => ({range:`${b}-${buckets[i+1]}L`,count:counts[i]}));
+    return buckets.slice(0,-1).map((b,i) => ({range:isFinite(buckets[i+1])?`${b}-${buckets[i+1]}L`:`${b}+L`,count:counts[i]}));
   }, [entries]);
 
   // Maintenance by type
@@ -433,23 +411,23 @@ function App() {
   const totalOwnership = costBreakdown.reduce((s,x)=>s+x.value,0);
 
   // Efficiency scatter (km driven vs l/100km)
-  const scatterData = useMemo(() => withCalc.map(e=>({km:e.calc.kmDriven,"l/100km":+e.calc.lPer100.toFixed(2),fuel:e.fuelType,date:fmtDate(e.date)})), [withCalc]);
+  const scatterData = useMemo(() => withCalc.map(e=>({km:e.calc.kmDriven,"l/100km":+e.calc.lPer100.toFixed(2),fuel:e.calc.fuel||"Mix",date:fmtDate(e.date)})), [withCalc]);
 
   // ═══ HANDLERS ═══
   const handleSubmit = async () => {
     const liters=parseFloat(form.liters),price=parseFloat(form.price),odo=parseInt(form.odo); if(!liters||!price||!odo) return;
     const entry = { id:editId||genId(), date:form.date, liters, pricePerLiter:price, odometer:odo, totalCost:Math.round(liters*price*100)/100, fuelType:form.fuel, fullTank:form.full, notes:form.notes };
-    const u = editId ? entries.map(e=>e.id===editId?entry:e) : [...entries,entry]; setEntries(u); await saveK("ft-v3",u);
-    setForm({date:new Date().toISOString().slice(0,10),liters:"",price:"",odo:"",fuel:"HVO",full:true,notes:""}); setEditId(null); setView("dash"); showMsg(true,"Rifornimento salvato");
+    const u = editId ? entries.map(e=>e.id===editId?entry:e) : [...entries,entry]; setEntries(u); await saveK("ft-v3",u,{up:[entry]});
+    setForm({date:today(),liters:"",price:"",odo:"",fuel:"HVO",full:true,notes:""}); setEditId(null); setView("dash"); showMsg(true,"Rifornimento salvato");
   };
   const handleMaintSubmit = async () => {
     const cost=parseFloat(mForm.cost),odo=mForm.odo?parseInt(mForm.odo):0; if(!mForm.desc||isNaN(cost)) return;
     const entry = { id:editMaintId||genId(), date:mForm.date, type:mForm.type, desc:mForm.desc, cost, odometer:odo, notes:mForm.notes };
-    const u = editMaintId ? maint.map(m=>m.id===editMaintId?entry:m) : [...maint,entry]; setMaint(u); await saveK("ft-maint-v3",u);
-    setMForm({date:new Date().toISOString().slice(0,10),type:"Tagliando",desc:"",cost:"",odo:"",notes:""}); setEditMaintId(null); showMsg(true,"Spesa registrata");
+    const u = editMaintId ? maint.map(m=>m.id===editMaintId?entry:m) : [...maint,entry]; setMaint(u); await saveK("ft-maint-v3",u,{up:[entry]});
+    setMForm({date:today(),type:"Tagliando",desc:"",cost:"",odo:"",notes:""}); setEditMaintId(null); showMsg(true,"Spesa registrata");
   };
-  const handleDelete = async (id) => { const u=entries.filter(e=>e.id!==id); setEntries(u); await saveK("ft-v3",u); };
-  const handleDeleteMaint = async (id) => { const u=maint.filter(m=>m.id!==id); setMaint(u); await saveK("ft-maint-v3",u); };
+  const handleDelete = async (id) => { const u=entries.filter(e=>e.id!==id); setEntries(u); await saveK("ft-v3",u,{del:[id]}); };
+  const handleDeleteMaint = async (id) => { const u=maint.filter(m=>m.id!==id); setMaint(u); await saveK("ft-maint-v3",u,{del:[id]}); };
   const handleEdit = (e) => { setForm({date:e.date,liters:""+e.liters,price:""+e.pricePerLiter,odo:""+e.odometer,fuel:e.fuelType,full:e.fullTank,notes:e.notes||""}); setEditId(e.id); setView("add"); };
   const handleEditMaint = (m) => { setMForm({date:m.date,type:m.type,desc:m.desc,cost:""+m.cost,odo:m.odometer?""+m.odometer:"",notes:m.notes||""}); setEditMaintId(m.id); setView("maint"); };
   // AdBlue handlers
@@ -457,7 +435,7 @@ function App() {
     const liters=parseFloat(abForm.liters),cost=parseFloat(abForm.cost)||0,odo=parseInt(abForm.odo); if(!liters||!odo) return;
     const entry = { id:editAbId||genId(), date:abForm.date, liters, cost, odometer:odo, notes:abForm.notes||"" };
     const u = editAbId ? adblue.map(a=>a.id===editAbId?entry:a) : [...adblue,entry]; setAdblue(u); await saveK("ft-adblue-v1",u);
-    setAbForm({date:new Date().toISOString().slice(0,10),liters:"",cost:"",odo:"",notes:""}); setEditAbId(null); showMsg(true,"AdBlue registrato");
+    setAbForm({date:today(),liters:"",cost:"",odo:"",notes:""}); setEditAbId(null); showMsg(true,"AdBlue registrato");
   };
   const handleAbDelete = async (id) => { const u=adblue.filter(a=>a.id!==id); setAdblue(u); await saveK("ft-adblue-v1",u); };
   const handleAbEdit = (a) => { setAbForm({date:a.date,liters:""+a.liters,cost:a.cost?""+a.cost:"",odo:""+a.odometer,notes:a.notes||""}); setEditAbId(a.id); setView("adblue"); };
@@ -469,7 +447,7 @@ function App() {
     const totalL = abSorted.reduce((s,a)=>s+a.liters,0);
     const totalCost = abSorted.reduce((s,a)=>s+(a.cost||0),0);
     const kmSpan = abSorted[abSorted.length-1].odometer - abSorted[0].odometer;
-    const lPer1000 = kmSpan > 0 ? (totalL / kmSpan) * 1000 : null;
+    const lPer1000 = kmSpan > 0 ? ((totalL - abSorted[0].liters) / kmSpan) * 1000 : null;
     const avgInterval = kmSpan / (abSorted.length - 1);
     const lastOdo = abSorted[abSorted.length-1].odometer;
     const currentOdo = entries.length ? Math.max(...entries.map(e=>e.odometer)) : lastOdo;
@@ -478,15 +456,15 @@ function App() {
     return { totalL, totalCost, kmSpan, lPer1000, avgInterval: Math.round(avgInterval), lastOdo, kmSinceLast, estNextKm, count: abSorted.length };
   }, [abSorted, entries]);
 
-  const handleReset = async () => { if(confirm("Cancellare TUTTI i dati?")){setEntries([]);setMaint([]);setAdblue([]);await saveK("ft-v3",[]);await saveK("ft-maint-v3",[]);await saveK("ft-adblue-v1",[]);} };
+  const handleReset = async () => { if(confirm("Cancellare TUTTI i dati?")){setEntries([]);setMaint([]);setAdblue([]);await saveK("ft-v3",[],{del:entries.map(e=>e.id)});await saveK("ft-maint-v3",[],{del:maint.map(m=>m.id)});await saveK("ft-adblue-v1",[]);} };
   const handleImportJSON = async (e) => { const file=e.target.files?.[0]; if(!file)return; try{const data=JSON.parse(await file.text()); const imp=data.entries||data;
     if(!Array.isArray(imp)||!imp.length){showMsg(false,"File non valido");return;} const keys=new Set(entries.map(e=>`${e.date}-${e.odometer}`));
     const added=imp.filter(e=>e.date&&e.odometer&&!keys.has(`${e.date}-${e.odometer}`)).map(e=>({...e,id:e.id||genId(),totalCost:e.totalCost||e.liters*e.pricePerLiter,fullTank:e.fullTank!==false}));
-    const m=[...entries,...added]; setEntries(m); await saveK("ft-v3",m); if(data.maintenance){const mk=new Set(maint.map(m=>m.id));const am=data.maintenance.filter(m=>!mk.has(m.id));const mm=[...maint,...am];setMaint(mm);await saveK("ft-maint-v3",mm);}
+    const m=[...entries,...added]; setEntries(m); await saveK("ft-v3",m,{up:added}); if(data.maintenance){const mk=new Set(maint.map(m=>m.id));const am=data.maintenance.filter(m=>!mk.has(m.id));const mm=[...maint,...am];setMaint(mm);await saveK("ft-maint-v3",mm,{up:am});}
     showMsg(true,`${added.length} rifornimenti importati`);}catch{showMsg(false,"Errore JSON");} e.target.value=""; };
   const handleImportFuelio = async (e) => { const file=e.target.files?.[0]; if(!file)return; try{const parsed=parseFuelioCSV(await file.text());
     if(!parsed){showMsg(false,"Formato Fuelio non riconosciuto");return;} const keys=new Set(entries.map(e=>`${e.date}-${e.odometer}`));
-    const added=parsed.filter(e=>!keys.has(`${e.date}-${e.odometer}`)); const m=[...entries,...added]; setEntries(m); await saveK("ft-v3",m);
+    const added=parsed.filter(e=>!keys.has(`${e.date}-${e.odometer}`)); const m=[...entries,...added]; setEntries(m); await saveK("ft-v3",m,{up:added});
     showMsg(true,`${added.length} importati da Fuelio`);}catch(err){showMsg(false,"Errore: "+err.message);} e.target.value=""; };
 
   // ═══ STYLES ═══
@@ -780,6 +758,7 @@ function App() {
                       <Tooltip {...TT()} formatter={(v,name)=>[v,name]}/>
                       <Scatter data={scatterData.filter(d=>d.fuel==="B7")} fill={FC.B7} name="B7" fillOpacity={0.7}/>
                       <Scatter data={scatterData.filter(d=>d.fuel==="HVO")} fill={FC.HVO} name="HVO" fillOpacity={0.7}/>
+                      <Scatter data={scatterData.filter(d=>d.fuel==="Diesel+")} fill={FC["Diesel+"]} name="Diesel+" fillOpacity={0.7}/>
                       <Scatter data={scatterData.filter(d=>d.fuel==="Mix")} fill={FC.Mix} name="Mix" fillOpacity={0.7}/>
                     </ScatterChart></ResponsiveContainer>
                   </ChartCard>
@@ -813,6 +792,7 @@ function App() {
                       <Tooltip {...TT()}/>
                       <Bar dataKey="B7" stackId="a" fill={FC.B7} fillOpacity={0.7}/>
                       <Bar dataKey="HVO" stackId="a" fill={FC.HVO} fillOpacity={0.7} radius={[3,3,0,0]}/>
+                      <Bar dataKey="Diesel+" stackId="a" fill={FC["Diesel+"]} fillOpacity={0.7}/>
                       <Bar dataKey="Mix" stackId="a" fill={FC.Mix} fillOpacity={0.7}/>
                     </BarChart></ResponsiveContainer>
                   </ChartCard>
@@ -1006,7 +986,7 @@ function App() {
             </div>
             <div style={{display:"flex",gap:12}}>
               <button style={s.btn} onClick={handleSubmit}>{editId?"SALVA MODIFICHE":"REGISTRA RIFORNIMENTO"}</button>
-              {editId&&<button style={s.btnSec} onClick={()=>{setEditId(null);setForm({date:new Date().toISOString().slice(0,10),liters:"",price:"",odo:"",fuel:"HVO",full:true,notes:""});}}>ANNULLA</button>}
+              {editId&&<button style={s.btnSec} onClick={()=>{setEditId(null);setForm({date:today(),liters:"",price:"",odo:"",fuel:"HVO",full:true,notes:""});}}>ANNULLA</button>}
             </div>
           </div>
         )}
@@ -1060,7 +1040,7 @@ function App() {
               </div>
               <div style={{display:"flex",gap:12}}>
                 <button style={{...s.btn,background:"linear-gradient(135deg,#ff8c00,#cc6600)"}} onClick={handleMaintSubmit}>{editMaintId?"SALVA":"REGISTRA SPESA"}</button>
-                {editMaintId&&<button style={s.btnSec} onClick={()=>{setEditMaintId(null);setMForm({date:new Date().toISOString().slice(0,10),type:"Tagliando",desc:"",cost:"",odo:"",notes:""});}}>ANNULLA</button>}
+                {editMaintId&&<button style={s.btnSec} onClick={()=>{setEditMaintId(null);setMForm({date:today(),type:"Tagliando",desc:"",cost:"",odo:"",notes:""});}}>ANNULLA</button>}
               </div>
             </div>
             {maint.length>0 && (<>
@@ -1143,7 +1123,7 @@ function App() {
               <div style={{marginBottom:16}}><label style={s.lbl}>NOTE</label><input type="text" placeholder="tipo, fornitore..." value={abForm.notes} onChange={e=>setAbForm(f=>({...f,notes:e.target.value}))} style={s.inp}/></div>
               <div style={{display:"flex",gap:12}}>
                 <button style={{...s.btn,background:"linear-gradient(135deg,#0088cc,#00bbff)"}} onClick={handleAbSubmit}>{editAbId?"SALVA":"REGISTRA ADBLUE"}</button>
-                {editAbId&&<button style={s.btnSec} onClick={()=>{setEditAbId(null);setAbForm({date:new Date().toISOString().slice(0,10),liters:"",cost:"",odo:"",notes:""});}}>ANNULLA</button>}
+                {editAbId&&<button style={s.btnSec} onClick={()=>{setEditAbId(null);setAbForm({date:today(),liters:"",cost:"",odo:"",notes:""});}}>ANNULLA</button>}
               </div>
             </div>
 
