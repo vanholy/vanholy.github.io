@@ -74,10 +74,17 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 // Storage — Supabase con cache localStorage e coda delle modifiche non ancora sincronizzate
-const TABLE = (k) => k === 'ft-v3' ? 'fuel_entries' : 'maintenance_entries';
+const TABLE = (k) => k === 'ft-v3' ? 'fuel_entries' : k === 'ft-adblue-v1' ? 'adblue_entries' : 'maintenance_entries';
 const toRow = (k, e) => k === 'ft-v3'
   ? { id: e.id, date: e.date, liters: e.liters, price_per_liter: e.pricePerLiter, odometer: e.odometer, total_cost: e.totalCost, fuel_type: e.fuelType, full_tank: e.fullTank, notes: e.notes || '' }
+  : k === 'ft-adblue-v1'
+  ? { id: e.id, date: e.date, liters: e.liters, cost: e.cost || 0, odometer: e.odometer, notes: e.notes || '' }
   : { id: e.id, date: e.date, type: e.type, description: e.desc, cost: e.cost, odometer: e.odometer || 0, notes: e.notes || '' };
+const fromRow = (k, r) => k === 'ft-v3'
+  ? { id: r.id, date: r.date, liters: Number(r.liters), pricePerLiter: Number(r.price_per_liter), odometer: r.odometer, totalCost: Number(r.total_cost), fuelType: r.fuel_type, fullTank: r.full_tank, notes: r.notes || '' }
+  : k === 'ft-adblue-v1'
+  ? { id: r.id, date: r.date, liters: Number(r.liters), cost: Number(r.cost) || 0, odometer: r.odometer, notes: r.notes || '' }
+  : { id: r.id, date: r.date, type: r.type, desc: r.description, cost: Number(r.cost), odometer: r.odometer || 0, notes: r.notes || '' };
 const getPend = (k) => { try { return JSON.parse(localStorage.getItem(k + ':pending')) || { up: {}, del: [] }; } catch { return { up: {}, del: [] }; } };
 // Invia a Supabase solo le righe modificate/eliminate (mai "cancella tutto ciò che non conosco": non tocca le righe inserite da un altro dispositivo)
 const flushPend = async (k) => {
@@ -93,12 +100,17 @@ const flushPend = async (k) => {
 
 const loadK = async (k) => {
   try {
-    if (k === 'ft-adblue-v1') { const r = localStorage.getItem(k); return r ? JSON.parse(r) : []; }
+    // AdBlue: fino alla v7 era salvato solo in locale → al primo avvio mette in coda per Supabase tutto ciò che c'è sul dispositivo
+    if (k === 'ft-adblue-v1' && !localStorage.getItem(k + ':migrated')) {
+      try { const local = JSON.parse(localStorage.getItem(k) || '[]'); if (local.length) await saveK(k, local, { up: local }); } catch {}
+      localStorage.setItem(k + ':migrated', '1');
+    }
     const synced = await flushPend(k);
     const { data, error } = await sb.from(TABLE(k)).select('*').order('date', { ascending: true });
     if (error) throw error;
-    let rows = k === 'ft-v3' ? data.map(r => ({ id: r.id, date: r.date, liters: Number(r.liters), pricePerLiter: Number(r.price_per_liter), odometer: r.odometer, totalCost: Number(r.total_cost), fuelType: r.fuel_type, fullTank: r.full_tank, notes: r.notes || '' })) : data.map(r => ({ id: r.id, date: r.date, type: r.type, desc: r.description, cost: Number(r.cost), odometer: r.odometer || 0, notes: r.notes || '' }));
+    let rows = data.map(r => fromRow(k, r));
     if (!synced) { const p = getPend(k); rows = rows.filter(r => !p.del.includes(r.id) && !p.up[r.id]).concat(Object.values(p.up)); }
+    try { localStorage.setItem(k, JSON.stringify(rows)); } catch {}
     return rows;
   } catch(e) {
     console.warn('Supabase load fallback:', e.message);
@@ -109,7 +121,6 @@ const loadK = async (k) => {
 // ch = { up: [righe nuove/modificate], del: [id eliminati] }
 const saveK = async (k, v, ch = {}) => {
   try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
-  if (k === 'ft-adblue-v1') return true;
   const p = getPend(k);
   (ch.up || []).forEach(e => { p.up[e.id] = e; p.del = p.del.filter(id => id !== e.id); });
   (ch.del || []).forEach(id => { delete p.up[id]; if (!p.del.includes(id)) p.del.push(id); });
@@ -358,10 +369,10 @@ function App() {
   const handleAbSubmit = async () => {
     const liters=parseFloat(abForm.liters),cost=parseFloat(abForm.cost)||0,odo=parseInt(abForm.odo); if(!liters||!odo) return;
     const entry = { id:editAbId||genId(), date:abForm.date, liters, cost, odometer:odo, notes:abForm.notes||"" };
-    const u = editAbId ? adblue.map(a=>a.id===editAbId?entry:a) : [...adblue,entry]; setAdblue(u); await saveK("ft-adblue-v1",u);
+    const u = editAbId ? adblue.map(a=>a.id===editAbId?entry:a) : [...adblue,entry]; setAdblue(u); await saveK("ft-adblue-v1",u,{up:[entry]});
     setAbForm({date:today(),liters:"",cost:"",odo:"",notes:""}); setEditAbId(null); showMsg(true,"AdBlue registrato");
   };
-  const handleAbDelete = async (id) => { const u=adblue.filter(a=>a.id!==id); setAdblue(u); await saveK("ft-adblue-v1",u); };
+  const handleAbDelete = async (id) => { const u=adblue.filter(a=>a.id!==id); setAdblue(u); await saveK("ft-adblue-v1",u,{del:[id]}); };
   const handleAbEdit = (a) => { setAbForm({date:a.date,liters:""+a.liters,cost:a.cost?""+a.cost:"",odo:""+a.odometer,notes:a.notes||""}); setEditAbId(a.id); setView("adblue"); };
   // AdBlue stats
   const abSorted = [...adblue].sort((a,b) => a.odometer - b.odometer);
@@ -378,7 +389,7 @@ function App() {
     const estNextKm = avgInterval > 0 ? Math.round(lastOdo + avgInterval) : null;
     return { totalL, totalCost, kmSpan, lPer1000, avgInterval: Math.round(avgInterval), lastOdo, kmSinceLast, estNextKm, count: abSorted.length };
   })();
-  const handleReset = async () => { if(confirm("Cancellare TUTTI i dati?")){ setEntries([]); setMaint([]); setAdblue([]); await saveK("ft-v3",[],{del:entries.map(e=>e.id)}); await saveK("ft-maint-v3",[],{del:maint.map(m=>m.id)}); await saveK("ft-adblue-v1",[]); }};
+  const handleReset = async () => { if(confirm("Cancellare TUTTI i dati?")){ setEntries([]); setMaint([]); setAdblue([]); await saveK("ft-v3",[],{del:entries.map(e=>e.id)}); await saveK("ft-maint-v3",[],{del:maint.map(m=>m.id)}); await saveK("ft-adblue-v1",[],{del:adblue.map(a=>a.id)}); }};
   const handleImportJSON = async (e) => { const file=e.target.files?.[0]; if(!file)return; try{const data=JSON.parse(await file.text()); const imp=data.entries||data;
     if(!Array.isArray(imp)||!imp.length){showMsg(false,"File non valido");return;} const keys=new Set(entries.map(e=>`${e.date}-${e.odometer}`));
     const added=imp.filter(e=>e.date&&e.odometer&&!keys.has(`${e.date}-${e.odometer}`)).map(e=>({...e,id:e.id||genId(),totalCost:e.totalCost||e.liters*e.pricePerLiter,fullTank:e.fullTank!==false}));
