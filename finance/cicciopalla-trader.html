@@ -612,65 +612,6 @@
             100% { opacity: 0; }
         }
 
-        /* Game Over Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-overlay.active { display: flex; }
-
-        .modal {
-            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
-            border: 4px solid #ffcc00;
-            border-radius: 20px;
-            padding: 25px;
-            text-align: center;
-            max-width: 500px;
-            box-shadow: 0 0 50px rgba(255, 204, 0, 0.5);
-            animation: modalPop 0.3s ease;
-        }
-
-        @keyframes modalPop {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .modal h2 {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 16px;
-            color: #ffcc00;
-            margin-bottom: 15px;
-        }
-
-        .modal-stats { font-size: 18px; margin: 12px 0; }
-
-        .modal-btn {
-            margin-top: 15px;
-            padding: 12px 25px;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            background: linear-gradient(180deg, #ffcc00 0%, #ff9900 100%);
-            border: none;
-            border-radius: 10px;
-            color: #000;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #aa6600;
-        }
-
-        .rank { font-size: 44px; margin: 8px 0; }
-        .rank-text { font-family: 'Press Start 2P', cursive; font-size: 11px; color: #aaa; }
-        .final-score { font-family: 'Press Start 2P', cursive; font-size: 26px; color: #00ff88; margin: 12px 0; }
-        .final-score.loss { color: #ff4466; }
-
         /* Start Screen */
         .start-screen {
             position: fixed;
@@ -810,6 +751,29 @@
             font-size: 11px;
             color: #444;
         }
+
+        /* Schermi stretti (telefono, iframe piccolo) */
+        @media (max-width: 900px) {
+            body { padding: 10px 16px; }
+            h1 { font-size: 14px; text-align: center; }
+            .game-container {
+                flex-direction: column;
+                width: 100%;
+                max-width: 600px;
+                padding: 10px;
+            }
+            /* Comandi subito sotto i grafici, report trimestrali in fondo */
+            .left-panel { display: contents; }
+            .reports-box { order: 1; }
+            .sidebar { width: 100%; }
+            #chartCanvas, #yearChartCanvas {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+            .start-title { font-size: 18px; text-align: center; padding: 0 16px; }
+            .start-btn { padding: 16px 40px; font-size: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -859,7 +823,7 @@
                 <span class="calendar-icon">⏰</span>
                 <div class="calendar-date">
                     <div class="calendar-day" id="tradingDays">Giorno 1</div>
-                    <div class="calendar-year">di 365</div>
+                    <div class="calendar-year" id="totalDays">di 366</div>
                 </div>
             </div>
             
@@ -957,22 +921,6 @@
     <!-- Month Flash -->
     <div class="month-flash" id="monthFlash"></div>
 
-    <!-- Game Over Modal -->
-    <div class="modal-overlay" id="gameOverModal">
-        <div class="modal">
-            <h2>🏆 FINE ANNO 2024 🏆</h2>
-            <div class="rank" id="rankEmoji">🎯</div>
-            <div class="rank-text" id="rankText">Trader</div>
-            <div class="final-score" id="finalScore">€0</div>
-            <div class="modal-stats">
-                <div>Capitale iniziale: €10,000.00</div>
-                <div>Rendimento: <span id="finalReturn">0%</span></div>
-            </div>
-            <canvas id="finalCharCanvas" width="130" height="110" style="margin: 12px auto; display: block;"></canvas>
-            <button class="modal-btn" onclick="restartGame()">🔄 GIOCA ANCORA</button>
-        </div>
-    </div>
-
     <canvas id="confettiCanvas"></canvas>
 
     <script>
@@ -989,26 +937,21 @@
             currentMood: 'neutral',
             currentSprite: null,
             selectedSprites: {}, // Sprite selezionati per questa partita (uno per ogni mood)
-            gameStartTime: Date.now(),
+            elapsed: 0, // ms di gioco trascorsi (avanza solo mentre si gioca)
             tradingDay: 1,
             currentDate: new Date(2024, 0, 1),
-            currentMonth: 0,
             currentQuarter: 0,
             quarterStartPortfolio: 10000,
             quarterlyReports: [],
             gameOver: false,
             gameStarted: false,
             isPaused: false,
-            pausedTime: 0, // Tempo totale in pausa
-            pauseStartTime: 0,
             volatility: 0.02,
             drift: 0.0001,
             meanReversionStrength: 0.001,
             meanPrice: 100,
             trendStrength: 0,
             trendDirection: 0,
-            tears: [],
-            tearsActive: false,
             // Trading tracking
             transactions: [], // {day, price, type: 'buy'|'sell', qty}
             lastOperation: null,
@@ -1071,26 +1014,28 @@
         // Precarica tutti gli sprite all'avvio
         preloadSprites();
 
+        const startSprite = new Image();
+        startSprite.onload = () => drawStartScreenCharacter();
+        startSprite.src = 'img/cicciopalla-start.jpeg';
+
         const MONTHS = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
                         'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 
         const QUARTERS = ['Q1 (Gen-Mar)', 'Q2 (Apr-Giu)', 'Q3 (Lug-Set)', 'Q4 (Ott-Dic)'];
 
-        const SEASON_COLORS = {
-            winter: '#87CEEB',   // Azzurro (Gen, Feb, Dic)
-            spring: '#90EE90',   // Verde chiaro (Mar, Apr, Mag)
-            summer: '#FFD700',   // Giallo (Giu, Lug, Ago)
-            autumn: '#FF8C00'    // Arancione (Set, Ott, Nov)
-        };
+        // Il 2024 è bisestile
+        const DAYS_IN_YEAR = 366;
 
         // 3 minuti per anno completo: ~493ms per giorno (25% più veloce)
         const MS_PER_DAY = 493;
+
+        // Un nuovo prezzo ogni 208ms di gioco
+        const MS_PER_TICK = 208;
 
         // ============================================
         // AUDIO SYSTEM - Web Audio API
         // ============================================
         let audioCtx = null;
-        let bgmOscillators = [];
         let bgmGain = null;
         let currentMoodMusic = null;
         let audioEnabled = true;
@@ -1281,10 +1226,6 @@
                 clearInterval(bgmInterval);
                 bgmInterval = null;
             }
-            bgmOscillators.forEach(osc => {
-                try { osc.stop(); } catch(e) {}
-            });
-            bgmOscillators = [];
             currentMoodMusic = null;
         }
 
@@ -1371,8 +1312,12 @@
         const confettiCanvas = document.getElementById('confettiCanvas');
         const confettiCtx = confettiCanvas.getContext('2d');
 
-        confettiCanvas.width = window.innerWidth;
-        confettiCanvas.height = window.innerHeight;
+        function resizeConfettiCanvas() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        resizeConfettiCanvas();
+        window.addEventListener('resize', resizeConfettiCanvas);
 
         // ============================================
         // TROLL FACE CHARACTER
@@ -1408,15 +1353,8 @@
         }
 
         // ============================================
-        // SEASONAL FLASH
+        // QUARTER FLASH
         // ============================================
-        function getSeason(month) {
-            if (month === 11 || month === 0 || month === 1) return 'winter';
-            if (month >= 2 && month <= 4) return 'spring';
-            if (month >= 5 && month <= 7) return 'summer';
-            return 'autumn';
-        }
-
         function triggerQuarterFlash(quarter) {
             // Colori per trimestre
             const quarterColors = {
@@ -1467,29 +1405,20 @@
         function updateCalendar() {
             if (state.gameOver) return;
             
-            // Sottrai il tempo in pausa dal tempo trascorso
-            const elapsed = Date.now() - state.gameStartTime - state.pausedTime;
-            const daysPassed = Math.floor(elapsed / MS_PER_DAY);
-            
+            const daysPassed = Math.floor(state.elapsed / MS_PER_DAY);
+
             if (daysPassed !== state.tradingDay - 1) {
-                state.tradingDay = daysPassed + 1;
-                
-                if (state.tradingDay > 365) {
+                if (daysPassed >= DAYS_IN_YEAR) {
                     endGame();
                     return;
                 }
-                
+
+                state.tradingDay = daysPassed + 1;
                 state.currentDate = new Date(2024, 0, 1);
                 state.currentDate.setDate(state.currentDate.getDate() + daysPassed);
-                
-                const newMonth = state.currentDate.getMonth();
-                const newQuarter = getQuarter(newMonth);
-                
-                // Aggiorna mese corrente (senza flash)
-                if (newMonth !== state.currentMonth && state.tradingDay > 1) {
-                    state.currentMonth = newMonth;
-                }
-                
+
+                const newQuarter = getQuarter(state.currentDate.getMonth());
+
                 // Report e FLASH al cambio trimestre
                 if (newQuarter !== state.currentQuarter && state.tradingDay > 1) {
                     addQuarterlyReport(state.currentQuarter);
@@ -1662,52 +1591,31 @@
             yearChartCtx.fillStyle = '#0a0a15';
             yearChartCtx.fillRect(0, 0, width, height);
             
-            // Usa il giorno corrente per calcolare la posizione
-            const currentDay = state.tradingDay;
-            if (currentDay < 1) return;
-            
-            const prices = state.yearPriceHistory;
-            if (prices.length < 2) return;
-            
-            // 52 settimane, posizione basata sul giorno corrente (1-365)
+            // Ogni punto è {day, price}
+            const points = state.yearPriceHistory;
+            if (points.length < 2) return;
+
+            // 52 settimane (gli ultimi giorni dell'anno finiscono nell'ultima)
             const TOTAL_WEEKS = 52;
+            const weekOf = day => Math.min(TOTAL_WEEKS - 1, Math.floor((day - 1) / 7));
             const drawWidth = width - padding - rightPadding;
             const drawHeight = height - padding * 2;
             const candleSpacing = drawWidth / TOTAL_WEEKS;
             const candleWidth = Math.max(3, candleSpacing * 0.65);
-            
-            // Calcola quanti tick per giorno (approssimativamente)
-            const ticksPerDay = Math.max(1, Math.floor(prices.length / currentDay));
-            
-            // Costruisci candele settimanali basate sui giorni
+
+            // Costruisci candele settimanali raggruppando i prezzi per giorno
             const weeklyCandles = [];
-            
-            for (let week = 0; week < TOTAL_WEEKS; week++) {
-                const startDay = week * 7 + 1;
-                const endDay = Math.min((week + 1) * 7, 365);
-                
-                // Questa settimana è già passata o in corso?
-                if (startDay > currentDay) break;
-                
-                // Raccogli i prezzi per questa settimana
-                const startTick = Math.floor((startDay - 1) * ticksPerDay);
-                const endTick = Math.min(Math.floor(Math.min(endDay, currentDay) * ticksPerDay), prices.length);
-                
-                if (startTick >= prices.length) break;
-                
-                const weekPrices = prices.slice(startTick, endTick);
-                if (weekPrices.length === 0) continue;
-                
-                weeklyCandles.push({
-                    week: week,
-                    open: weekPrices[0],
-                    close: weekPrices[weekPrices.length - 1],
-                    high: Math.max(...weekPrices),
-                    low: Math.min(...weekPrices)
-                });
-            }
-            
-            if (weeklyCandles.length === 0) return;
+            points.forEach(({ day, price }) => {
+                const week = weekOf(day);
+                const last = weeklyCandles[weeklyCandles.length - 1];
+                if (last && last.week === week) {
+                    last.close = price;
+                    last.high = Math.max(last.high, price);
+                    last.low = Math.min(last.low, price);
+                } else {
+                    weeklyCandles.push({ week, open: price, close: price, high: price, low: price });
+                }
+            });
             
             // Trova min/max per scala
             let allHighLow = [];
@@ -1748,29 +1656,26 @@
             
             // Marker transazioni
             state.transactions.forEach(tx => {
-                const weekNum = Math.floor((tx.day - 1) / 7);
-                if (weekNum < TOTAL_WEEKS) {
-                    const x = padding + (weekNum * candleSpacing) + (candleSpacing / 2);
-                    const y = padding + drawHeight - ((tx.price - minPrice) / priceRange) * drawHeight;
-                    
-                    yearChartCtx.fillStyle = tx.type === 'buy' ? '#00ff88' : '#ff4466';
-                    yearChartCtx.beginPath();
-                    if (tx.type === 'buy') {
-                        yearChartCtx.moveTo(x, y - 6);
-                        yearChartCtx.lineTo(x - 3, y - 1);
-                        yearChartCtx.lineTo(x + 3, y - 1);
-                    } else {
-                        yearChartCtx.moveTo(x, y + 6);
-                        yearChartCtx.lineTo(x - 3, y + 1);
-                        yearChartCtx.lineTo(x + 3, y + 1);
-                    }
-                    yearChartCtx.closePath();
-                    yearChartCtx.fill();
+                const x = padding + (weekOf(tx.day) * candleSpacing) + (candleSpacing / 2);
+                const y = padding + drawHeight - ((tx.price - minPrice) / priceRange) * drawHeight;
+
+                yearChartCtx.fillStyle = tx.type === 'buy' ? '#00ff88' : '#ff4466';
+                yearChartCtx.beginPath();
+                if (tx.type === 'buy') {
+                    yearChartCtx.moveTo(x, y - 6);
+                    yearChartCtx.lineTo(x - 3, y - 1);
+                    yearChartCtx.lineTo(x + 3, y - 1);
+                } else {
+                    yearChartCtx.moveTo(x, y + 6);
+                    yearChartCtx.lineTo(x - 3, y + 1);
+                    yearChartCtx.lineTo(x + 3, y + 1);
                 }
+                yearChartCtx.closePath();
+                yearChartCtx.fill();
             });
             
             // Linea prezzo corrente
-            const lastPrice = prices[prices.length - 1];
+            const lastPrice = points[points.length - 1].price;
             const currentY = padding + drawHeight - ((lastPrice - minPrice) / priceRange) * drawHeight;
             
             yearChartCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -1869,18 +1774,33 @@
             const percent = btn.dataset.percent;
             
             let value = 0;
-            
+
             if (action === 'max') {
                 value = Math.floor(state.cash / state.currentPrice);
             } else if (action === 'all') {
                 value = state.shares;
             } else if (percent) {
-                // Use cash for percentage calculation
-                const maxBuyable = Math.floor(state.cash / state.currentPrice);
-                value = Math.floor(maxBuyable * (parseInt(percent) / 100));
+                // Il campo mostra la quantità da comprare; la vendita usa la % delle azioni
+                value = getPercentQuantity('buy');
             }
-            
+
             document.getElementById('quantity').value = Math.max(0, value);
+        }
+
+        // Quantità per un pulsante percentuale: % del cash per comprare, % delle azioni per vendere
+        function getPercentQuantity(side) {
+            const percent = parseInt(state.activePercentBtn.dataset.percent) / 100;
+            if (side === 'buy') {
+                return Math.floor(Math.floor(state.cash / state.currentPrice) * percent);
+            }
+            return Math.floor(state.shares * percent);
+        }
+
+        function getTradeQuantity(side) {
+            if (state.activePercentBtn && state.activePercentBtn.dataset.percent) {
+                return getPercentQuantity(side);
+            }
+            return parseInt(document.getElementById('quantity').value);
         }
 
         function setActivePercentBtn(btn) {
@@ -1888,6 +1808,9 @@
             btn.classList.add('active');
             state.activePercentBtn = btn;
             updateActivePercentValue();
+            if (btn.dataset.percent) {
+                showMessage(`${btn.dataset.percent}%: B=${getPercentQuantity('buy')} S=${getPercentQuantity('sell')}`, 'info');
+            }
         }
 
         // ============================================
@@ -1897,11 +1820,11 @@
             if (state.gameOver || !state.gameStarted) return;
             initAudio(); // Inizializza audio al primo click
             
-            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            const quantity = getTradeQuantity('buy');
             const cost = quantity * state.currentPrice;
-            
-            if (cost > state.cash || quantity <= 0) {
-                showMessage(`Max ${Math.floor(state.cash / state.currentPrice)}!`, 'error');
+
+            if (!(quantity > 0) || cost > state.cash) {
+                showMessage(quantity > 0 ? `Max ${Math.floor(state.cash / state.currentPrice)}!` : 'Qtà non valida!', 'error');
                 playErrorSound();
                 return;
             }
@@ -1933,10 +1856,10 @@
             if (state.gameOver || !state.gameStarted) return;
             initAudio(); // Inizializza audio al primo click
             
-            const quantity = Math.min(parseInt(document.getElementById('quantity').value) || 1, state.shares);
-            
-            if (quantity <= 0) {
-                showMessage('Nessuna azione!', 'error');
+            const quantity = Math.min(getTradeQuantity('sell'), state.shares);
+
+            if (!(quantity > 0)) {
+                showMessage(state.shares > 0 ? 'Qtà non valida!' : 'Nessuna azione!', 'error');
                 playErrorSound();
                 return;
             }
@@ -1978,6 +1901,7 @@
         // GAME OVER
         // ============================================
         function endGame() {
+            addQuarterlyReport(state.currentQuarter); // Report Q4
             state.gameOver = true;
             stopBgm(); // Ferma la musica di sottofondo
             
@@ -2017,30 +1941,6 @@
                 startConfetti();
             } else {
                 playSadTrombone(); // 😢 Wah wah wah wahhh
-            }
-        }
-        
-        function drawFinalTrollFace(ctx, cx, cy, isProfit) {
-            const width = ctx.canvas.width;
-            const height = ctx.canvas.height;
-
-            ctx.clearRect(0, 0, width, height);
-
-            // Usa lo sprite corrente (che corrisponde allo stato emotivo finale)
-            const sprite = state.currentSprite;
-
-            if (sprite && sprite.complete) {
-                // Calcola dimensioni per mantenere aspect ratio (più piccolo per la schermata finale)
-                const scale = Math.min(width / sprite.width, height / sprite.height) * 0.8;
-                const scaledWidth = sprite.width * scale;
-                const scaledHeight = sprite.height * scale;
-
-                // Centra l'immagine nel canvas
-                const x = (width - scaledWidth) / 2;
-                const y = (height - scaledHeight) / 2;
-
-                // Disegna lo sprite
-                ctx.drawImage(sprite, x, y, scaledWidth, scaledHeight);
             }
         }
         
@@ -2090,16 +1990,17 @@
             else confettiActive = false;
         }
         
-        function restartGame() {
+        // Riporta la partita allo stato iniziale (usato da Rigioca ed Esci)
+        function resetGameState() {
             state.cash = 10000;
             state.shares = 0;
             state.priceHistory = [100];
-            state.yearPriceHistory = [100];
+            state.yearPriceHistory = [{ day: 1, price: 100 }];
             state.currentPrice = 100;
             state.currentMood = 'neutral';
+            state.elapsed = 0;
             state.tradingDay = 1;
             state.currentDate = new Date(2024, 0, 1);
-            state.currentMonth = 0;
             state.currentQuarter = 0;
             state.quarterStartPortfolio = 10000;
             state.quarterlyReports = [];
@@ -2109,35 +2010,40 @@
             state.totalBought = 0;
             state.gameOver = false;
             state.isPaused = false;
-            state.pausedTime = 0;
-            state.pauseStartTime = 0;
             state.meanPrice = 100;
             state.trendStrength = 0;
-            state.tearsActive = false;
+            state.trendDirection = 0;
             state.activePercentBtn = null;
-            
+            tickAccumulator = 0;
+
+            // Nuovo set di sprite, allineato al mood appena resettato
+            selectSpritesForGame();
+
             // Reset audio
-            currentMoodMusic = null;
             stopBgm();
-            
+
             document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
-            document.getElementById('gameOverPanel').classList.remove('active'); // Nuovo pannello
+            document.getElementById('gameOverPanel').classList.remove('active');
             document.getElementById('pauseBtn').textContent = '⏸';
             document.getElementById('pauseBtn').classList.remove('paused');
             confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
             confettiActive = false;
-            
+
             document.getElementById('lastOp').textContent = '-';
             document.getElementById('lastOp').className = 'stat-value';
-            
-            // Riavvia il gioco
-            state.gameStartTime = Date.now();
-            state.gameStarted = true;
-            
+            document.getElementById('calendarDay').textContent = '1 Gennaio';
+            document.getElementById('tradingDays').textContent = 'Giorno 1';
+
             renderReports();
+            drawChart();
+            drawYearChart();
             updateUI();
-            updateCalendar();
-            
+        }
+
+        function restartGame() {
+            resetGameState();
+            state.gameStarted = true;
+
             // Riavvia musica
             setTimeout(() => playBgm('neutral'), 300);
         }
@@ -2147,28 +2053,17 @@
         // ============================================
         function togglePause() {
             if (state.gameOver) return;
-            
+
             const btn = document.getElementById('pauseBtn');
-            
-            if (state.isPaused) {
-                // Riprendi
-                state.pausedTime += Date.now() - state.pauseStartTime;
-                state.isPaused = false;
-                btn.textContent = '⏸';
-                btn.classList.remove('paused');
-            } else {
-                // Pausa
-                state.pauseStartTime = Date.now();
-                state.isPaused = true;
-                btn.textContent = '▶';
-                btn.classList.add('paused');
-            }
+            state.isPaused = !state.isPaused;
+            btn.textContent = state.isPaused ? '▶' : '⏸';
+            btn.classList.toggle('paused', state.isPaused);
         }
 
         function toggleAudio() {
             const btn = document.getElementById('audioBtn');
             audioEnabled = !audioEnabled;
-            
+
             if (audioEnabled) {
                 btn.textContent = '🔊';
                 btn.classList.remove('muted');
@@ -2182,35 +2077,48 @@
         // ============================================
         // GAME LOOP
         // ============================================
-        let lastUpdate = 0;
+        // Il tempo di gioco avanza solo con i frame: se la scheda è nascosta
+        // (o l'iframe fuori schermo) il gioco si ferma invece di saltare avanti.
+        const MAX_FRAME_MS = 100;
+        let lastFrame = null;
+        let tickAccumulator = 0;
         let lastCharUpdate = 0;
 
+        function gameTick() {
+            generateNextPrice();
+            state.priceHistory.push(state.currentPrice);
+            if (state.priceHistory.length > 80) state.priceHistory.shift();
+
+            // Year history - si costruisce progressivamente insieme al grafico principale
+            state.yearPriceHistory.push({ day: state.tradingDay, price: state.currentPrice });
+
+            drawChart();
+            drawYearChart();
+            updateUI();
+        }
+
         function gameLoop(timestamp) {
+            const dt = lastFrame === null ? 0 : Math.min(timestamp - lastFrame, MAX_FRAME_MS);
+            lastFrame = timestamp;
+
             // Solo se il gioco è iniziato e non è in pausa/finito
             if (state.gameStarted && !state.gameOver && !state.isPaused) {
-                // Chart update - 30% più lento (208ms invece di 160ms)
-                if (timestamp - lastUpdate >= 208) {
-                    generateNextPrice();
-                    state.priceHistory.push(state.currentPrice);
-                    if (state.priceHistory.length > 80) state.priceHistory.shift();
-                    
-                    // Year history - si costruisce progressivamente insieme al grafico principale
-                    state.yearPriceHistory.push(state.currentPrice);
-                    
-                    drawChart();
-                    drawYearChart(); // Aggiorna insieme al grafico principale
-                    updateUI();
-                    updateCalendar();
-                    lastUpdate = timestamp;
+                state.elapsed += dt;
+                updateCalendar();
+
+                tickAccumulator += dt;
+                while (tickAccumulator >= MS_PER_TICK && !state.gameOver) {
+                    tickAccumulator -= MS_PER_TICK;
+                    gameTick();
                 }
             }
-            
+
             // Animazione personaggio sempre attiva
             if (timestamp - lastCharUpdate >= 33) {
                 drawTrollFace();
                 lastCharUpdate = timestamp;
             }
-            
+
             requestAnimationFrame(gameLoop);
         }
 
@@ -2218,9 +2126,6 @@
         // START GAME & QUIT
         // ============================================
         function startGame() {
-            // Seleziona un nuovo set di sprite per questa partita
-            selectSpritesForGame();
-
             // Inizializza audio (deve essere fatto con interazione utente)
             initAudio();
 
@@ -2230,14 +2135,13 @@
                 playTone(659, 0.1, 'square', 0.15, 0.1);
                 playTone(784, 0.15, 'square', 0.18, 0.2);
             }
-            
+
             // Nascondi schermata start
             document.getElementById('startScreen').classList.add('hidden');
-            
+
             // Inizia il gioco
             state.gameStarted = true;
-            state.gameStartTime = Date.now();
-            
+
             // Avvia musica di sottofondo
             setTimeout(() => {
                 playBgm('neutral');
@@ -2247,92 +2151,12 @@
         function quitGame() {
             if (!state.gameStarted || state.gameOver) return;
 
-            // Ferma musica
-            stopBgm();
-
-            // Seleziona un nuovo set di sprite per la prossima partita
-            selectSpritesForGame();
-
-            // Reset stato
-            state.cash = 10000;
-            state.shares = 0;
-            state.priceHistory = [100];
-            state.yearPriceHistory = [100];
-            state.currentPrice = 100;
-            state.currentMood = 'neutral';
-            state.tradingDay = 1;
-            state.currentDate = new Date(2024, 0, 1);
-            state.currentMonth = 0;
-            state.currentQuarter = 0;
-            state.quarterStartPortfolio = 10000;
-            state.quarterlyReports = [];
-            state.transactions = [];
-            state.lastOperation = null;
-            state.avgBuyPrice = 0;
-            state.totalBought = 0;
-            state.meanPrice = 100;
-            state.trendStrength = 0;
-            state.tearsActive = false;
-            state.activePercentBtn = null;
-            state.isPaused = false;
-            state.pausedTime = 0;
             state.gameStarted = false;
-            state.gameOver = false;
-            
-            // Reset UI
-            document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
-            document.getElementById('pauseBtn').textContent = '⏸';
-            document.getElementById('pauseBtn').classList.remove('paused');
-            document.getElementById('lastOp').textContent = '-';
-            document.getElementById('lastOp').className = 'stat-value';
-            
+            resetGameState();
+
             // Mostra schermata start
             document.getElementById('startScreen').classList.remove('hidden');
-            
-            // Aggiorna grafici
-            renderReports();
-            drawChart();
-            drawYearChart();
-            updateUI();
-        }
-
-        function resetGameState() {
-            state.cash = 10000;
-            state.shares = 0;
-            state.priceHistory = [100];
-            state.yearPriceHistory = [100];
-            state.currentPrice = 100;
-            state.currentMood = 'neutral';
-            state.tradingDay = 1;
-            state.currentDate = new Date(2024, 0, 1);
-            state.currentMonth = 0;
-            state.currentQuarter = 0;
-            state.quarterStartPortfolio = 10000;
-            state.quarterlyReports = [];
-            state.transactions = [];
-            state.lastOperation = null;
-            state.avgBuyPrice = 0;
-            state.totalBought = 0;
-            state.gameOver = false;
-            state.gameStarted = false;
-            state.isPaused = false;
-            state.pausedTime = 0;
-            state.pauseStartTime = 0;
-            state.meanPrice = 100;
-            state.trendStrength = 0;
-            state.tearsActive = false;
-            state.activePercentBtn = null;
-            
-            document.querySelectorAll('.btn-percent').forEach(b => b.classList.remove('active'));
-            document.getElementById('pauseBtn').textContent = '⏸';
-            document.getElementById('pauseBtn').classList.remove('paused');
-            document.getElementById('lastOp').textContent = '-';
-            document.getElementById('lastOp').className = 'stat-value';
-            
-            renderReports();
-            drawChart();
-            drawYearChart();
-            updateUI();
+            showMessage('Premi START per iniziare!', 'info');
         }
 
         // ============================================
@@ -2388,10 +2212,10 @@
 
             ctx.clearRect(0, 0, width, height);
 
-            // Usa sempre neutral-1 (computer guy) per la schermata start
-            const sprite = spriteGroups.neutral[0]; // neutral-1.jpeg
+            // Omino al computer (disegnato anche da startSprite.onload, se non era ancora caricato)
+            const sprite = startSprite;
 
-            if (sprite && sprite.complete) {
+            if (sprite.complete && sprite.naturalWidth) {
                 // Calcola dimensioni per mantenere aspect ratio
                 const scale = Math.min(width / sprite.width, height / sprite.height) * 0.9;
                 const scaledWidth = sprite.width * scale;
@@ -2408,7 +2232,7 @@
 
         function init() {
             state.priceHistory = [state.currentPrice];
-            state.yearPriceHistory = [state.currentPrice];
+            state.yearPriceHistory = [{ day: 1, price: state.currentPrice }];
 
             // Seleziona set iniziale di sprite
             selectSpritesForGame();
