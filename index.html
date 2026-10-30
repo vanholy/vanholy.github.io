@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VanHoly Hub - Birra & Finanza</title>
+    <title>VanHoly Hub - Birra, Finanza & Giochi</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
         * {
@@ -248,6 +248,80 @@
             transform: translateY(-3px);
         }
 
+        /* Sezione giochi: occupa tutta la riga, con un riquadro per ogni gioco */
+        .section-card.games {
+            grid-column: 1 / -1;
+            border-color: rgba(255, 45, 149, 0.5);
+            cursor: default;
+        }
+
+        .section-card.games:hover {
+            border-color: #ff2d95;
+            box-shadow: 0 0 40px rgba(255, 45, 149, 0.3);
+            background: rgba(255, 45, 149, 0.05);
+        }
+
+        .section-card.games .section-title {
+            color: #ff2d95;
+            text-shadow: 0 0 20px rgba(255, 45, 149, 0.5);
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            position: relative;
+        }
+
+        .game-tile {
+            display: flex;
+            flex-direction: column;
+            padding: 30px 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .game-tile:hover {
+            border-color: #ff2d95;
+            transform: translateY(-6px);
+            box-shadow: 0 8px 30px rgba(255, 45, 149, 0.25);
+        }
+
+        .game-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .game-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .game-desc {
+            flex: 1;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .section-card.games .section-btn {
+            background: linear-gradient(135deg, #ff2d95, #8a2dff);
+            color: white;
+            box-shadow: 0 5px 20px rgba(255, 45, 149, 0.4);
+        }
+
+        .game-tile:hover .section-btn {
+            box-shadow: 0 8px 30px rgba(255, 45, 149, 0.6);
+        }
+
         footer {
             text-align: center;
             margin-top: 80px;
@@ -299,7 +373,7 @@
     <div class="container">
         <header>
             <h1>🚀 VANHOLY HUB</h1>
-            <p class="subtitle">Esplora il mondo della birra artigianale e della finanza intelligente</p>
+            <p class="subtitle">Esplora il mondo della birra artigianale, della finanza intelligente e dei giochi</p>
         </header>
 
         <div class="sections-grid">
@@ -343,6 +417,29 @@
                     <span>Esplora Finance</span>
                     <span>→</span>
                 </a>
+            </div>
+
+            <!-- Games Section -->
+            <div class="section-card games">
+                <span class="section-icon">🎮</span>
+                <h2 class="section-title">GIOCHI</h2>
+                <p class="section-description">
+                    Giochi nel browser, da fare anche su telefono e tablet
+                </p>
+                <div class="games-grid">
+                    <a href="reflection-game/" class="game-tile">
+                        <span class="game-icon">⚡</span>
+                        <span class="game-name">Reflection Game</span>
+                        <span class="game-desc">Tocca il bersaglio appena si illumina e misura i tuoi tempi di reazione. Survival, sfida in due e modalità gatto.</span>
+                        <span class="section-btn"><span>Gioca</span><span>→</span></span>
+                    </a>
+                    <a href="finance/cicciopalla-trader.html" class="game-tile">
+                        <span class="game-icon">📈</span>
+                        <span class="game-name">Cicciopalla Trader</span>
+                        <span class="game-desc">Trading game interattivo: compra, vendi e cerca di non far finire Cicciopalla sul lastrico.</span>
+                        <span class="section-btn"><span>Gioca</span><span>→</span></span>
+                    </a>
+                </div>
             </div>
         </div>
 
