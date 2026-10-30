@@ -31,7 +31,7 @@ Si avvia dal pulsante **Survival** del menu, non dalle opzioni.
 - **Record:** vince chi resiste più a lungo. Il record è salvato sul dispositivo e si vede nel menu. A fine partita, se lo batti, compare "Nuovo record!".
 - Nella schermata di gioco si vedono tempo, vite, bersagli presi, ultimo tempo e media.
 
-### Modalità gatto 🐱
+### Modalità gatto 🐱👶
 
 Si avvia dal pulsante **Modalità gatto** del menu. È pensata per far giocare un gatto con il tablet.
 
