@@ -1325,6 +1325,10 @@ function startCat() {
   cat.count = 0;
   $('#cat-count').textContent = 0;
   sound.fx('rustle'); // sblocca l'audio durante il tocco sul pulsante
+  // con lo sfondo "La tua foto" anche il gatto gioca sulla foto
+  catArena.style.background = settings.bg === 'foto' && bgPhoto
+    ? `${rgbStr(bgPhoto.avg)} url(${bgPhoto.src}) center / cover no-repeat`
+    : '';
   show('cat');
   requestAnimationFrame(() => {
     for (let i = 0; i < CAT_BUGS; i++) spawnBug();

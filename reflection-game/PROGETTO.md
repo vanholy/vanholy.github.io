@@ -41,6 +41,7 @@ Si avvia dal pulsante **Modalità gatto** del menu. È pensata per far giocare u
 - **Ogni tanto fanno uno scatto** per mezzo secondo, 2–4,5 volte più veloci, con un suono proprio: "zip" per insetti, ragno e lucertola, squittio per il topo, ronzio per l'ape, frullio d'ali per la farfalla. Durante lo scatto zampe, ali e coda vanno più veloci.
 - **Mentre camminano fanno rumore**, diverso per ogni animale: zampette che grattano, ticchettio del ragno, passettini del topo, strusciare della lucertola, frullio della farfalla, ronzio dell'ape. Il suono arriva dal lato dello schermo in cui si trovano. Questi rumori sono sempre attivi, indipendentemente dall'opzione Suoni.
 - Basta toccare **vicino** all'insetto, perché una zampa è grossa. L'insetto schiacciato sparisce con una macchia e un suono, e dopo 1–2 s ne entra un altro.
+- **Sfondo:** se nelle opzioni è scelto "La tua foto", gli animali camminano sulla foto; altrimenti sul prato scuro.
 - **Nessun timer:** solo un contatore grande degli insetti presi.
 - **Per uscire bisogna tenere premuto** il pulsante in alto a destra per 1,2 s, così il gatto non esce per sbaglio.
 
