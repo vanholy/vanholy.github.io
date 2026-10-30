@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f1115">
+  <title>reflection-game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- MENU -->
+  <section id="menu" class="screen active">
+    <div class="center-col">
+      <h1>reflection<span>-game</span></h1>
+      <p class="subtitle">Tocca il bersaglio appena si illumina</p>
+      <div class="seg menu-players" data-key="players">
+        <button data-value="1">👤 Un giocatore</button>
+        <button data-value="2">👥 Due giocatori</button>
+      </div>
+      <p id="menu-players-hint" class="hint"></p>
+      <button class="btn primary big" data-action="start">Gioco normale</button>
+      <button class="btn survival" data-action="survival">Survival a tempo ❤❤❤</button>
+      <p id="menu-record" class="hint"></p>
+      <button class="btn cat" data-action="cat">Modalità gatto 🐱</button>
+      <button class="btn" data-goto="options">Opzioni</button>
+      <button class="btn" data-action="history">Storico</button>
+      <p id="menu-summary" class="hint"></p>
+    </div>
+  </section>
+
+  <!-- OPZIONI -->
+  <section id="options" class="screen">
+    <div class="panel">
+      <h2>Opzioni</h2>
+
+      <div class="opt">
+        <label>Livello <small>(imposta tutte le opzioni insieme)</small></label>
+        <div class="seg" data-key="level">
+          <button data-value="base">Base</button>
+          <button data-value="medio">Medio</button>
+          <button data-value="avanzato">Avanzato</button>
+          <button data-value="personalizzato">Personalizzato</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Modalità</label>
+        <div class="seg" data-key="mode">
+          <button data-value="visibili">Bersagli visibili</button>
+          <button data-value="compaiono">Bersagli che compaiono</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Dimensione bersagli</label>
+        <div class="seg" data-key="size">
+          <button data-value="piccola">Piccola</button>
+          <button data-value="media">Media</button>
+          <button data-value="grande">Grande</button>
+        </div>
+        <div class="size-preview-wrap"><div id="size-preview" class="target lit"></div></div>
+      </div>
+
+      <div class="opt" id="opt-targets">
+        <label>Numero di bersagli</label>
+        <div class="seg" data-key="targets">
+          <button data-value="3">3</button>
+          <button data-value="5">5</button>
+          <button data-value="8">8</button>
+          <button data-value="12">12</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Bersagli in movimento <small>(scivolano e rimbalzano sui bordi)</small></label>
+        <div class="seg" data-key="moving">
+          <button data-value="0">No</button>
+          <button data-value="30">Leggero</button>
+          <button data-value="70">Veloce</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Frequenza <small>(attesa sempre casuale)</small></label>
+        <div class="seg" data-key="freq">
+          <button data-value="lenta">Lenta</button>
+          <button data-value="media">Media</button>
+          <button data-value="veloce">Veloce</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Scomparsa bersaglio <small>(se non lo tocchi in tempo è "mancato")</small></label>
+        <div class="seg" data-key="timeout">
+          <button data-value="0">Mai</button>
+          <button data-value="3000">3 s</button>
+          <button data-value="2000">2 s</button>
+          <button data-value="1500">1,5 s</button>
+          <button data-value="1000">1 s</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Colori bersaglio</label>
+        <div class="seg" data-key="colors">
+          <button data-value="fissi">Fissi</button>
+          <button data-value="variabili">Variabili</button>
+          <button data-value="difficili">Variabili difficili</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Sfondo</label>
+        <div class="seg" data-key="bg">
+          <button data-value="fisso">Fisso</button>
+          <button data-value="variabile">Cambia ogni volta</button>
+          <button data-value="psichedelico">Psichedelico</button>
+          <button data-value="foto">📷 La tua foto</button>
+        </div>
+        <div id="bg-photo-row" class="photo-row">
+          <div id="bg-photo-thumb" class="photo-thumb"></div>
+          <button type="button" class="btn" id="bg-photo-pick">Scegli foto</button>
+          <input type="file" id="bg-photo-input" accept="image/*" hidden>
+        </div>
+        <p id="bg-photo-msg" class="hint"></p>
+      </div>
+
+      <div class="opt">
+        <label>Elementi di disturbo <small>(toccarli è un errore)</small></label>
+        <div class="seg" data-key="distractors">
+          <button data-value="0">Nessuno</button>
+          <button data-value="3">3</button>
+          <button data-value="7">7</button>
+          <button data-value="12">12</button>
+          <button data-value="20">20</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Musica <small>(tocca per sentire un'anteprima)</small></label>
+        <div class="seg" data-key="music">
+          <button data-value="no">No</button>
+          <button data-value="arcade">Arcade</button>
+          <button data-value="techno">Techno</button>
+          <button data-value="ipnotica">Ipnotica</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Suoni <small>(tocco, errore, mancato: seguono lo stile della musica)</small></label>
+        <div class="seg" data-key="sounds">
+          <button data-value="no">No</button>
+          <button data-value="si">Sì</button>
+        </div>
+      </div>
+
+      <div class="opt">
+        <label>Numero di interazioni</label>
+        <div class="seg" data-key="rounds">
+          <button data-value="10">10</button>
+          <button data-value="20">20</button>
+          <button data-value="30">30</button>
+          <button data-value="50">50</button>
+        </div>
+      </div>
+
+      <button class="btn primary" data-goto="menu">Fatto</button>
+    </div>
+  </section>
+
+  <!-- GIOCO -->
+  <section id="game" class="screen">
+    <div id="players"></div>
+    <div id="pause" class="overlay">
+      <div class="center-col">
+        <h2>In pausa</h2>
+        <button class="btn primary big" data-action="resume">Riprendi</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODALITÀ GATTO -->
+  <section id="cat" class="screen">
+    <div id="cat-arena">
+      <div class="cat-hud">
+        <div class="cat-count"><span class="lbl">Presi</span><span id="cat-count">0</span></div>
+        <button id="cat-exit" class="btn"><span class="hold-fill"></span><span class="hold-text">Tieni premuto per uscire</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RISULTATI -->
+  <section id="results" class="screen">
+    <div class="panel wide">
+      <h2 id="res-title">Risultati</h2>
+      <p id="res-record" class="record"></p>
+      <p id="res-meta" class="hint"></p>
+      <div class="stats-grid" id="res-cards"></div>
+      <h3>Andamento dei tempi</h3>
+      <canvas id="res-chart" class="chart"></canvas>
+      <div class="row">
+        <button class="btn primary" data-action="replay" id="res-replay">Rigioca</button>
+        <button class="btn" data-action="history" id="res-history">Storico</button>
+        <button class="btn" data-goto="menu">Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORICO -->
+  <section id="history" class="screen">
+    <div class="panel wide">
+      <h2>Storico</h2>
+      <h3>Media delle partite nel tempo</h3>
+      <canvas id="hist-chart" class="chart"></canvas>
+      <ul id="hist-list"></ul>
+      <div class="row">
+        <button class="btn" data-goto="menu">Menu</button>
+        <button class="btn danger" data-action="clear-history">Cancella storico</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Animazione di apertura (3 s, un tocco la salta) -->
+  <div id="intro" aria-hidden="true">
+    <div class="psy-layer"></div>
+    <div class="intro-stage"></div>
+    <div class="intro-bar bar-track"><div class="bar-fill"></div><span class="bar-label">0 ms</span></div>
+    <div class="intro-title">reflection<span>-game</span></div>
+  </div>
+
+  <!-- Campo di un giocatore (in doppia ce ne sono due, ognuno girato verso il suo lato) -->
+  <template id="player-tpl">
+    <div class="half">
+      <div class="player">
+        <header class="hud">
+          <span class="ptag" data-s="ptag" data-v="ptag"></span>
+          <div class="stat" data-s="time"><span class="lbl">Tempo</span><span data-v="time">0:00,0</span></div>
+          <div class="stat" data-s="lives"><span class="lbl">Vite</span><span data-v="lives" class="lives"></span></div>
+          <div class="stat" data-s="score"><span class="lbl">Punti</span><span data-v="score">0</span></div>
+          <div class="stat"><span class="lbl" data-v="count-lbl">Interazione</span><span data-v="count">0 / 0</span></div>
+          <div class="stat"><span class="lbl">Ultimo</span><span data-v="last">—</span></div>
+          <div class="stat"><span class="lbl">Media</span><span data-v="avg">—</span></div>
+          <div class="stat" data-s="err"><span class="lbl">Errori</span><span data-v="err">0</span></div>
+          <div class="stat" data-s="miss"><span class="lbl">Mancati</span><span data-v="miss">0</span></div>
+          <button class="btn icon" data-action="quit" aria-label="Esci">✕</button>
+        </header>
+        <div class="arena"><div class="msg"></div></div>
+        <footer class="bar">
+          <div class="bar-track">
+            <div class="bar-fill"></div>
+            <span class="bar-label">0 ms</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </template>
+
+  <script src="game.js"></script>
+</body>
+</html>
