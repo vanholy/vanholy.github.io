@@ -27,6 +27,7 @@
         <li>Colpo che arriva <b>in fondo</b> al campo avversario: <b>+1 🪙</b>. Colpo sul <b>cannone</b>: −1 vita all'avversario e <b>+2 🪙</b>.</li>
         <li>Spendi le monete: <b>⚡ Potenza</b> (cadenza, colpi doppi/tripli, più forza) oppure <b>🛡 Ripara</b>: usa le monete che hai, 10 monete = barriera completa, meno monete = riparazione in proporzione.</li>
         <li>Ogni vita persa <b>danneggia il cannone</b>: crepe, fumo e scintille ti dicono quanto manca.</li>
+        <li><b>Movimento libero</b> (opzione): il cannone va ovunque nella tua metà e ogni minuto compare un <b>bonus</b> al centro: monete, vita, barriera, potenza o fuoco rapido. Lo prende chi lo tocca per primo col cannone.</li>
         <li>Vince chi distrugge per primo il cannone dell'altro.</li>
       </ul>
 
@@ -48,6 +49,14 @@
           </div>
         </div>
         <p id="fire-hint" class="hint"></p>
+        <div class="opt">
+          <span>Movimento</span>
+          <div class="seg" id="move-seg">
+            <button data-move="rail" class="on">Su binario</button>
+            <button data-move="free">Libero</button>
+          </div>
+        </div>
+        <p id="move-hint" class="hint"></p>
       </div>
 
       <button id="btn-start" class="btn primary">GIOCA</button>
@@ -59,7 +68,7 @@
         <a href="../" class="btn small">← Hub</a>
       </div>
 
-      <p class="keys">Tastiera: <b>BLU</b> W/S muovi · D spara (manuale: un colpo per pressione) · Q potenza · E ripara — <b>ROSA</b> ↑/↓ muovi · ← spara · O potenza · P ripara — Esc pausa</p>
+      <p class="keys">Tastiera: <b>BLU</b> W/A/S/D muovi · F spara · Q potenza · E ripara — <b>ROSA</b> frecce muovi · L o Invio spara · O potenza · P ripara — Esc pausa</p>
     </div>
   </div>
 

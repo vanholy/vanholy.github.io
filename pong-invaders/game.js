@@ -14,7 +14,17 @@
   const MAXLVL = 5;
   const GRID = 48;               // lato di un quadratino della griglia di sfondo
   const VORTEX_T = 0.55;         // durata del vortice elettrico
-  const PARRY = GRID;            // due colpi si annullano se distano meno di un quadratino in x e in y (area 2x2)
+  const PARRY = GRID;
+  const PAUSE_Y = 46;
+  const FINGER_AHEAD = 70;       // modalità libera: il cannone sta davanti al dito, così il dito non lo copre            // tasto pausa in alto sulla linea centrale (il centro è del bonus)
+  const BONUS_EVERY = 60, BONUS_LIFE = 20, BONUS_R = 32, RAPID_T = 10;
+  const BONUSES = {
+    coins:   { icon: '🪙', label: '+5 MONETE',        c: '#ffd34d' },
+    life:    { icon: '❤️', label: '+1 VITA',          c: '#ff5a7a' },
+    barrier: { icon: '🛡️', label: 'BARRIERA COMPLETA', c: '#7dfcff' },
+    power:   { icon: '⚡', label: 'POTENZA +1',       c: '#b48cff' },
+    rapid:   { icon: '🔥', label: 'FUOCO RAPIDO',     c: '#ff8a3a' },
+  };            // due colpi si annullano se distano meno di un quadratino in x e in y (area 2x2)
   const LEVELS = [null,
     { cd: 0.55, shots: 1, speed: 760, str: 1, rad: 1.0, r: 9 },
     { cd: 0.44, shots: 1, speed: 820, str: 1, rad: 1.4, r: 10 },
@@ -131,14 +141,16 @@
   let state = 'menu';            // menu | countdown | play | paused | over
   let pausedFrom = 'play';
   let players = [], balls = [], parts = [], pops = [], flashes = [];
+  let bonus = null, bonusTimer = 0;
   let countdown = 0, goT = 0, overT = 0, winner = -1, shake = 0, time = 0;
-  let maxHp = 3, fireMode = 'auto', demo = true, firstMatch = true;
+  let maxHp = 3, fireMode = 'auto', moveMode = 'rail', demo = true, firstMatch = true;
   try {
     const saved = JSON.parse(localStorage.getItem('pong-invaders-opts') || '{}');
     if ([3, 5, 7].includes(saved.hp)) maxHp = saved.hp;
     if (saved.fire === 'manual' || saved.fire === 'auto') fireMode = saved.fire;
+    if (saved.move === 'free' || saved.move === 'rail') moveMode = saved.move;
   } catch (e) { /* opzioni di default */ }
-  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode })); } catch (e) { /* niente */ } }
+  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode, move: moveMode })); } catch (e) { /* niente */ } }
   const wins = [0, 0];
   const owners = new Map();      // pointerId -> indice giocatore
 
@@ -146,14 +158,15 @@
     demo = isDemo;
     Sound.muted = isDemo;
     players = [0, 1].map(i => ({
-      i, dir: i === 0 ? 1 : -1, y: W / 2, ty: W / 2, vy: 0, hp: maxHp, coins: 0, lvl: 1,
+      i, dir: i === 0 ? 1 : -1, x: homeX(i), tx: homeX(i), y: W / 2, ty: W / 2, vy: 0, hp: maxHp, coins: 0, lvl: 1, rapid: 0,
       cd: 0.4 + i * 0.2, recoil: 0, hitT: 0, repairFx: 0, coinFx: 0, queued: 0,
       bar: Int8Array.from(MASK, m => m * 2), fresh: new Uint8Array(MASK.length), goals: [],
       marks: makeMarks(i === 0 ? 1 : -1),
       btn: { power: 0, repair: 0 }, deny: { power: 0, repair: 0 },
-      touches: new Map(), kUp: false, kDown: false, kFire: false, ai: { t: 0, tgt: W / 2 },
+      touches: new Map(), kUp: false, kDown: false, kFwd: false, kBack: false, kFire: false, ai: { t: 0, tgt: W / 2, tgx: homeX(i) },
     }));
     balls = []; parts = []; pops = []; flashes = []; winner = -1; owners.clear();
+    bonus = null; bonusTimer = 0;
   }
 
   // segni di danno del cannone: compaiono uno alla volta man mano che perde vite
@@ -172,7 +185,14 @@
   }
   const damageOf = p => demo ? 0 : 1 - p.hp / maxHp;
 
-  const cannonX = p => p.i === 0 ? PX0 + CANNON_OFF : PX1 - CANNON_OFF;
+  function homeX(i) { return i === 0 ? PX0 + CANNON_OFF : PX1 - CANNON_OFF; }
+  const cannonX = p => p.x;
+  // limiti del cannone in profondità: fisso sul binario, oppure libero in tutta la propria metà
+  function xRange(p) {
+    if (moveMode !== 'free') { const h = homeX(p.i); return [h, h]; }
+    const back = CANNON_T / 2 + 10, front = CANNON_T / 2 + 24;
+    return p.i === 0 ? [PX0 + back, MID - front] : [MID + front, PX1 - back];
+  }
   const barrierX0 = p => p.i === 0 ? PX0 + BARRIER_OFF : PX1 - BARRIER_OFF - DEPTH * CELL_X;
   const colToD = (p, c) => p.i === 0 ? c : DEPTH - 1 - c;          // c = colonna in ordine di x
   function barrierRatio(p) { let s = 0; for (const h of p.bar) s += h; return s / MASK_HP; }
@@ -317,16 +337,26 @@
   // ---------- aggiornamento ----------
   function updatePlayer(p, dt, canFire) {
     const half = CANNON_LEN / 2 + 4;
+    const [xa, xb] = xRange(p);
     if (demo) {
       p.ai.t -= dt;
-      if (p.ai.t <= 0) { p.ai.tgt = rnd(half, W - half); p.ai.t = rnd(0.5, 1.8); }
-      p.ty = p.ai.tgt;
+      if (p.ai.t <= 0) { p.ai.tgt = rnd(half, W - half); p.ai.tgx = rnd(xa, xa + (xb - xa) * 0.6); p.ai.t = rnd(0.5, 1.8); }
+      p.ty = p.ai.tgt; p.tx = p.ai.tgx;
     }
     const prevY = p.y;
     const k = (p.kDown ? 1 : 0) - (p.kUp ? 1 : 0);
-    if (k) { p.y += k * 1050 * dt; p.ty = p.y; }
-    else { const m = (demo ? 700 : 2400) * dt; p.y += clamp(p.ty - p.y, -m, m); }
+    const kx = ((p.kFwd ? 1 : 0) - (p.kBack ? 1 : 0)) * p.dir;
+    if (k || kx) {
+      p.y += k * 1050 * dt; p.ty = p.y;
+      p.x += kx * 900 * dt; p.tx = p.x;
+    } else {
+      // segue il bersaglio con velocità massima (vettoriale, così in diagonale non va più veloce)
+      const m = (demo ? 700 : 2400) * dt, dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy);
+      if (d > m) { p.x += dx / d * m; p.y += dy / d * m; } else { p.x = p.tx; p.y = p.ty; }
+    }
     p.y = clamp(p.y, half, W - half); p.ty = clamp(p.ty, half, W - half);
+    p.x = clamp(p.x, xa, xb); p.tx = clamp(p.tx, xa, xb);
+    p.rapid = Math.max(0, p.rapid - dt);
     p.vy = lerp(p.vy, (p.y - prevY) / Math.max(dt, 1e-3), 0.35);
     p.cd -= dt;
     const manual = !demo && fireMode === 'manual';
@@ -334,7 +364,7 @@
     if (canFire && firing && p.cd <= 0) {
       fire(p);
       p.queued = 0;
-      p.cd = LEVELS[p.lvl].cd * (manual ? 0.75 : 1) + (demo ? rnd(0.1, 0.6) : 0);
+      p.cd = LEVELS[p.lvl].cd * (manual ? 0.75 : 1) * (p.rapid > 0 ? 0.45 : 1) + (demo ? rnd(0.1, 0.6) : 0);
     }
     p.queued = Math.max(0, p.queued - dt);
     // fumo e scintille in base ai danni
@@ -355,6 +385,48 @@
     for (const key of ['power', 'repair']) { p.btn[key] = Math.max(0, p.btn[key] - dt); p.deny[key] = Math.max(0, p.deny[key] - dt); }
     for (const g of p.goals) g.t -= dt * 1.6;
     p.goals = p.goals.filter(g => g.t > 0);
+  }
+
+  // ---------- bonus (modalità libera) ----------
+  function spawnBonus() {
+    const opts = ['coins', 'rapid'];
+    for (const p of players) {
+      if (p.hp < maxHp) opts.push('life');
+      if (p.lvl < MAXLVL) opts.push('power');
+      if (barrierRatio(p) < 0.85) opts.push('barrier');
+    }
+    const type = opts[Math.floor(Math.random() * opts.length)];
+    bonus = { x: MID, y: W / 2, type, age: 0 };
+    burst(MID, W / 2, BONUSES[type].c, 40, 420); burst(MID, W / 2, '#ffffff', 16, 300);
+    Sound.bonusSpawn();
+  }
+
+  function takeBonus(p) {
+    const b = bonus, def = BONUSES[b.type];
+    bonus = null;
+    if (b.type === 'coins') { p.coins += 5; p.coinFx = 1; }
+    else if (b.type === 'life') { p.hp = Math.min(maxHp, p.hp + 1); if (players.every(q => q.hp > 1)) Sound.setMusicLevel(1); }
+    else if (b.type === 'barrier') { for (let k = 0; k < p.bar.length; k++) { if (MASK[k] && p.bar[k] < 2) p.fresh[k] = 1; p.bar[k] = MASK[k] * 2; } p.repairFx = 0.8; }
+    else if (b.type === 'power') { if (p.lvl < MAXLVL) p.lvl++; else { p.coins += 5; p.coinFx = 1; } }
+    else if (b.type === 'rapid') p.rapid = RAPID_T;
+    burst(b.x, b.y, def.c, 50, 520); burst(b.x, b.y, '#ffffff', 20, 360);
+    addPop(p.x + p.dir * 120, p.y, `${def.icon} ${def.label}`, p.i, def.c, true);
+    shake = Math.max(shake, 8);
+    Sound.bonusTake(b.x); vibrate(40);
+  }
+
+  function updateBonus(dt) {
+    if (moveMode !== 'free' || demo) return;
+    if (state !== 'play') return;
+    bonusTimer += dt;
+    if (!bonus && bonusTimer >= BONUS_EVERY) { bonusTimer = 0; spawnBonus(); }
+    if (!bonus) return;
+    bonus.age += dt;
+    if (bonus.age > BONUS_LIFE) { burst(bonus.x, bonus.y, '#888899', 20, 200); bonus = null; return; }
+    for (const p of players) {
+      const nx = clamp(bonus.x, p.x - CANNON_T / 2, p.x + CANNON_T / 2), ny = clamp(bonus.y, p.y - CANNON_LEN / 2, p.y + CANNON_LEN / 2);
+      if ((bonus.x - nx) ** 2 + (bonus.y - ny) ** 2 <= BONUS_R * BONUS_R) { takeBonus(p); return; }
+    }
   }
 
   function updateBalls(dt) {
@@ -426,6 +498,7 @@
     goT = Math.max(0, goT - dt);
     if (state === 'over') overT += dt;
     if (state === 'play' || state === 'menu') updateBalls(dt);
+    updateBonus(dt);
     updateFx(dt);
   }
 
@@ -527,6 +600,13 @@
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
         ctx.globalAlpha = 0.35 + 0.35 * Math.sin(time * 9);
         ctx.drawImage(glow[1], -90, -CANNON_LEN, 180, CANNON_LEN * 2);
+        ctx.restore();
+      }
+      if (p.rapid > 0) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.4 + 0.3 * Math.sin(time * 16);
+        ctx.drawImage(glow[1], -70, -CANNON_LEN * 0.9, 140, CANNON_LEN * 1.8);
+        ctx.drawImage(glow[0], -40, -CANNON_LEN * 0.7, 80, CANNON_LEN * 1.4);
         ctx.restore();
       }
       // il colore si spegne con i danni
@@ -667,6 +747,52 @@
     ctx.restore();
   }
 
+  function drawBonus() {
+    if (moveMode !== 'free' || demo) return;
+    // anello che si riempie fino al prossimo bonus
+    if (!bonus && (state === 'play' || state === 'paused')) {
+      const f = bonusTimer / BONUS_EVERY;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,211,77,0.12)'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(MID, W / 2, 90, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,211,77,${0.35 + 0.4 * (f > 0.9 ? Math.abs(Math.sin(time * 8)) : 0)})`;
+      ctx.beginPath(); ctx.arc(MID, W / 2, 90, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+    if (!bonus) return;
+    const def = BONUSES[bonus.type];
+    const appear = Math.min(1, bonus.age / 0.35), leftT = BONUS_LIFE - bonus.age;
+    if (leftT < 4 && Math.sin(time * 20) < 0) return;          // lampeggia prima di sparire
+    const R = BONUS_R * (0.4 + 0.6 * appear) * (1 + 0.07 * Math.sin(time * 6));
+    ctx.save();
+    ctx.translate(bonus.x, bonus.y);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.7;
+    ctx.drawImage(glow[0], -R * 2.6, -R * 2.6, R * 5.2, R * 5.2);
+    ctx.drawImage(glow[1], -R * 2, -R * 2, R * 4, R * 4);
+    ctx.globalAlpha = 1;
+    // particelle in orbita
+    for (let k = 0; k < 8; k++) {
+      const a = time * 2.2 + k * Math.PI / 4, r = R * 1.55;
+      ctx.fillStyle = k % 2 ? def.c : '#ffffff';
+      ctx.fillRect(Math.cos(a) * r - 2.5, Math.sin(a) * r - 2.5, 5, 5);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    // esagono rotante
+    ctx.rotate(time * 1.4);
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; k ? ctx.lineTo(Math.cos(a) * R, Math.sin(a) * R) : ctx.moveTo(Math.cos(a) * R, Math.sin(a) * R); }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(12,14,34,0.85)'; ctx.fill();
+    ctx.shadowColor = def.c; ctx.shadowBlur = 18 * view.dpr;
+    ctx.strokeStyle = def.c; ctx.lineWidth = 4; ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.rotate(-time * 1.4);
+    ctx.font = `${Math.round(R * 1.05)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, 0, 2);
+    ctx.restore();
+  }
+
   function drawParticles() {
     for (const q of parts) {
       if (!q.smoke) continue;
@@ -757,6 +883,7 @@
     }
     ctx.font = `500 12px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.fillText(`LIVELLO FUOCO ${p.lvl}`, 24, 100);
+    if (p.rapid > 0) { ctx.fillStyle = '#ff8a3a'; ctx.font = `700 12px ${FONT}`; ctx.fillText(`🔥 RAPIDO ${Math.ceil(p.rapid)}s`, 160, 100); }
     // monete
     const lay = hudLayout();
     const cxp = Math.max(24 + maxHp * 27 + 40, 240);
@@ -781,11 +908,11 @@
     ctx.save();
     ctx.globalAlpha = 0.5;
     ctx.fillStyle = 'rgba(10,12,30,0.8)'; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(MID, W / 2, 30, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(MID, PAUSE_Y, 30, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#fff';
     // le barre sono parallele alla linea centrale, quindi leggibili da entrambi i lati
-    ctx.fillRect(MID - 9, W / 2 - 11, 6, 22);
-    ctx.fillRect(MID + 3, W / 2 - 11, 6, 22);
+    ctx.fillRect(MID - 9, PAUSE_Y - 11, 6, 22);
+    ctx.fillRect(MID + 3, PAUSE_Y - 11, 6, 22);
     ctx.restore();
   }
 
@@ -833,7 +960,7 @@
     const sx = shake ? rnd(-shake, shake) * view.s : 0, sy = shake ? rnd(-shake, shake) * view.s : 0;
     ctx.drawImage(bg, sx * dpr, sy * dpr);
     setField(ctx, sx, sy);
-    drawGoals(); drawBarriers(); drawCannons(); drawBalls(); drawFlashes(); drawParticles(); drawPops();
+    drawGoals(); drawBonus(); drawBarriers(); drawCannons(); drawBalls(); drawFlashes(); drawParticles(); drawPops();
     setField(ctx);
     if (!demo) {
       if (state === 'play' || state === 'countdown') drawPauseBtn();
@@ -891,7 +1018,7 @@
     Sound.init();
     if (state !== 'play' && state !== 'countdown') return;
     const f = toField(e.clientX, e.clientY);
-    if (Math.hypot(f.x - MID, f.y - W / 2) < 42) { pause(); return; }
+    if (Math.hypot(f.x - MID, f.y - PAUSE_Y) < 42) { pause(); return; }
     const p = players[f.x < MID ? 0 : 1];
     const l = toLocal(p, f);
     if (l.v >= 0 && l.v <= HUD) {
@@ -901,7 +1028,7 @@
     }
     owners.set(e.pointerId, p.i);
     p.touches.set(e.pointerId, f.y);
-    p.ty = f.y;
+    p.ty = f.y; p.tx = f.x + p.dir * FINGER_AHEAD;
     if (fireMode === 'manual' && state === 'play') p.queued = 0.6;
     try { cv.setPointerCapture(e.pointerId); } catch (err) { /* niente */ }
   });
@@ -909,7 +1036,7 @@
     const i = owners.get(e.pointerId);
     if (i === undefined) return;
     const f = toField(e.clientX, e.clientY);
-    players[i].ty = f.y;
+    players[i].ty = f.y; players[i].tx = f.x + players[i].dir * FINGER_AHEAD;
   });
   const release = e => {
     const i = owners.get(e.pointerId);
@@ -925,7 +1052,10 @@
   cv.addEventListener('contextmenu', e => e.preventDefault());
 
   // ---------- tastiera ----------
-  const KEYS = { KeyW: [0, 'kUp'], KeyS: [0, 'kDown'], KeyD: [0, 'kFire'], ArrowUp: [1, 'kUp'], ArrowDown: [1, 'kDown'], ArrowLeft: [1, 'kFire'] };
+  const KEYS = {
+    KeyW: [0, 'kUp'], KeyS: [0, 'kDown'], KeyD: [0, 'kFwd'], KeyA: [0, 'kBack'], KeyF: [0, 'kFire'],
+    ArrowUp: [1, 'kUp'], ArrowDown: [1, 'kDown'], ArrowLeft: [1, 'kFwd'], ArrowRight: [1, 'kBack'], KeyL: [1, 'kFire'], Enter: [1, 'kFire'],
+  };
   window.addEventListener('keydown', e => {
     Sound.init();
     if (e.code === 'Escape' || e.code === 'Space') {
@@ -952,13 +1082,20 @@
     auto: 'Automatico: tieni il dito nella tua metà, il cannone ti segue e spara da solo.',
     manual: 'Manuale: tocca nella tua metà, il cannone va lì e spara un colpo per ogni tocco.',
   };
+  const MOVE_HINT = {
+    rail: 'Su binario: il cannone scorre solo lungo il tuo fondo campo.',
+    free: 'Libero: il cannone va ovunque nella tua metà. Ogni minuto compare un bonus al centro: prendilo col cannone!',
+  };
   function syncOpts() {
     document.querySelectorAll('#hp-seg button').forEach(x => x.classList.toggle('on', +x.dataset.hp === maxHp));
     document.querySelectorAll('#fire-seg button').forEach(x => x.classList.toggle('on', x.dataset.fire === fireMode));
+    document.querySelectorAll('#move-seg button').forEach(x => x.classList.toggle('on', x.dataset.move === moveMode));
     $('fire-hint').textContent = FIRE_HINT[fireMode];
+    $('move-hint').textContent = MOVE_HINT[moveMode];
   }
   document.querySelectorAll('#hp-seg button').forEach(b => b.addEventListener('click', () => { maxHp = +b.dataset.hp; saveOpts(); syncOpts(); }));
   document.querySelectorAll('#fire-seg button').forEach(b => b.addEventListener('click', () => { fireMode = b.dataset.fire; saveOpts(); syncOpts(); }));
+  document.querySelectorAll('#move-seg button').forEach(b => b.addEventListener('click', () => { moveMode = b.dataset.move; saveOpts(); syncOpts(); newMatch(true); }));
   syncOpts();
   $('btn-start').addEventListener('click', () => { Sound.init(); wins[0] = wins[1] = 0; firstMatch = true; startMatch(); });
   $('btn-again').addEventListener('click', () => { Sound.init(); startMatch(); });
@@ -1014,5 +1151,5 @@
   requestAnimationFrame(frame);
 
   // per i test automatici
-  window.__pi = { get state() { return state; }, get players() { return players; }, get balls() { return balls; } };
+  window.__pi = { get state() { return state; }, get players() { return players; }, get balls() { return balls; }, get bonus() { return bonus; }, nextBonus() { bonusTimer = BONUS_EVERY - 0.3; } };
 })();

@@ -170,6 +170,17 @@ window.PIAudio = (() => {
     noise({ f: 6000, d: 0.4, v: 0.05, ft: 'highpass', x });
   };
 
+  A.bonusSpawn = () => {   // compare il bonus al centro
+    if (!okSfx()) return;
+    [0, 7, 12, 19, 24].forEach((s, k) => tone({ f: midi(72 + s), d: 0.3, type: 'triangle', v: 0.06, at: k * 0.07 }));
+    tone({ f: 300, f2: 2400, d: 0.5, type: 'sine', v: 0.05 });
+  };
+  A.bonusTake = x => {     // bonus preso
+    if (!okSfx()) return;
+    [0, 4, 7, 12, 16, 19, 24].forEach((s, k) => tone({ f: midi(76 + s), d: 0.18, type: 'square', v: 0.045, lp: 4500, at: k * 0.035, x }));
+    noise({ f: 7000, ft: 'highpass', d: 0.35, v: 0.06, x });
+  };
+
   A.deny = x => { if (okSfx()) tone({ f: 220, f2: 150, d: 0.18, type: 'square', v: 0.05, lp: 1500, x }); };
   A.tick = () => { if (okSfx()) tone({ f: 660, d: 0.14, type: 'sine', v: 0.16 }); };
   A.go = () => {
