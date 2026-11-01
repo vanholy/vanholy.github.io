@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Pong Invaders</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Roboto:wght@400;500;700&family=Rye&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -28,11 +28,20 @@
         <li>Spendi le monete: <b>⚡ Potenza</b> (cadenza, colpi doppi/tripli, più forza) oppure <b>🛡 Ripara</b>: usa le monete che hai, 10 monete = barriera completa, meno monete = riparazione in proporzione.</li>
         <li>Ogni vita persa <b>danneggia il cannone</b>: crepe, fumo e scintille ti dicono quanto manca.</li>
         <li><b>Movimento libero</b> (opzione): il cannone va ovunque nella tua metà e ogni minuto compare un <b>bonus</b> al centro: monete, vita, barriera, potenza o fuoco rapido. Lo prende chi lo tocca per primo col cannone.</li>
+        <li><b>Tema Storico 1800</b> (opzione): cannoni da campo, trincee di soldati e sacchi di sabbia, palle di ferro e marcia militare.</li>
         <li>Vince chi distrugge per primo il cannone dell'altro.</li>
       </ul>
 
       <div class="options">
         <h3>OPZIONI</h3>
+        <div class="opt">
+          <span>Tema</span>
+          <div class="seg" id="theme-seg">
+            <button data-theme="neon" class="on">Neon</button>
+            <button data-theme="hist">Storico 1800</button>
+          </div>
+        </div>
+        <p id="theme-hint" class="hint"></p>
         <div class="opt">
           <span>Vite</span>
           <div class="seg" id="hp-seg">

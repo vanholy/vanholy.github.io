@@ -8,6 +8,7 @@ window.PIAudio = (() => {
     ac: null, master: null, sfxBus: null, musicBus: null, nb: null,
     sfxOn: true, musicOn: true,
     muted: false,          // true durante la demo del menu (solo musica, niente effetti)
+    theme: 'neon',         // 'hist' = guerra dell'800: suoni di cannone e marcia militare
     pan: x => 0,           // impostata dal gioco: posizione nel campo -> stereo
   };
 
@@ -101,6 +102,12 @@ window.PIAudio = (() => {
     const now = A.ac.currentTime;
     if (now - lastShot[i] < 0.06) return;
     lastShot[i] = now;
+    if (A.theme === 'hist') {   // colpo di cannone ad avancarica
+      noise({ f: 700 - lvl * 40, f2: 90, d: 0.32, v: 0.22 + lvl * 0.02, q: 0.7, x });
+      tone({ f: i ? 105 : 95, f2: 38, d: 0.3, type: 'sine', v: 0.3, x });
+      noise({ f: 3000, d: 0.04, v: 0.08, x });
+      return;
+    }
     const base = (i ? 620 : 520) * (1 + (lvl - 1) * 0.06);
     tone({ f: base, f2: base * 0.45, d: 0.11, type: i ? 'sawtooth' : 'square', v: 0.07, lp: 4200, lp2: 900, x });
     tone({ f: base * 2, f2: base, d: 0.05, type: 'triangle', v: 0.04, x });
@@ -110,6 +117,12 @@ window.PIAudio = (() => {
   A.crack = x => {
     if (!okSfx()) return;
     const now = A.ac.currentTime; if (now - lastCrack < 0.03) return; lastCrack = now;
+    if (A.theme === 'hist') {   // tonfo nei sacchi di sabbia e nella terra
+      noise({ f: rand(250, 450), d: 0.16, v: 0.28, q: 0.8, x });
+      noise({ f: 1800, d: 0.05, v: 0.06, x });
+      tone({ f: 80, f2: 45, d: 0.14, type: 'sine', v: 0.2, x });
+      return;
+    }
     noise({ f: rand(1800, 3200), d: 0.09, v: 0.16, q: 1.4, x });
     tone({ f: 140, f2: 60, d: 0.08, type: 'sine', v: 0.12, x });
   };
@@ -117,11 +130,17 @@ window.PIAudio = (() => {
   A.wall = x => {           // il "blip" classico del Pong
     if (!okSfx()) return;
     const now = A.ac.currentTime; if (now - lastWall < 0.04) return; lastWall = now;
+    if (A.theme === 'hist') { tone({ f: 310, f2: 220, d: 0.07, type: 'triangle', v: 0.09, x }); noise({ f: 900, d: 0.04, v: 0.06, x }); return; }   // colpo sul legno
     tone({ f: 990, d: 0.05, type: 'square', v: 0.04, lp: 3000, x });
   };
 
   A.clash = x => {         // parata: scarica elettrica che vortica
     if (!okSfx()) return;
+    if (A.theme === 'hist') {   // due palle di ferro che si scontrano: rintocco metallico e sbuffo
+      tone({ f: 1250, d: 0.5, type: 'sine', v: 0.09, x }); tone({ f: 1870, d: 0.35, type: 'sine', v: 0.06, x }); tone({ f: 2960, d: 0.2, type: 'sine', v: 0.04, x });
+      noise({ f: 600, f2: 150, d: 0.35, v: 0.2, q: 0.6, x });
+      return;
+    }
     for (let k = 0; k < 6; k++) noise({ f: rand(2500, 7000), q: 6, d: 0.04, v: 0.12, at: k * 0.045 + rand(0, 0.02), x });
     tone({ f: 1600, f2: 120, d: 0.45, type: 'sawtooth', v: 0.06, lp: 5000, lp2: 400, q: 6, x });
     tone({ f: 60, d: 0.4, type: 'square', v: 0.05, lp: 600, x });                 // ronzio elettrico
@@ -227,8 +246,46 @@ window.PIAudio = (() => {
     while (mus.next < A.ac.currentTime + 0.12) { playStep(mus.step, mus.next); mus.next += STEP; mus.step++; }
   }
 
+  // marcia militare originale (tema storico): pifferi, rullante, grancassa e bassotuba "um-pa"
+  const FIFE = [
+    72, 0, 72, 74, 76, 0, 79, 0, 76, 0, 72, 0, 74, 0, 76, 0,
+    74, 0, 71, 0, 74, 0, 79, 0, 77, 0, 74, 0, 71, 0, 74, 0,
+    76, 0, 79, 0, 84, 0, 79, 0, 76, 0, 72, 0, 76, 77, 79, 0,
+    77, 0, 76, 0, 74, 0, 71, 0, 72, 0, 0, 0, 72, 0, 0, 0,
+  ];
+  const TUBA = [[48, 55], [43, 50], [48, 55], [43, 48]];
+  function playStepHist(step, t) {
+    const s = step % 16, bar = Math.floor(step / 16) % 4, lvl = mus.level, at = t - A.ac.currentTime, bus = A.musicBus;
+    // bassotuba: fondamentale sul battere, quinta sul levare
+    if (s % 8 === 0 || s % 8 === 4) {
+      const m = TUBA[bar][s % 8 === 0 ? 0 : 1];
+      tone({ f: midi(m - 12), d: STEP * 2.6, type: 'triangle', v: lvl ? 0.16 : 0.1, at, bus });
+      tone({ f: midi(m), d: STEP * 2, type: 'sawtooth', v: lvl ? 0.025 : 0.015, lp: 600, at, bus });
+    }
+    // piffero (più acuto e brillante quando c'è tensione)
+    const note = FIFE[bar * 16 + s];
+    if (note) {
+      const node = A.ac.createGain(); node.connect(bus); node.connect(A.echo);
+      const up = lvl === 2 ? 12 : 0;
+      tone({ f: midi(note + up), d: STEP * 1.7, type: 'square', v: lvl ? 0.03 : 0.026, lp: 2600, att: 0.01, at, bus: node });
+      tone({ f: midi(note + 12 + up), d: STEP * 1.2, type: 'sine', v: 0.012, at, bus: node });
+    }
+    if (lvl >= 1) {
+      // grancassa sul primo e terzo quarto
+      if (s === 0 || s === 8) tone({ f: 95, f2: 45, slide: 0.15, d: 0.32, type: 'sine', v: 0.4, at, bus });
+      // rullante: colpi sui quarti deboli e rullate a fine frase
+      const roll = (bar === 3 && s >= 8) || (lvl === 2 && s >= 12);
+      if (s === 4 || s === 12 || roll || (s % 2 === 0 && lvl === 2)) {
+        noise({ f: 2200, q: 0.9, d: roll ? 0.05 : 0.12, v: roll ? 0.08 : 0.14, at, bus });
+      }
+    } else if (s === 0) {
+      noise({ f: 2200, q: 0.9, d: 0.1, v: 0.07, at, bus });
+    }
+  }
+
   function playStep(step, t) {
     if (!A.musicOn) return;
+    if (A.theme === 'hist') return playStepHist(step, t);
     const s = step % 16, bar = Math.floor(step / 16) % 4, lvl = mus.level, at = t - A.ac.currentTime;
     const bus = A.musicBus;
     // pad all'inizio della battuta

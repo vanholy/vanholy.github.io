@@ -156,3 +156,27 @@ h2 { font-size: 1.8rem; margin-bottom: 14px; }
 .btn.off { opacity: 0.5; }
 
 .keys { margin-top: 14px; font-size: 0.74rem; color: rgba(255, 255, 255, 0.45); line-height: 1.5; }
+
+/* ---------- tema Storico 1800 ---------- */
+body.hist .overlay { background: rgba(40, 28, 12, 0.45); }
+body.hist .overlay.clear { background: rgba(40, 28, 12, 0.15); }
+body.hist .panel {
+  background: linear-gradient(160deg, #f3e6c4, #e2cf9f);
+  color: #3b2a17;
+  border: 3px solid #6b4423;
+  box-shadow: 0 0 0 4px #e2cf9f, 0 0 0 7px #6b4423, 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+body.hist h1, body.hist h2, body.hist .options h3, body.hist .opt { font-family: 'Rye', Georgia, serif; }
+body.hist h1 { color: #2f5fb3; text-shadow: 2px 2px 0 #3b2a17; }
+body.hist h1 span { color: #c4302b; text-shadow: 2px 2px 0 #3b2a17; }
+body.hist .tag, body.hist .rules, body.hist .hint, body.hist .keys, body.hist .opt, body.hist .options h3 { color: #3b2a17; }
+body.hist .rules li { background: rgba(107, 68, 35, 0.08); border-left-color: #2f5fb3; }
+body.hist .rules li:nth-child(even) { border-left-color: #c4302b; }
+body.hist .rules b { color: #1f160b; }
+body.hist .options { background: rgba(107, 68, 35, 0.08); border-color: rgba(107, 68, 35, 0.3); }
+body.hist .seg { border-color: #6b4423; }
+body.hist .seg button { color: #3b2a17; font-family: 'Rye', Georgia, serif; }
+body.hist .seg button + button { border-left-color: #6b4423; }
+body.hist .seg button.on { background: linear-gradient(135deg, #2f5fb3, #c4302b); color: #fff; }
+body.hist .btn { font-family: 'Rye', Georgia, serif; color: #3b2a17; border-color: #6b4423; background: rgba(107, 68, 35, 0.1); }
+body.hist .btn.primary { color: #fff; background: linear-gradient(135deg, #2f5fb3, #6b4423 50%, #c4302b); box-shadow: 0 6px 20px rgba(60, 30, 10, 0.4); }

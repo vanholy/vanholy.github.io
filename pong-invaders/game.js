@@ -15,9 +15,9 @@
   const GRID = 48;               // lato di un quadratino della griglia di sfondo
   const VORTEX_T = 0.55;         // durata del vortice elettrico
   const PARRY = GRID;
-  const PAUSE_Y = 46;
+  const PAUSE_Y = 46;            // tasto pausa in alto sulla linea centrale (il centro è del bonus)
   const FREE_SPEED = 0.8;        // modalità libera: velocità del cannone ridotta del 20%
-  const FINGER_AHEAD = 70;       // modalità libera: il cannone sta davanti al dito, così il dito non lo copre            // tasto pausa in alto sulla linea centrale (il centro è del bonus)
+  const FINGER_AHEAD = 70;       // modalità libera: il cannone sta davanti al dito, così il dito non lo copre
   const BONUS_EVERY = 60, BONUS_LIFE = 20, BONUS_R = 32, RAPID_T = 10;
   const BONUSES = {
     coins:   { icon: '🪙', label: '+5 MONETE',        c: '#ffd34d' },
@@ -35,12 +35,18 @@
   ];
   const powerCost = lvl => 2 + lvl * 2;        // 4, 6, 8, 10
   const REPAIR_FULL = 10;                      // monete per una riparazione completa
-  const PL = [
-    { name: 'BLU',  c: '#2de2ff', rgb: '45,226,255' },
-    { name: 'ROSA', c: '#ff2d95', rgb: '255,45,149' },
-  ];
+  // Temi: "neon" (moderno) e "hist" (guerra dell'800, cartoon). Le regole sono identiche, cambia la grafica.
+  const THEMES = {
+    neon: { pl: [{ name: 'BLU', c: '#2de2ff', rgb: '45,226,255' }, { name: 'ROSA', c: '#ff2d95', rgb: '255,45,149' }],
+            font: '"Orbitron", "Segoe UI", sans-serif', text: '#fff', sub: 'rgba(255,255,255,0.55)', sub2: 'rgba(255,255,255,0.75)', fs: 1 },
+    hist: { pl: [{ name: 'BLU', c: '#2f5fb3', rgb: '47,95,179' }, { name: 'ROSSO', c: '#c4302b', rgb: '196,48,43' }],
+            font: '"Rye", Georgia, serif', text: '#3b2a17', sub: 'rgba(59,42,23,0.65)', sub2: 'rgba(59,42,23,0.8)', fs: 0.86 },
+  };
+  let theme = 'neon', HIST = false, TS = THEMES.neon;
+  const PL = THEMES.neon.pl.map(x => ({ ...x }));
   const GOLD = '#ffd34d';
-  const FONT = '"Orbitron", "Segoe UI", sans-serif';
+  let FONT = THEMES.neon.font;
+  const glowK = () => HIST ? 0 : view.dpr;          // niente bagliori neon nel tema storico
 
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -125,7 +131,7 @@
   }
 
   // sprite di bagliore per le palle
-  const glow = PL.map(pl => {
+  const makeGlow = () => PL.map(pl => {
     const g = document.createElement('canvas'); g.width = g.height = 128;
     const gc = g.getContext('2d');
     const gr = gc.createRadialGradient(64, 64, 0, 64, 64, 64);
@@ -134,6 +140,7 @@
     gc.fillStyle = gr; gc.fillRect(0, 0, 128, 128);
     return g;
   });
+  let glow = makeGlow();
 
   // ---------- audio (vedi audio.js) ----------
   const Sound = window.PIAudio;
@@ -153,8 +160,9 @@
     if ([3, 5, 7].includes(saved.hp)) maxHp = saved.hp;
     if (saved.fire === 'manual' || saved.fire === 'auto') fireMode = saved.fire;
     if (saved.move === 'free' || saved.move === 'rail') moveMode = saved.move;
+    if (saved.theme === 'hist' || saved.theme === 'neon') theme = saved.theme;
   } catch (e) { /* opzioni di default */ }
-  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode, move: moveMode })); } catch (e) { /* niente */ } }
+  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode, move: moveMode, theme })); } catch (e) { /* niente */ } }
   const wins = [0, 0];
   const owners = new Map();      // pointerId -> indice giocatore
 
@@ -203,10 +211,11 @@
 
   // ---------- effetti ----------
   function burst(x, y, color, n, speed, dirx = 0, size = 5) {
+    const remap = HIST && color !== GOLD;
     for (let k = 0; k < n && parts.length < 900; k++) {
       const a = Math.random() * Math.PI * 2, v = rnd(0.2, 1) * speed;
       parts.push({ x, y, vx: Math.cos(a) * v + dirx * speed * 0.6, vy: Math.sin(a) * v,
-        life: rnd(0.35, 0.8), max: 0.8, c: color, s: rnd(size * 0.5, size * 1.3) });
+        life: rnd(0.35, 0.8), max: 0.8, c: remap ? histColor(color) : color, s: rnd(size * 0.5, size * 1.3) });
     }
   }
   function addPop(x, y, text, i, color, big = false) {
@@ -509,6 +518,7 @@
 
   // ---------- disegno ----------
   function drawBackground() {
+    if (HIST) return drawBackgroundHist();
     bgx.setTransform(1, 0, 0, 1, 0, 0);
     bgx.fillStyle = '#05060f'; bgx.fillRect(0, 0, bg.width, bg.height);
     setField(bgx);
@@ -533,7 +543,7 @@
     bgx.restore();
     // sponde laterali
     bgx.save();
-    bgx.shadowBlur = 16 * view.dpr; bgx.shadowColor = '#a8b4ff';
+    bgx.shadowBlur = 16 * glowK(); bgx.shadowColor = '#a8b4ff';
     bgx.strokeStyle = 'rgba(200,210,255,0.6)'; bgx.lineWidth = 4;
     bgx.beginPath(); bgx.moveTo(PX0, 2); bgx.lineTo(PX1, 2); bgx.moveTo(PX0, W - 2); bgx.lineTo(PX1, W - 2); bgx.stroke();
     // linee di fondo
@@ -559,6 +569,7 @@
   }
 
   function drawGoals() {
+    if (HIST) return drawGoalsHist();
     ctx.globalCompositeOperation = 'lighter';
     for (const p of players) for (const g of p.goals) {
       const x = p.i === 0 ? PX0 : PX1;
@@ -570,6 +581,18 @@
 
   function drawBarriers() {
     const ch = W / ROWS;
+    if (HIST) {   // le trincee sono nel livello in cache (updateBarLayer); qui solo il lampo della riparazione
+      for (const p of players) {
+        if (p.repairFx <= 0) continue;
+        const bx0 = barrierX0(p);
+        ctx.fillStyle = `rgba(255,250,220,${p.repairFx * 0.9})`;
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < DEPTH; c++) {
+          const idx = r * DEPTH + colToD(p, c);
+          if (p.bar[idx] > 0 && (demo || p.fresh[idx])) ctx.fillRect(bx0 + c * CELL_X + 1, r * ch + 1, CELL_X - 2, ch - 2);
+        }
+      }
+      return;
+    }
     for (const p of players) {
       const bx0 = barrierX0(p), pl = PL[p.i];
       const full = new Path2D(), weak = new Path2D(), fresh = new Path2D();
@@ -582,7 +605,7 @@
         if (allFresh || p.fresh[idx]) fresh.rect(x, y, CELL_X - 2, ch - 2);
       }
       ctx.save();
-      ctx.shadowColor = pl.c; ctx.shadowBlur = 12 * view.dpr;
+      ctx.shadowColor = pl.c; ctx.shadowBlur = 12 * glowK();
       ctx.fillStyle = `rgba(${pl.rgb},0.88)`; ctx.fill(full);
       ctx.shadowBlur = 0;
       ctx.fillStyle = `rgba(${pl.rgb},0.3)`; ctx.fill(weak);
@@ -595,6 +618,7 @@
   function drawCannons() {
     for (const p of players) {
       if (state === 'over' && p.i !== winner && overT > 0) continue;
+      if (HIST) { drawCannonHist(p); continue; }
       const pl = PL[p.i], cx = cannonX(p) - p.dir * p.recoil * 7;
       ctx.save();
       ctx.translate(cx, p.y);
@@ -618,7 +642,7 @@
       const glowA = 1 - dmg * 0.75;
       const g = ctx.createLinearGradient(-p.dir * CANNON_T / 2, 0, p.dir * CANNON_T / 2, 0);
       g.addColorStop(0, '#0b0e22'); g.addColorStop(1, `rgba(${pl.rgb},${0.35 + 0.65 * glowA})`);
-      ctx.shadowColor = pl.c; ctx.shadowBlur = 22 * view.dpr * glowA;
+      ctx.shadowColor = pl.c; ctx.shadowBlur = 22 * glowK() * glowA;
       // canna: con molti danni si storta
       ctx.save();
       if (dmg >= 0.5) ctx.rotate(p.dir * (dmg - 0.4) * 0.35);
@@ -662,6 +686,7 @@
   }
 
   function drawBalls() {
+    if (HIST) return drawBallsHist();
     ctx.globalCompositeOperation = 'lighter';
     ctx.lineCap = 'round';
     for (const b of balls) {
@@ -697,6 +722,7 @@
 
   function drawFlashes() {
     if (!flashes.length) return;
+    if (HIST) return drawFlashesHist();
     ctx.save();
     ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const f of flashes) {
@@ -758,9 +784,9 @@
     if (!bonus && (state === 'play' || state === 'paused')) {
       const f = bonusTimer / BONUS_EVERY;
       ctx.save();
-      ctx.strokeStyle = 'rgba(255,211,77,0.12)'; ctx.lineWidth = 6;
+      ctx.strokeStyle = HIST ? 'rgba(59,42,23,0.15)' : 'rgba(255,211,77,0.12)'; ctx.lineWidth = 6;
       ctx.beginPath(); ctx.arc(MID, W / 2, 90, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = `rgba(255,211,77,${0.35 + 0.4 * (f > 0.9 ? Math.abs(Math.sin(time * 8)) : 0)})`;
+      ctx.strokeStyle = `rgba(${HIST ? '120,80,30' : '255,211,77'},${0.35 + 0.4 * (f > 0.9 ? Math.abs(Math.sin(time * 8)) : 0)})`;
       ctx.beginPath(); ctx.arc(MID, W / 2, 90, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
@@ -771,6 +797,13 @@
     const R = BONUS_R * (0.4 + 0.6 * appear) * (1 + 0.07 * Math.sin(time * 6));
     ctx.save();
     ctx.translate(bonus.x, bonus.y);
+    if (HIST) {
+      drawBonusCrate(def, R);
+      ctx.font = `${Math.round(R * 0.85)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(def.icon, 0, 2);
+      ctx.restore();
+      return;
+    }
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = 0.7;
     ctx.drawImage(glow[0], -R * 2.6, -R * 2.6, R * 5.2, R * 5.2);
@@ -789,7 +822,7 @@
     for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; k ? ctx.lineTo(Math.cos(a) * R, Math.sin(a) * R) : ctx.moveTo(Math.cos(a) * R, Math.sin(a) * R); }
     ctx.closePath();
     ctx.fillStyle = 'rgba(12,14,34,0.85)'; ctx.fill();
-    ctx.shadowColor = def.c; ctx.shadowBlur = 18 * view.dpr;
+    ctx.shadowColor = def.c; ctx.shadowBlur = 18 * glowK();
     ctx.strokeStyle = def.c; ctx.lineWidth = 4; ctx.stroke();
     ctx.shadowBlur = 0;
     ctx.rotate(-time * 1.4);
@@ -804,7 +837,7 @@
       ctx.fillStyle = `rgba(${q.c},${0.45 * clamp(q.life / q.max, 0, 1)})`;
       ctx.beginPath(); ctx.arc(q.x, q.y, q.s, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalCompositeOperation = HIST ? 'source-over' : 'lighter';
     for (const q of parts) {
       if (q.smoke) continue;
       ctx.globalAlpha = clamp(q.life / q.max, 0, 1);
@@ -821,15 +854,15 @@
       facing(q.x, q.y, q.i);
       ctx.globalAlpha = clamp(q.life * 1.6, 0, 1);
       ctx.font = `900 ${q.big ? 30 : 36}px ${FONT}`;
-      ctx.shadowColor = q.c; ctx.shadowBlur = 14 * view.dpr;
-      ctx.fillStyle = q.c; ctx.fillText(q.text, 0, 0);
+      ctx.shadowColor = q.c; ctx.shadowBlur = 14 * glowK();
+      ctx.fillStyle = q.c; drawCenterTextOutline(q.text, 0, 0);
       ctx.restore();
     }
   }
 
   function coin(x, y, r) {
     ctx.save();
-    ctx.shadowColor = GOLD; ctx.shadowBlur = 10 * view.dpr;
+    ctx.shadowColor = GOLD; ctx.shadowBlur = 10 * glowK();
     ctx.fillStyle = GOLD; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
     ctx.shadowBlur = 0;
     ctx.strokeStyle = 'rgba(120,70,0,0.6)'; ctx.lineWidth = r * 0.16;
@@ -850,20 +883,20 @@
     ctx.save();
     if (deny > 0) ctx.translate(Math.sin(deny * 70) * 7 * (deny / 0.35), 0);
     rr(ctx, r.u, r.v, r.w, r.h, 16);
-    ctx.fillStyle = `rgba(${pl.rgb},${ok ? 0.2 : 0.05})`; ctx.fill();
-    if (ok) { ctx.shadowColor = pl.c; ctx.shadowBlur = 14 * view.dpr; }
+    ctx.fillStyle = HIST ? (ok ? '#f7ebcb' : '#e6d5ac') : `rgba(${pl.rgb},${ok ? 0.2 : 0.05})`; ctx.fill();
+    if (ok) { ctx.shadowColor = pl.c; ctx.shadowBlur = 14 * glowK(); }
     ctx.strokeStyle = deny > 0 ? '#ff5a5a' : `rgba(${pl.rgb},${ok ? 0.95 : 0.3})`; ctx.lineWidth = 2.5; ctx.stroke();
     ctx.shadowBlur = 0;
     if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fill(); }
     ctx.globalAlpha = ok ? 1 : 0.45;
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
-    ctx.font = `700 20px ${FONT}`;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = TS.text;
+    ctx.font = `700 ${Math.round(20 * TS.fs)}px ${FONT}`;
     ctx.fillText(`${icon} ${title}`, r.u + 14, r.v + 28);
-    ctx.font = `500 15px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = `500 ${Math.round(15 * TS.fs)}px ${FONT}`; ctx.fillStyle = TS.sub2;
     ctx.fillText(sub, r.u + 14, r.v + 58);
     if (cost !== null) {
       coin(r.u + r.w - 22, r.v + 58, 10);
-      ctx.textAlign = 'right'; ctx.fillStyle = GOLD; ctx.font = `800 18px ${FONT}`;
+      ctx.textAlign = 'right'; ctx.fillStyle = HIST ? '#8a5a00' : GOLD; ctx.font = `800 ${Math.round(18 * TS.fs)}px ${FONT}`;
       ctx.fillText(String(cost), r.u + r.w - 38, r.v + 59);
     }
     ctx.restore();
@@ -875,10 +908,10 @@
     playerFrame(p);
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.font = `900 22px ${FONT}`; ctx.fillStyle = pl.c;
-    ctx.shadowColor = pl.c; ctx.shadowBlur = 10 * view.dpr;
+    ctx.shadowColor = pl.c; ctx.shadowBlur = 10 * glowK();
     ctx.fillText(pl.name, 24, 30);
     ctx.shadowBlur = 0;
-    ctx.font = `500 13px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = `500 ${Math.round(13 * TS.fs)}px ${FONT}`; ctx.fillStyle = TS.sub;
     ctx.fillText(`VITTORIE ${wins[p.i]}`, 24 + ctx.measureText(pl.name).width + 70, 31);
     // vite
     for (let k = 0; k < maxHp; k++) {
@@ -886,7 +919,7 @@
       if (k < p.hp) { ctx.fillStyle = pl.c; ctx.fill(); }
       else { ctx.strokeStyle = `rgba(${pl.rgb},0.4)`; ctx.lineWidth = 2; ctx.stroke(); }
     }
-    ctx.font = `500 12px ${FONT}`; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = `500 ${Math.round(12 * TS.fs)}px ${FONT}`; ctx.fillStyle = TS.sub;
     ctx.fillText(`LIVELLO FUOCO ${p.lvl}`, 24, 100);
     if (p.rapid > 0) { ctx.fillStyle = '#ff8a3a'; ctx.font = `700 12px ${FONT}`; ctx.fillText(`🔥 RAPIDO ${Math.ceil(p.rapid)}s`, 160, 100); }
     // monete
@@ -896,7 +929,7 @@
     ctx.save();
     ctx.translate(cxp, HUD / 2 + 2); ctx.scale(sc, sc);
     coin(0, 0, 17);
-    ctx.font = `900 36px ${FONT}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
+    ctx.font = `900 36px ${FONT}`; ctx.fillStyle = TS.text; ctx.textAlign = 'left';
     ctx.fillText(String(p.coins), 28, 2);
     ctx.restore();
     // pulsanti
@@ -912,9 +945,10 @@
   function drawPauseBtn() {
     ctx.save();
     ctx.globalAlpha = 0.5;
-    ctx.fillStyle = 'rgba(10,12,30,0.8)'; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2.5;
+    if (HIST) ctx.globalAlpha = 0.85;
+    ctx.fillStyle = HIST ? '#e9d8ae' : 'rgba(10,12,30,0.8)'; ctx.strokeStyle = HIST ? '#5a3a1c' : 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(MID, PAUSE_Y, 30, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = HIST ? '#5a3a1c' : '#fff';
     // le barre sono parallele alla linea centrale, quindi leggibili da entrambi i lati
     ctx.fillRect(MID - 9, PAUSE_Y - 11, 6, 22);
     ctx.fillRect(MID + 3, PAUSE_Y - 11, 6, 22);
@@ -932,27 +966,27 @@
         const n = Math.ceil(countdown), f = countdown - Math.floor(countdown);
         ctx.globalAlpha = 0.4 + f * 0.6;
         ctx.font = `900 ${150 + (1 - f) * 40}px ${FONT}`;
-        ctx.shadowColor = pl.c; ctx.shadowBlur = 30 * view.dpr; ctx.fillStyle = '#fff';
-        ctx.fillText(String(n), 0, -20);
+        ctx.shadowColor = pl.c; ctx.shadowBlur = 30 * glowK(); ctx.fillStyle = '#fff';
+        drawCenterTextOutline(String(n), 0, -20);
         if (firstMatch) {
           ctx.globalAlpha = 1; ctx.shadowBlur = 0;
           ctx.font = `600 20px ${FONT}`; ctx.fillStyle = pl.c;
-          ctx.fillText(fireMode === 'manual' ? 'TOCCA NELLA TUA METÀ: OGNI TOCCO UN COLPO' : 'TIENI IL DITO NELLA TUA METÀ: MUOVI E SPARA', 0, 100);
+          drawCenterTextOutline(fireMode === 'manual' ? 'TOCCA NELLA TUA METÀ: OGNI TOCCO UN COLPO' : 'TIENI IL DITO NELLA TUA METÀ: MUOVI E SPARA', 0, 100);
         }
       } else if (goT > 0) {
         ctx.globalAlpha = goT / 0.8;
         ctx.font = `900 ${120 + (0.8 - goT) * 80}px ${FONT}`;
-        ctx.shadowColor = pl.c; ctx.shadowBlur = 30 * view.dpr; ctx.fillStyle = pl.c;
-        ctx.fillText('VIA!', 0, 0);
+        ctx.shadowColor = pl.c; ctx.shadowBlur = 30 * glowK(); ctx.fillStyle = pl.c;
+        drawCenterTextOutline('VIA!', 0, 0);
       } else if (state === 'over' && overT > 0.5) {
         const won = p.i === winner;
         ctx.globalAlpha = clamp((overT - 0.5) * 2, 0, 1);
         ctx.font = `900 84px ${FONT}`;
-        ctx.shadowColor = won ? GOLD : pl.c; ctx.shadowBlur = 30 * view.dpr;
+        ctx.shadowColor = won ? GOLD : pl.c; ctx.shadowBlur = 30 * glowK();
         ctx.fillStyle = won ? GOLD : 'rgba(255,255,255,0.85)';
-        ctx.fillText(won ? 'VITTORIA!' : 'SCONFITTA', 0, -150);
+        drawCenterTextOutline(won ? 'VITTORIA!' : 'SCONFITTA', 0, -150);
         ctx.shadowBlur = 0; ctx.font = `600 24px ${FONT}`; ctx.fillStyle = '#fff';
-        ctx.fillText(`${PL[0].name} ${wins[0]}  –  ${wins[1]} ${PL[1].name}`, 0, -80);
+        drawCenterTextOutline(`${PL[0].name} ${wins[0]}  –  ${wins[1]} ${PL[1].name}`, 0, -80);
       }
       ctx.restore();
     }
@@ -964,6 +998,7 @@
     ctx.fillStyle = '#05060f'; ctx.fillRect(0, 0, cv.width, cv.height);
     const sx = shake ? rnd(-shake, shake) * view.s : 0, sy = shake ? rnd(-shake, shake) * view.s : 0;
     ctx.drawImage(bg, sx * dpr, sy * dpr);
+    if (HIST) { updateBarLayer(); ctx.drawImage(barLayer, sx * dpr, sy * dpr); }
     setField(ctx, sx, sy);
     drawGoals(); drawBonus(); drawBarriers(); drawCannons(); drawBalls(); drawFlashes(); drawParticles(); drawPops();
     setField(ctx);
@@ -972,6 +1007,333 @@
       for (const p of players) drawHud(p);
       drawCenterTexts();
     }
+  }
+
+  // =====================================================================
+  // ---------- TEMA STORICO 1800: grafica cartoon, vista dall'alto ----------
+  // =====================================================================
+  const H = {
+    grass: '#7aa64a', dirt: '#6e5132', dirtDark: '#4e3822', wood: '#8a5a2b', woodDark: '#4a2e14',
+    sand: '#d8bf86', sandDark: '#8a6a3c', sandHurt: '#b39a66', bronze1: '#7a4a1a', bronze2: '#e0a85a',
+    skin: '#f1c99b', hat: '#22222c', ink: '#3b2a17', paper1: '#efe0b8', paper2: '#e2cf9f',
+  };
+  const HIST_DEBRIS = ['#6b4a2b', '#8b6a42', '#4a3a2a', '#5c5c5c', '#ff9a2a', '#a07a4a'];
+  const histColor = c => (c === GOLD ? c : c === '#ffffff' ? '#f4ecd8' : HIST_DEBRIS[Math.floor(Math.random() * HIST_DEBRIS.length)]);
+
+  // generatore casuale con seme: lo sfondo è sempre lo stesso a ogni ridisegno
+  function seeded(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+
+  function drawBackgroundHist() {
+    const c = bgx, R = seeded(1815);
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.fillStyle = '#2b2116'; c.fillRect(0, 0, bg.width, bg.height);
+    setField(c);
+    // fasce HUD: pergamena con il nastro del colore dell'esercito
+    for (const i of [0, 1]) {
+      const x0 = i === 0 ? 0 : PX1;
+      const g = c.createLinearGradient(i === 0 ? 0 : T, 0, i === 0 ? HUD : PX1, 0);
+      g.addColorStop(0, H.paper2); g.addColorStop(1, H.paper1);
+      c.fillStyle = g; c.fillRect(x0, 0, HUD, W);
+      for (let k = 0; k < 14; k++) { c.fillStyle = `rgba(120,90,40,${0.04 + R() * 0.06})`; c.beginPath(); c.arc(x0 + R() * HUD, R() * W, 8 + R() * 30, 0, 7); c.fill(); }
+      c.fillStyle = PL[i].c; c.fillRect(i === 0 ? HUD - 7 : PX1, 0, 7, W);
+    }
+    // prato
+    c.fillStyle = H.grass; c.fillRect(PX0, 0, PX1 - PX0, W);
+    const greens = ['#86b356', '#6f9a42', '#8fbc5e', '#6a933d', '#7fae4f'];
+    for (let k = 0; k < 260; k++) {
+      c.fillStyle = greens[k % greens.length]; c.globalAlpha = 0.35 + R() * 0.3;
+      c.beginPath(); c.ellipse(PX0 + R() * (PX1 - PX0), R() * W, 20 + R() * 60, 12 + R() * 40, R() * 3, 0, 7); c.fill();
+    }
+    c.globalAlpha = 1;
+    // zone di terra battuta
+    for (let k = 0; k < 26; k++) {
+      c.fillStyle = 'rgba(139,107,62,0.35)';
+      c.beginPath(); c.ellipse(PX0 + R() * (PX1 - PX0), R() * W, 20 + R() * 50, 10 + R() * 30, R() * 3, 0, 7); c.fill();
+    }
+    // terra smossa dietro le trincee e intorno ai cannoni
+    for (const i of [0, 1]) {
+      const x0 = i === 0 ? PX0 : PX1 - BARRIER_OFF - DEPTH * CELL_X - 20;
+      c.fillStyle = 'rgba(110,81,50,0.28)'; c.fillRect(x0, 0, BARRIER_OFF + DEPTH * CELL_X + 20, W);
+    }
+    // crateri di granata nella terra di nessuno
+    for (let k = 0; k < 12; k++) {
+      const side = k % 2, xa = side ? MID + 60 : PX0 + BARRIER_OFF + DEPTH * CELL_X + 60, xb = side ? PX1 - BARRIER_OFF - DEPTH * CELL_X - 60 : MID - 60;
+      const x = xa + R() * (xb - xa), y = 30 + R() * (W - 60), r = 12 + R() * 16;
+      c.fillStyle = 'rgba(160,128,90,0.8)'; c.beginPath(); c.ellipse(x, y, r * 1.35, r * 1.2, 0, 0, 7); c.fill();
+      c.fillStyle = H.dirtDark; c.beginPath(); c.ellipse(x, y, r, r * 0.85, 0, 0, 7); c.fill();
+      c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(x + r * 0.2, y + r * 0.15, r * 0.6, r * 0.5, 0, 0, 7); c.fill();
+    }
+    // ciuffi d'erba
+    c.strokeStyle = '#557f2f'; c.lineWidth = 2; c.lineCap = 'round';
+    for (let k = 0; k < 420; k++) {
+      const x = PX0 + R() * (PX1 - PX0), y = R() * W;
+      c.beginPath(); c.moveTo(x - 4, y - 5); c.lineTo(x, y + 2); c.lineTo(x + 4, y - 5); c.stroke();
+    }
+    // fiori
+    const flowers = ['#ffffff', '#ffd84a', '#e8475a', '#c9a0ff'];
+    for (let k = 0; k < 70; k++) { c.fillStyle = flowers[k % 4]; c.beginPath(); c.arc(PX0 + R() * (PX1 - PX0), R() * W, 2.2, 0, 7); c.fill(); }
+    // un leggero velo del colore di ogni esercito sulla propria metà
+    c.fillStyle = `rgba(${PL[0].rgb},0.06)`; c.fillRect(PX0, 0, MID - PX0, W);
+    c.fillStyle = `rgba(${PL[1].rgb},0.06)`; c.fillRect(MID, 0, PX1 - MID, W);
+    // ruscello al centro
+    const riverX = y => MID + Math.sin(y / 70) * 10 + Math.sin(y / 23) * 3;
+    const band = (half, color) => {
+      c.beginPath();
+      for (let y = 0; y <= W; y += 8) c.lineTo(riverX(y) - half, y);
+      for (let y = W; y >= 0; y -= 8) c.lineTo(riverX(y) + half, y);
+      c.closePath(); c.fillStyle = color; c.fill();
+    };
+    band(30, '#c9b07a'); band(23, '#4f8fc0'); band(12, '#5fa0d0');
+    c.strokeStyle = 'rgba(220,240,255,0.7)'; c.lineWidth = 2;
+    for (let y = 20; y < W; y += 46) { const x = riverX(y) + (R() - 0.5) * 16; c.beginPath(); c.arc(x, y, 7, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }
+    // staccionate sui lati lunghi
+    for (const y of [0, W]) {
+      const s = y ? -1 : 1;
+      c.strokeStyle = '#8a5a2b'; c.lineWidth = 4;
+      c.beginPath(); c.moveTo(PX0, y + s * 5); c.lineTo(PX1, y + s * 5); c.moveTo(PX0, y + s * 12); c.lineTo(PX1, y + s * 12); c.stroke();
+      for (let x = PX0 + 10; x < PX1; x += 56) { c.fillStyle = H.woodDark; c.fillRect(x - 3, y + (s > 0 ? 0 : -16), 7, 16); }
+    }
+    // palizzata di tronchi appuntiti in fondo a ogni campo
+    for (const i of [0, 1]) {
+      const d = i === 0 ? 1 : -1, x = i === 0 ? PX0 : PX1;
+      for (let y = 0; y < W; y += 15) {
+        c.beginPath();
+        c.moveTo(x - d * 14, y + 1); c.lineTo(x + d * 2, y + 1); c.lineTo(x + d * 10, y + 7.5); c.lineTo(x + d * 2, y + 14); c.lineTo(x - d * 14, y + 14); c.closePath();
+        c.fillStyle = y % 30 ? '#9a6a38' : H.wood; c.fill(); c.strokeStyle = H.woodDark; c.lineWidth = 1.5; c.stroke();
+      }
+    }
+    // vignetta seppia
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    const vg = c.createRadialGradient(bg.width / 2, bg.height / 2, Math.min(bg.width, bg.height) * 0.35, bg.width / 2, bg.height / 2, Math.max(bg.width, bg.height) * 0.75);
+    vg.addColorStop(0, 'rgba(60,40,10,0)'); vg.addColorStop(1, 'rgba(60,40,10,0.35)');
+    c.fillStyle = vg; c.fillRect(0, 0, bg.width, bg.height);
+  }
+
+  // soldatino visto dall'alto: spalle con l'uniforme e le spalline, cappello a tesa con la mostrina, fucile con baionetta
+  function drawSoldier(c, x, y, dir, sw, sh, color, wounded) {
+    const rx = sw * 0.4, ry = sh * 0.44;
+    c.fillStyle = 'rgba(0,0,0,0.2)'; c.beginPath(); c.ellipse(x + 1.5, y + 2, rx, ry, 0, 0, 7); c.fill();
+    if (!wounded) {   // fucile imbracciato verso il nemico
+      c.strokeStyle = '#6b4423'; c.lineWidth = Math.max(1.5, sw * 0.11);
+      c.beginPath(); c.moveTo(x, y + ry * 0.5); c.lineTo(x + dir * sw * 0.7, y + ry * 0.5); c.stroke();
+      c.strokeStyle = '#d6d6de'; c.lineWidth = Math.max(1, sw * 0.06);
+      c.beginPath(); c.moveTo(x + dir * sw * 0.7, y + ry * 0.5); c.lineTo(x + dir * sw * 0.95, y + ry * 0.5); c.stroke();
+    }
+    // spalle / giubba
+    c.fillStyle = wounded ? shade(color, -0.35) : color;
+    c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(30,20,10,0.85)'; c.lineWidth = 1; c.stroke();
+    // bandoliere bianche incrociate
+    c.strokeStyle = 'rgba(245,240,225,0.9)'; c.lineWidth = Math.max(1, sw * 0.08);
+    c.beginPath(); c.moveTo(x - rx * 0.55, y - ry * 0.65); c.lineTo(x + rx * 0.55, y + ry * 0.65); c.moveTo(x + rx * 0.55, y - ry * 0.65); c.lineTo(x - rx * 0.55, y + ry * 0.65); c.stroke();
+    // spalline dorate
+    c.fillStyle = '#e8b830';
+    c.beginPath(); c.ellipse(x, y - ry * 0.82, rx * 0.5, ry * 0.16, 0, 0, 7); c.ellipse(x, y + ry * 0.82, rx * 0.5, ry * 0.16, 0, 0, 7); c.fill();
+    // cappello: tesa marrone, calotta nera, mostrina dorata davanti
+    const hr = Math.min(sw, sh) * 0.3;
+    c.fillStyle = '#5a3a1c'; c.beginPath(); c.ellipse(x + dir * hr * 0.15, y, hr * 1.15, hr * 1.05, 0, 0, 7); c.fill();
+    c.fillStyle = wounded ? '#3a3a44' : H.hat; c.beginPath(); c.arc(x, y, hr * 0.8, 0, 7); c.fill();
+    c.fillStyle = '#e8b830'; c.beginPath(); c.arc(x + dir * hr * 0.75, y, hr * 0.28, 0, 7); c.fill();
+    if (wounded) {   // bendaggio
+      c.strokeStyle = '#ffffff'; c.lineWidth = Math.max(1.5, sw * 0.1);
+      c.beginPath(); c.moveTo(x - hr * 0.9, y - hr * 0.5); c.lineTo(x + hr * 0.9, y + hr * 0.5); c.stroke();
+    }
+  }
+
+  function shade(hex, k) {
+    const n = parseInt(hex.slice(1), 16), f = v => clamp(Math.round(v * (1 + k)), 0, 255);
+    return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
+  }
+
+  // trincee: disegnate in un livello a parte e ridisegnate solo quando cambiano
+  const barLayer = document.createElement('canvas');
+  const blx = barLayer.getContext('2d');
+  let barKey = '';
+  function barHash(p) { let h = 0; for (let k = 0; k < p.bar.length; k++) h = (h * 31 + p.bar[k] * (k + 7)) % 1000000007; return h; }
+
+  function updateBarLayer() {
+    const key = `${cv.width}x${cv.height}|${W}|${view.s}|${players.map(barHash).join(',')}|${PL[0].c}`;
+    if (key === barKey) return;
+    barKey = key;
+    barLayer.width = cv.width; barLayer.height = cv.height;
+    const c = blx;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, barLayer.width, barLayer.height);
+    setField(c);
+    const ch = W / ROWS;
+    for (const p of players) {
+      const bx0 = barrierX0(p), col = PL[p.i].c;
+      // fondo della trincea (terra scavata), anche dove i soldati sono caduti
+      for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < DEPTH; cc++) {
+        const idx = r * DEPTH + colToD(p, cc);
+        if (!MASK[idx]) continue;
+        c.fillStyle = H.dirt; c.fillRect(bx0 + cc * CELL_X - 1, r * ch - 1, CELL_X + 2, ch + 2);
+      }
+      for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < DEPTH; cc++) {
+        const d = colToD(p, cc), idx = r * DEPTH + d, hp = p.bar[idx];
+        const x = bx0 + cc * CELL_X, y = r * ch;
+        if (!MASK[idx]) continue;
+        if (hp <= 0) {   // buca
+          c.fillStyle = H.dirtDark; c.beginPath(); c.ellipse(x + CELL_X / 2, y + ch / 2, CELL_X * 0.38, ch * 0.32, 0, 0, 7); c.fill();
+          continue;
+        }
+        if (d >= DEPTH - 2) {   // sacchi di sabbia in prima linea
+          rr(c, x + 1, y + 1, CELL_X - 2, ch - 2, 4);
+          c.fillStyle = hp >= 2 ? H.sand : H.sandHurt; c.fill();
+          c.strokeStyle = H.sandDark; c.lineWidth = 1.2; c.stroke();
+          c.beginPath(); c.moveTo(x + 3, y + ch / 2); c.lineTo(x + CELL_X - 3, y + ch / 2); c.strokeStyle = 'rgba(120,90,50,0.6)'; c.stroke();
+          if (hp < 2) { c.fillStyle = 'rgba(216,191,134,0.9)'; c.beginPath(); c.arc(x + CELL_X / 2 + p.dir * 6, y + ch * 0.7, 2.5, 0, 7); c.fill(); }
+        } else {               // soldati in trincea
+          drawSoldier(c, x + CELL_X / 2, y + ch / 2, p.dir, CELL_X, ch, col, hp < 2);
+        }
+      }
+    }
+  }
+
+  function drawCannonHist(p) {
+    const pl = PL[p.i], d = p.dir, cx = cannonX(p) - d * p.recoil * 7;
+    const dmg = damageOf(p), last = !demo && p.hp === 1;
+    const c = ctx;
+    c.save();
+    c.translate(cx, p.y);
+    if (p.rapid > 0) {
+      const g = c.createRadialGradient(0, 0, 10, 0, 0, 90);
+      g.addColorStop(0, `rgba(255,150,40,${0.45 + 0.2 * Math.sin(time * 16)})`); g.addColorStop(1, 'rgba(255,150,40,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(0, 0, 90, 0, 7); c.fill();
+    }
+    // ombra
+    c.fillStyle = 'rgba(0,0,0,0.13)'; c.beginPath(); c.ellipse(3, 4, 30, 60, 0, 0, 7); c.fill();
+    // coda dell'affusto
+    c.fillStyle = H.wood; rr(c, d > 0 ? -46 : 0, -7, 46, 14, 4); c.fill();
+    c.strokeStyle = H.woodDark; c.lineWidth = 2; c.stroke();
+    // assale
+    c.fillStyle = '#5a3a1c'; c.fillRect(-5, -52, 10, 104);
+    // ruote (con molti danni una si stacca)
+    for (const s of [-1, 1]) {
+      c.save();
+      if (dmg >= 0.5 && s === 1) { c.translate(-d * 10, 8); c.rotate(0.6); }
+      c.translate(0, s * 52);
+      rr(c, -19, -7, 38, 14, 6);
+      c.fillStyle = dmg >= 0.5 && s === 1 ? '#4a301a' : '#7a4f2a'; c.fill();
+      c.strokeStyle = '#3a2410'; c.lineWidth = 3; c.stroke();
+      c.strokeStyle = 'rgba(58,36,16,0.8)'; c.lineWidth = 1.5;
+      c.beginPath(); for (let k = -12; k <= 12; k += 6) { c.moveTo(k, -5); c.lineTo(k, 5); } c.stroke();
+      c.fillStyle = '#c9c2b0'; c.beginPath(); c.arc(0, 0, 3, 0, 7); c.fill();
+      c.restore();
+    }
+    // canna in bronzo
+    const g = c.createLinearGradient(0, -11, 0, 11);
+    g.addColorStop(0, H.bronze1); g.addColorStop(0.45, H.bronze2); g.addColorStop(1, H.bronze1);
+    c.fillStyle = g;
+    c.beginPath();
+    c.moveTo(-d * 16, -10); c.lineTo(d * 38, -7); c.lineTo(d * 38, 7); c.lineTo(-d * 16, 10); c.closePath(); c.fill();
+    c.strokeStyle = '#5a3410'; c.lineWidth = 1.5; c.stroke();
+    c.fillStyle = H.bronze1; c.beginPath(); c.arc(-d * 19, 0, 6, 0, 7); c.fill(); c.stroke();      // pomo di culatta
+    for (const bx of [-6, 12]) { c.fillStyle = '#9a6428'; c.fillRect(d * bx - 2, -10, 4, 20); }
+    c.fillStyle = '#a06a2c'; rr(c, d > 0 ? 35 : -43, -9, 8, 18, 3); c.fill(); c.stroke();             // bocca
+    c.fillStyle = '#1a1208'; c.beginPath(); c.arc(d * 43, 0, 3.5, 0, 7); c.fill();
+    // artiglieri
+    for (const s of [-1, 1]) drawSoldier(c, -d * 28, s * 27, d, 20, 26, pl.c, false);
+    // fuliggine e bruciature: aumentano con i danni
+    const shown = Math.round(dmg * p.marks.length);
+    for (let k = 0; k < shown; k++) {
+      const m = p.marks[k];
+      c.fillStyle = 'rgba(25,18,10,0.55)'; c.beginPath(); c.ellipse(m.side * 6, m.y * 0.8, m.r * 1.3, m.r, 0, 0, 7); c.fill();
+    }
+    // all'ultima vita prende fuoco
+    if (last) {   // vampate che tremolano sull'affusto
+      for (const [fx, fy, ph] of [[-d * 6, -30, 0], [d * 4, 18, 2], [-d * 30, 6, 4]]) {
+        const r = 9 + 3 * Math.sin(time * 22 + ph);
+        c.fillStyle = 'rgba(255,110,20,0.85)'; c.beginPath(); c.arc(fx, fy, r, 0, 7); c.fill();
+        c.fillStyle = 'rgba(255,200,60,0.95)'; c.beginPath(); c.arc(fx + 1, fy - 1, r * 0.55, 0, 7); c.fill();
+        c.fillStyle = 'rgba(255,250,210,0.9)'; c.beginPath(); c.arc(fx + 1, fy - 1, r * 0.22, 0, 7); c.fill();
+      }
+    }
+    if (p.hitT > 0) {
+      c.fillStyle = `rgba(255,250,230,${p.hitT / 0.4 * 0.85})`;
+      c.beginPath(); c.ellipse(0, 0, 40, 64, 0, 0, 7); c.fill();
+    }
+    c.restore();
+  }
+
+  function drawBallsHist() {
+    const c = ctx;
+    for (const b of balls) {   // scia di fumo da polvere da sparo
+      const t = b.trail, n = t.length / 2;
+      for (let k = 0; k < n; k += 2) {
+        const f = k / n;
+        c.fillStyle = `rgba(235,230,220,${0.32 * f})`;
+        c.beginPath(); c.arc(t[k * 2], t[k * 2 + 1], b.r * (0.6 + (1 - f) * 1.3), 0, 7); c.fill();
+      }
+    }
+    for (const b of balls) {
+      c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(b.x + 3, b.y + 4, b.r, b.r * 0.8, 0, 0, 7); c.fill();
+      const g = c.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.35, 1, b.x, b.y, b.r);
+      g.addColorStop(0, '#8a8a8a'); g.addColorStop(0.5, '#333'); g.addColorStop(1, '#0d0d0d');
+      c.fillStyle = g; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.fill();
+      c.strokeStyle = PL[b.o].c; c.lineWidth = 2; c.stroke();
+    }
+  }
+
+  // parata: esplosione cartoon a stella con nuvolette di fumo
+  function drawFlashesHist() {
+    const c = ctx;
+    for (const f of flashes) {
+      const k = f.t / VORTEX_T, age = 1 - k, R = 16 + 46 * (1 - Math.pow(1 - age, 3));
+      for (let j = 0; j < 9; j++) {
+        const a = f.rot + j * Math.PI * 2 / 9, rr2 = R * 1.15;
+        c.fillStyle = `rgba(225,220,210,${0.8 * k})`;
+        c.beginPath(); c.arc(f.x + Math.cos(a) * rr2, f.y + Math.sin(a) * rr2, 10 + R * 0.28, 0, 7); c.fill();
+      }
+      if (age < 0.6) {
+        const ka = 1 - age / 0.6, Rs = R * (0.9 + 0.2 * Math.sin(time * 40));
+        c.save(); c.translate(f.x, f.y); c.rotate(f.rot + age * f.spin * 2);
+        c.beginPath();
+        for (let j = 0; j < 24; j++) { const a = j * Math.PI / 12, r = j % 2 ? Rs * 0.48 : Rs; j ? c.lineTo(Math.cos(a) * r, Math.sin(a) * r) : c.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+        c.closePath();
+        c.globalAlpha = ka; c.fillStyle = '#ffb72b'; c.fill(); c.strokeStyle = H.ink; c.lineWidth = 3; c.stroke();
+        c.fillStyle = '#fff6c0'; c.beginPath(); c.arc(0, 0, Rs * 0.32, 0, 7); c.fill();
+        c.restore();
+      }
+    }
+  }
+
+  function drawGoalsHist() {
+    for (const p of players) for (const g of p.goals) {
+      const x = p.i === 0 ? PX0 : PX1;
+      for (let j = 0; j < 5; j++) {
+        ctx.fillStyle = `rgba(150,120,80,${0.55 * g.t})`;
+        ctx.beginPath(); ctx.arc(x + (j - 2) * 8 * (p.i ? -1 : 1), g.y + Math.sin(j * 2.1) * 30, 18 + (1 - g.t) * 30, 0, 7); ctx.fill();
+      }
+    }
+  }
+
+  // bonus: cassa di rifornimenti
+  function drawBonusCrate(def, R) {
+    const c = ctx;
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(5, 7, R * 1.05, R * 0.95, 0, 0, 7); c.fill();
+    c.rotate(Math.sin(time * 2) * 0.12);
+    rr(c, -R, -R, R * 2, R * 2, 5); c.fillStyle = '#b07a3e'; c.fill(); c.strokeStyle = '#5a3a1c'; c.lineWidth = 3; c.stroke();
+    c.strokeStyle = '#7a4f22'; c.lineWidth = 2;
+    c.beginPath(); for (let k = -1; k <= 1; k++) { c.moveTo(-R, k * R * 0.66); c.lineTo(R, k * R * 0.66); } c.stroke();
+    c.beginPath(); c.moveTo(-R, -R); c.lineTo(R, R); c.stroke();
+    c.fillStyle = 'rgba(245,232,200,0.9)'; c.beginPath(); c.arc(0, 0, R * 0.62, 0, 7); c.fill();
+    c.strokeStyle = def.c; c.lineWidth = 3; c.stroke();
+  }
+
+  function drawCenterTextOutline(text, x, y) {
+    if (HIST) { ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha *= 1; ctx.lineJoin = 'round'; ctx.strokeStyle = H.ink; ctx.lineWidth = 8; ctx.strokeText(text, x, y); ctx.restore(); }
+    ctx.fillText(text, x, y);
+  }
+
+  function applyTheme(t) {
+    theme = THEMES[t] ? t : 'neon';
+    HIST = theme === 'hist'; TS = THEMES[theme]; FONT = TS.font;
+    THEMES[theme].pl.forEach((x, i) => Object.assign(PL[i], x));
+    glow = makeGlow(); barKey = '';
+    Sound.theme = theme;
+    document.body.classList.toggle('hist', HIST);
+    drawBackground();
+    if (document.fonts && document.fonts.load) document.fonts.load(`20px ${FONT}`).then(() => { barKey = ''; }).catch(() => {});
   }
 
   // ---------- flusso di gioco ----------
@@ -1097,10 +1459,17 @@
     document.querySelectorAll('#move-seg button').forEach(x => x.classList.toggle('on', x.dataset.move === moveMode));
     $('fire-hint').textContent = FIRE_HINT[fireMode];
     $('move-hint').textContent = MOVE_HINT[moveMode];
+    document.querySelectorAll('#theme-seg button').forEach(x => x.classList.toggle('on', x.dataset.theme === theme));
+    $('theme-hint').textContent = THEME_HINT[theme];
   }
+  const THEME_HINT = {
+    neon: 'Neon: grafica moderna con luci e scie luminose.',
+    hist: 'Storico 1800: cannoni da campo, trincee di soldati e sacchi di sabbia, marcia militare.',
+  };
   document.querySelectorAll('#hp-seg button').forEach(b => b.addEventListener('click', () => { maxHp = +b.dataset.hp; saveOpts(); syncOpts(); }));
   document.querySelectorAll('#fire-seg button').forEach(b => b.addEventListener('click', () => { fireMode = b.dataset.fire; saveOpts(); syncOpts(); }));
   document.querySelectorAll('#move-seg button').forEach(b => b.addEventListener('click', () => { moveMode = b.dataset.move; saveOpts(); syncOpts(); newMatch(true); }));
+  document.querySelectorAll('#theme-seg button').forEach(b => b.addEventListener('click', () => { applyTheme(b.dataset.theme); saveOpts(); syncOpts(); newMatch(true); }));
   syncOpts();
   $('btn-start').addEventListener('click', () => { Sound.init(); wins[0] = wins[1] = 0; firstMatch = true; startMatch(); });
   $('btn-again').addEventListener('click', () => { Sound.init(); startMatch(); });
@@ -1142,6 +1511,7 @@
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 200));
   resize();
+  applyTheme(theme);
   newMatch(true);
   if (document.fonts && document.fonts.load) document.fonts.load(`700 20px ${FONT}`).catch(() => {});
 
