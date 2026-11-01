@@ -21,21 +21,33 @@
 
       <ul class="rules">
         <li><b>Appoggia il tablet</b> sul tavolo: un giocatore per lato.</li>
-        <li><b>Tieni il dito nella tua metà</b>: il cannone segue il dito e spara da solo.</li>
+        <li><b>Tocca nella tua metà</b>: il cannone segue il dito. <b>Sparo automatico</b>: spara da solo finché tieni il dito. <b>Sparo manuale</b>: ogni tocco è un colpo.</li>
         <li><b>Muoviti mentre spari</b> per dare effetto: i colpi rimbalzano sulle sponde come a Pong.</li>
         <li>Le <b>barriere</b> si consumano sotto i colpi nemici. Due colpi che si scontrano si annullano.</li>
         <li>Colpo che arriva <b>in fondo</b> al campo avversario: <b>+1 🪙</b>. Colpo sul <b>cannone</b>: −1 vita all'avversario e <b>+2 🪙</b>.</li>
-        <li>Spendi le monete: <b>⚡ Potenza</b> (cadenza, colpi doppi/tripli, più forza) oppure <b>🛡 Ripara</b> la barriera.</li>
+        <li>Spendi le monete: <b>⚡ Potenza</b> (cadenza, colpi doppi/tripli, più forza) oppure <b>🛡 Ripara</b>: usa le monete che hai, 10 monete = barriera completa, meno monete = riparazione in proporzione.</li>
+        <li>Ogni vita persa <b>danneggia il cannone</b>: crepe, fumo e scintille ti dicono quanto manca.</li>
         <li>Vince chi distrugge per primo il cannone dell'altro.</li>
       </ul>
 
-      <div class="opt">
-        <span>Vite del cannone</span>
-        <div class="seg" id="hp-seg">
-          <button data-hp="3">3</button>
-          <button data-hp="5" class="on">5</button>
-          <button data-hp="7">7</button>
+      <div class="options">
+        <h3>OPZIONI</h3>
+        <div class="opt">
+          <span>Vite</span>
+          <div class="seg" id="hp-seg">
+            <button data-hp="3" class="on">3</button>
+            <button data-hp="5">5</button>
+            <button data-hp="7">7</button>
+          </div>
         </div>
+        <div class="opt">
+          <span>Sparo</span>
+          <div class="seg" id="fire-seg">
+            <button data-fire="auto" class="on">Automatico</button>
+            <button data-fire="manual">Manuale</button>
+          </div>
+        </div>
+        <p id="fire-hint" class="hint"></p>
       </div>
 
       <button id="btn-start" class="btn primary">GIOCA</button>
@@ -46,7 +58,7 @@
         <a href="../" class="btn small">← Hub</a>
       </div>
 
-      <p class="keys">Tastiera: <b>BLU</b> W/S muovi · D spara · Q potenza · E ripara — <b>ROSA</b> ↑/↓ muovi · ← spara · O potenza · P ripara — Esc pausa</p>
+      <p class="keys">Tastiera: <b>BLU</b> W/S muovi · D spara (manuale: un colpo per pressione) · Q potenza · E ripara — <b>ROSA</b> ↑/↓ muovi · ← spara · O potenza · P ripara — Esc pausa</p>
     </div>
   </div>
 

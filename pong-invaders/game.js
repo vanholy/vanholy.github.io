@@ -20,7 +20,7 @@
     { cd: 0.36, shots: 3, speed: 980, str: 3, rad: 2.1, r: 12 },
   ];
   const powerCost = lvl => 2 + lvl * 2;        // 4, 6, 8, 10
-  const repairCost = n => 5 + n * 2;           // 5, 7, 9, ...
+  const REPAIR_FULL = 10;                      // monete per una riparazione completa
   const PL = [
     { name: 'BLU',  c: '#2de2ff', rgb: '45,226,255' },
     { name: 'ROSA', c: '#ff2d95', rgb: '255,45,149' },
@@ -169,7 +169,13 @@
   let pausedFrom = 'play';
   let players = [], balls = [], parts = [], pops = [];
   let countdown = 0, goT = 0, overT = 0, winner = -1, shake = 0, time = 0;
-  let maxHp = 5, demo = true, firstMatch = true;
+  let maxHp = 3, fireMode = 'auto', demo = true, firstMatch = true;
+  try {
+    const saved = JSON.parse(localStorage.getItem('pong-invaders-opts') || '{}');
+    if ([3, 5, 7].includes(saved.hp)) maxHp = saved.hp;
+    if (saved.fire === 'manual' || saved.fire === 'auto') fireMode = saved.fire;
+  } catch (e) { /* opzioni di default */ }
+  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode })); } catch (e) { /* niente */ } }
   const wins = [0, 0];
   const owners = new Map();      // pointerId -> indice giocatore
 
@@ -177,13 +183,30 @@
     demo = isDemo;
     players = [0, 1].map(i => ({
       i, dir: i === 0 ? 1 : -1, y: W / 2, ty: W / 2, vy: 0, hp: maxHp, coins: 0, lvl: 1,
-      cd: 0.4 + i * 0.2, recoil: 0, hitT: 0, repairs: 0, repairFx: 0, coinFx: 0,
-      bar: Int8Array.from(MASK, m => m * 2), goals: [],
+      cd: 0.4 + i * 0.2, recoil: 0, hitT: 0, repairFx: 0, coinFx: 0, queued: 0,
+      bar: Int8Array.from(MASK, m => m * 2), fresh: new Uint8Array(MASK.length), goals: [],
+      marks: makeMarks(i === 0 ? 1 : -1),
       btn: { power: 0, repair: 0 }, deny: { power: 0, repair: 0 },
       touches: new Map(), kUp: false, kDown: false, kFire: false, ai: { t: 0, tgt: W / 2 },
     }));
     balls = []; parts = []; pops = []; winner = -1; owners.clear();
   }
+
+  // segni di danno del cannone: compaiono uno alla volta man mano che perde vite
+  function makeMarks(dir) {
+    const list = [];
+    for (let k = 0; k < 10; k++) {
+      const y = rnd(-CANNON_LEN / 2 + 8, CANNON_LEN / 2 - 8);
+      const side = Math.random() < 0.75 ? dir : -dir;          // i colpi arrivano soprattutto davanti
+      const crack = [[side * CANNON_T / 2, y]];
+      let cx = side * CANNON_T / 2, cy = y;
+      for (let j = 0; j < 3; j++) { cx -= side * rnd(4, 9); cy += rnd(-10, 10); crack.push([cx, cy]); }
+      list.push({ y, side, r: rnd(4, 8), crack });
+    }
+    // ordinate in modo che i primi danni siano sparsi su tutto il cannone
+    return list.sort(() => Math.random() - 0.5);
+  }
+  const damageOf = p => demo ? 0 : 1 - p.hp / maxHp;
 
   const cannonX = p => p.i === 0 ? PX0 + CANNON_OFF : PX1 - CANNON_OFF;
   const barrierX0 = p => p.i === 0 ? PX0 + BARRIER_OFF : PX1 - BARRIER_OFF - DEPTH * CELL_X;
@@ -227,12 +250,30 @@
     burst(cannonX(p), p.y, GOLD, 30, 380); Sound.buy(); vibrate(25);
   }
 
+  // Riparazione: usa le monete disponibili. REPAIR_FULL monete = barriera completa,
+  // meno monete = riparazione in proporzione. Non spende mai più del necessario.
+  function repairInfo(p) {
+    let hp = 0; for (const h of p.bar) hp += h;
+    const missing = MASK_HP - hp;
+    const need = Math.ceil(missing / MASK_HP * REPAIR_FULL - 1e-9);
+    return { missing, need, spend: Math.min(p.coins, need) };
+  }
+
   function buyRepair(p) {
     if (state !== 'play' && state !== 'countdown') return;
-    if (barrierRatio(p) >= 0.999 || p.coins < repairCost(p.repairs)) { p.deny.repair = 0.35; Sound.deny(); return; }
-    p.coins -= repairCost(p.repairs); p.repairs++; p.btn.repair = 0.4; p.repairFx = 0.7;
-    for (let k = 0; k < p.bar.length; k++) p.bar[k] = MASK[k] * 2;
-    addPop(barrierX0(p) + DEPTH * CELL_X / 2 + p.dir * 110, W / 2, 'BARRIERA RIPARATA', p.i, PL[p.i].c, true);
+    const { missing, spend } = repairInfo(p);
+    if (missing <= 0 || spend <= 0) { p.deny.repair = 0.35; Sound.deny(); return; }
+    let pts = Math.min(missing, Math.round(spend / REPAIR_FULL * MASK_HP));
+    const restored = pts;
+    p.coins -= spend; p.btn.repair = 0.4; p.repairFx = 0.8; p.fresh.fill(0);
+    // prima i mattoncini incrinati, poi quelli distrutti, in ordine casuale
+    const shuffle = a => { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
+    const cracked = [], gone = [];
+    for (let k = 0; k < p.bar.length; k++) if (MASK[k]) { if (p.bar[k] === 1) cracked.push(k); else if (p.bar[k] === 0) gone.push(k); }
+    for (const k of shuffle(cracked)) { if (pts <= 0) break; p.bar[k] = 2; pts--; p.fresh[k] = 1; }
+    for (const k of shuffle(gone)) { if (pts <= 0) break; const add = Math.min(2, pts); p.bar[k] = add; pts -= add; p.fresh[k] = 1; }
+    const label = restored >= missing ? 'BARRIERA COMPLETA' : `+${Math.max(1, Math.round(restored / MASK_HP * 100))}% BARRIERA`;
+    addPop(barrierX0(p) + DEPTH * CELL_X / 2 + p.dir * 110, W / 2, label, p.i, PL[p.i].c, true);
     Sound.repair(); vibrate(25);
   }
 
@@ -322,15 +363,28 @@
     p.y = clamp(p.y, half, W - half); p.ty = clamp(p.ty, half, W - half);
     p.vy = lerp(p.vy, (p.y - prevY) / Math.max(dt, 1e-3), 0.35);
     p.cd -= dt;
-    const firing = demo || p.touches.size > 0 || p.kFire;
+    const manual = !demo && fireMode === 'manual';
+    const firing = demo || (manual ? p.queued > 0 : p.touches.size > 0 || p.kFire);
     if (canFire && firing && p.cd <= 0) {
       fire(p);
-      p.cd = LEVELS[p.lvl].cd + (demo ? rnd(0.1, 0.6) : 0);
+      p.queued = 0;
+      p.cd = LEVELS[p.lvl].cd * (manual ? 0.75 : 1) + (demo ? rnd(0.1, 0.6) : 0);
+    }
+    p.queued = Math.max(0, p.queued - dt);
+    // fumo e scintille in base ai danni
+    const dmg = damageOf(p);
+    if (dmg > 0 && state !== 'over' && Math.random() < dmg * dt * 16) {
+      parts.push({ x: cannonX(p) + rnd(-10, 10), y: p.y + rnd(-CANNON_LEN / 2, CANNON_LEN / 2), vx: p.dir * rnd(10, 40), vy: rnd(-25, 25),
+        life: rnd(0.8, 1.6), max: 1.6, c: dmg > 0.6 ? '40,40,48' : '110,110,125', s: rnd(8, 14), smoke: true });
+    }
+    if (!demo && p.hp === 1 && state === 'play' && Math.random() < dt * 5) {
+      burst(cannonX(p) + p.dir * rnd(0, 12), p.y + rnd(-CANNON_LEN / 2, CANNON_LEN / 2), Math.random() < 0.5 ? GOLD : '#ff7a3a', 6, 220, 0, 3);
     }
     if (demo && barrierRatio(p) < 0.35) { for (let i = 0; i < p.bar.length; i++) p.bar[i] = MASK[i] * 2; p.repairFx = 0.7; }
     p.recoil = Math.max(0, p.recoil - dt * 7);
     p.hitT = Math.max(0, p.hitT - dt);
     p.repairFx = Math.max(0, p.repairFx - dt);
+    if (p.repairFx === 0 && !demo) p.fresh.fill(0);
     p.coinFx = Math.max(0, p.coinFx - dt * 3);
     for (const key of ['power', 'repair']) { p.btn[key] = Math.max(0, p.btn[key] - dt); p.deny[key] = Math.max(0, p.deny[key] - dt); }
     for (const g of p.goals) g.t -= dt * 1.6;
@@ -373,7 +427,11 @@
   }
 
   function updateFx(dt) {
-    for (const q of parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= 1 - 3 * dt; q.vy *= 1 - 3 * dt; q.life -= dt; }
+    for (const q of parts) {
+      q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
+      if (q.smoke) { q.vx *= 1 - 0.8 * dt; q.vy *= 1 - 0.8 * dt; q.s += 14 * dt; }
+      else { q.vx *= 1 - 3 * dt; q.vy *= 1 - 3 * dt; }
+    }
     parts = parts.filter(q => q.life > 0);
     for (const q of pops) { q.x += (q.i === 0 ? 1 : -1) * 45 * dt; q.life -= dt; }
     pops = pops.filter(q => q.life > 0);
@@ -461,11 +519,14 @@
     const ch = W / ROWS;
     for (const p of players) {
       const bx0 = barrierX0(p), pl = PL[p.i];
-      const full = new Path2D(), weak = new Path2D();
+      const full = new Path2D(), weak = new Path2D(), fresh = new Path2D();
+      const allFresh = demo;
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < DEPTH; c++) {
-        const hp = p.bar[r * DEPTH + colToD(p, c)];
+        const idx = r * DEPTH + colToD(p, c), hp = p.bar[idx];
         if (hp <= 0) continue;
-        (hp >= 2 ? full : weak).rect(bx0 + c * CELL_X + 1, r * ch + 1, CELL_X - 2, ch - 2);
+        const x = bx0 + c * CELL_X + 1, y = r * ch + 1;
+        (hp >= 2 ? full : weak).rect(x, y, CELL_X - 2, ch - 2);
+        if (allFresh || p.fresh[idx]) fresh.rect(x, y, CELL_X - 2, ch - 2);
       }
       ctx.save();
       ctx.shadowColor = pl.c; ctx.shadowBlur = 12 * view.dpr;
@@ -473,7 +534,7 @@
       ctx.shadowBlur = 0;
       ctx.fillStyle = `rgba(${pl.rgb},0.3)`; ctx.fill(weak);
       ctx.strokeStyle = `rgba(${pl.rgb},0.7)`; ctx.lineWidth = 1; ctx.stroke(weak);
-      if (p.repairFx > 0) { ctx.fillStyle = `rgba(255,255,255,${p.repairFx * 0.9})`; ctx.fill(full); }
+      if (p.repairFx > 0) { ctx.fillStyle = `rgba(255,255,255,${p.repairFx * 0.9})`; ctx.fill(fresh); }
       ctx.restore();
     }
   }
@@ -484,23 +545,53 @@
       const pl = PL[p.i], cx = cannonX(p) - p.dir * p.recoil * 7;
       ctx.save();
       ctx.translate(cx, p.y);
+      const dmg = damageOf(p);
+      const last = !demo && p.hp === 1;
+      // all'ultima vita il cannone pulsa di rosso
+      if (last) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.35 + 0.35 * Math.sin(time * 9);
+        ctx.drawImage(glow[1], -90, -CANNON_LEN, 180, CANNON_LEN * 2);
+        ctx.restore();
+      }
+      // il colore si spegne con i danni
+      const glowA = 1 - dmg * 0.75;
       const g = ctx.createLinearGradient(-p.dir * CANNON_T / 2, 0, p.dir * CANNON_T / 2, 0);
-      g.addColorStop(0, '#0b0e22'); g.addColorStop(1, pl.c);
-      ctx.shadowColor = pl.c; ctx.shadowBlur = 22 * view.dpr;
-      // canna
-      ctx.fillStyle = pl.c;
+      g.addColorStop(0, '#0b0e22'); g.addColorStop(1, `rgba(${pl.rgb},${0.35 + 0.65 * glowA})`);
+      ctx.shadowColor = pl.c; ctx.shadowBlur = 22 * view.dpr * glowA;
+      // canna: con molti danni si storta
+      ctx.save();
+      if (dmg >= 0.5) ctx.rotate(p.dir * (dmg - 0.4) * 0.35);
+      ctx.fillStyle = dmg >= 0.5 ? `rgba(${pl.rgb},0.6)` : pl.c;
       rr(ctx, p.dir > 0 ? CANNON_T / 2 - 4 : -CANNON_T / 2 - 14, -13, 18, 26, 6); ctx.fill();
+      ctx.restore();
       // corpo
-      ctx.fillStyle = g; rr(ctx, -CANNON_T / 2, -CANNON_LEN / 2, CANNON_T, CANNON_LEN, 11); ctx.fill();
+      ctx.fillStyle = '#2a2d3a'; rr(ctx, -CANNON_T / 2, -CANNON_LEN / 2, CANNON_T, CANNON_LEN, 11); ctx.fill();
+      ctx.fillStyle = g; ctx.fill();
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${0.75 - dmg * 0.4})`; ctx.lineWidth = 2; ctx.stroke();
       // nucleo luminoso: si accorcia con le vite
       if (!demo) {
         const frac = p.hp / maxHp;
-        const flick = p.hp <= Math.ceil(maxHp / 3) ? 0.55 + 0.45 * Math.sin(time * 18) : 1;
-        ctx.fillStyle = `rgba(255,255,255,${0.85 * flick})`;
+        const flick = last ? 0.35 + 0.65 * Math.abs(Math.sin(time * 14)) : dmg >= 0.5 ? 0.75 + 0.25 * Math.sin(time * 9) : 1;
+        ctx.fillStyle = last ? `rgba(255,90,90,${flick})` : `rgba(255,255,255,${0.85 * flick})`;
         const len = (CANNON_LEN - 26) * frac;
         rr(ctx, -3, -len / 2, 6, Math.max(len, 1), 3); ctx.fill();
+      }
+      // danni: pezzi mancanti e crepe, sempre di più fino al limite
+      const shown = Math.round(dmg * p.marks.length);
+      if (shown > 0) {
+        ctx.save();
+        rr(ctx, -CANNON_T / 2 - 3, -CANNON_LEN / 2 - 3, CANNON_T + 6, CANNON_LEN + 6, 12); ctx.clip();
+        for (let k = 0; k < shown; k++) {
+          const m = p.marks[k];
+          ctx.fillStyle = '#05060f';
+          ctx.beginPath(); ctx.arc(m.side * CANNON_T / 2, m.y, m.r * (0.8 + dmg * 0.6), 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = 'rgba(10,10,20,0.9)'; ctx.lineWidth = 2;
+          ctx.beginPath(); m.crack.forEach(([x, y], j) => j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+          ctx.strokeStyle = `rgba(255,170,90,${0.25 + 0.5 * dmg})`; ctx.lineWidth = 0.8; ctx.stroke();
+        }
+        ctx.restore();
       }
       if (p.hitT > 0) {
         ctx.fillStyle = `rgba(255,255,255,${p.hitT / 0.4})`;
@@ -534,8 +625,14 @@
   }
 
   function drawParticles() {
+    for (const q of parts) {
+      if (!q.smoke) continue;
+      ctx.fillStyle = `rgba(${q.c},${0.45 * clamp(q.life / q.max, 0, 1)})`;
+      ctx.beginPath(); ctx.arc(q.x, q.y, q.s, 0, Math.PI * 2); ctx.fill();
+    }
     ctx.globalCompositeOperation = 'lighter';
     for (const q of parts) {
+      if (q.smoke) continue;
       ctx.globalAlpha = clamp(q.life / q.max, 0, 1);
       ctx.fillStyle = q.c;
       ctx.fillRect(q.x - q.s / 2, q.y - q.s / 2, q.s, q.s);
@@ -631,9 +728,9 @@
     const pc = p.lvl >= MAXLVL ? null : powerCost(p.lvl);
     drawButton(lay.power, '⚡', 'POTENZA', p.lvl >= MAXLVL ? 'LIVELLO MAX' : `LV ${p.lvl} → ${p.lvl + 1}`, pc,
       pc !== null && p.coins >= pc, p.btn.power, p.deny.power, pl);
-    const ratio = barrierRatio(p), rc = repairCost(p.repairs);
-    drawButton(lay.repair, '🛡', 'RIPARA', `BARRIERA ${Math.round(ratio * 100)}%`, rc,
-      ratio < 0.999 && p.coins >= rc, p.btn.repair, p.deny.repair, pl);
+    const ri = repairInfo(p), pct = Math.round((1 - ri.missing / MASK_HP) * 100);
+    drawButton(lay.repair, '🛡', 'RIPARA', ri.missing <= 0 ? 'BARRIERA INTEGRA' : `BARRIERA ${pct}% (MAX ${ri.need})`,
+      ri.missing <= 0 ? null : ri.spend, ri.spend > 0, p.btn.repair, p.deny.repair, pl);
     ctx.restore();
   }
 
@@ -665,7 +762,7 @@
         if (firstMatch) {
           ctx.globalAlpha = 1; ctx.shadowBlur = 0;
           ctx.font = `600 20px ${FONT}`; ctx.fillStyle = pl.c;
-          ctx.fillText('TIENI IL DITO NELLA TUA METÀ: MUOVI E SPARA', 0, 100);
+          ctx.fillText(fireMode === 'manual' ? 'TOCCA NELLA TUA METÀ: OGNI TOCCO UN COLPO' : 'TIENI IL DITO NELLA TUA METÀ: MUOVI E SPARA', 0, 100);
         }
       } else if (goT > 0) {
         ctx.globalAlpha = goT / 0.8;
@@ -755,6 +852,7 @@
     owners.set(e.pointerId, p.i);
     p.touches.set(e.pointerId, f.y);
     p.ty = f.y;
+    if (fireMode === 'manual' && state === 'play') p.queued = 0.6;
     try { cv.setPointerCapture(e.pointerId); } catch (err) { /* niente */ }
   });
   cv.addEventListener('pointermove', e => {
@@ -786,7 +884,11 @@
     }
     if (demo) return;
     const k = KEYS[e.code];
-    if (k) { players[k[0]][k[1]] = true; e.preventDefault(); return; }
+    if (k) {
+      players[k[0]][k[1]] = true; e.preventDefault();
+      if (k[1] === 'kFire' && !e.repeat && fireMode === 'manual' && state === 'play') players[k[0]].queued = 0.6;
+      return;
+    }
     if (e.repeat) return;
     if (e.code === 'KeyQ') buyPower(players[0]);
     else if (e.code === 'KeyE') buyRepair(players[0]);
@@ -796,10 +898,18 @@
   window.addEventListener('keyup', e => { const k = KEYS[e.code]; if (k && players[k[0]]) players[k[0]][k[1]] = false; });
 
   // ---------- menu ----------
-  document.querySelectorAll('#hp-seg button').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('#hp-seg button').forEach(x => x.classList.toggle('on', x === b));
-    maxHp = +b.dataset.hp;
-  }));
+  const FIRE_HINT = {
+    auto: 'Automatico: tieni il dito nella tua metà, il cannone ti segue e spara da solo.',
+    manual: 'Manuale: tocca nella tua metà, il cannone va lì e spara un colpo per ogni tocco.',
+  };
+  function syncOpts() {
+    document.querySelectorAll('#hp-seg button').forEach(x => x.classList.toggle('on', +x.dataset.hp === maxHp));
+    document.querySelectorAll('#fire-seg button').forEach(x => x.classList.toggle('on', x.dataset.fire === fireMode));
+    $('fire-hint').textContent = FIRE_HINT[fireMode];
+  }
+  document.querySelectorAll('#hp-seg button').forEach(b => b.addEventListener('click', () => { maxHp = +b.dataset.hp; saveOpts(); syncOpts(); }));
+  document.querySelectorAll('#fire-seg button').forEach(b => b.addEventListener('click', () => { fireMode = b.dataset.fire; saveOpts(); syncOpts(); }));
+  syncOpts();
   $('btn-start').addEventListener('click', () => { Sound.init(); wins[0] = wins[1] = 0; firstMatch = true; startMatch(); });
   $('btn-again').addEventListener('click', () => { Sound.init(); startMatch(); });
   $('btn-resume').addEventListener('click', resume);
