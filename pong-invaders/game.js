@@ -364,13 +364,14 @@
   //     per parare quelli che ha il tempo di intercettare, cerca i varchi nella trincea nemica
   //     (o scava sempre nello stesso punto per aprirne uno), mira al cannone avversario;
   //  3. gestisce le monete (potenza o riparazione) e, nel movimento libero, va a prendere il bonus.
-  // I livelli cambiano reazione, precisione, velocità, attenzione e strategia. Solo il difficile (parry >= 0.6) usa
-  // le parate "ragionate" (conta i propri colpi in volo e si allinea per parare): servono riflessi pronti,
-  // altrimenti fidarsi di una parata che poi fallisce costa più di quanto rende (misurato nelle simulazioni).
+  // I livelli cambiano reazione, precisione, velocità, attenzione e strategia; medio e difficile (parry >= 0.6) usano
+  // anche le parate "ragionate" (contano i propri colpi in volo e si allineano per parare).
+  // Taratura misurata con centinaia di partite simulate contro un "umano simulato" (reazione ~0,3 s, attenzione parziale):
+  // il facile perde quasi sempre, il medio è alla pari, il difficile vince quasi sempre.
   const AI_LEVELS = {
-    easy:   { think: 0.25, react: 0.3,  noise: 35, speed: 0.65, notice: 0.6,  duty: 1, offense: 0.7,  dig: 0.3, parry: 0.3, cover: 8,  econ: 'easy',   bonus: 0.3, wander: 0.15 },
-    medium: { think: 0.12, react: 0.2,  noise: 18, speed: 0.8,  notice: 0.8,  duty: 1, offense: 0.85, dig: 0.6, parry: 0.45, cover: 28, econ: 'medium', bonus: 0.7, wander: 0.05 },
-    hard:   { think: 0.05, react: 0.08, noise: 5,  speed: 1.0,  notice: 1.0,  duty: 1, offense: 1.2,  dig: 1.0, parry: 1.0, cover: 45, econ: 'hard',   bonus: 1.0, wander: 0 },
+    easy:   { think: 0.25, react: 0.3,  noise: 35, speed: 0.65, notice: 0.6,  duty: 1, offense: 0.7,  dig: 0.3, parry: 0.3, econ: 'easy',   bonus: 0.3, wander: 0.15 },
+    medium: { think: 0.1,  react: 0.15, noise: 12, speed: 0.8,  notice: 0.9,  duty: 1, offense: 0.85, dig: 0.6, parry: 0.6, econ: 'medium', bonus: 0.7, wander: 0.05 },
+    hard:   { think: 0.05, react: 0.08, noise: 5,  speed: 1.0,  notice: 1.0,  duty: 1, offense: 1.2,  dig: 1.0, parry: 1.0, econ: 'hard',   bonus: 1.0, wander: 0 },
   };
 
   // y dopo t secondi, con i rimbalzi sulle sponde
@@ -429,16 +430,6 @@
       if (Math.abs(yo - yb) < PARRY * 0.8) { budget.set(o, left - b.str); return true; }
     }
     return false;
-  }
-
-  // quanta parte del cannone (centrato in y) è coperta dalla propria trincea: righe con almeno un mattone vivo
-  function coverFrac(p, y) {
-    const r0 = rowAt(y - CANNON_LEN / 2), r1 = rowAt(y + CANNON_LEN / 2);
-    let cov = 0;
-    for (let r = r0; r <= r1; r++) {
-      for (let d = 0; d < DEPTH; d++) if (p.bar[r * DEPTH + d] > 0) { cov++; break; }
-    }
-    return cov / (r1 - r0 + 1);
   }
 
   function cpuEconomy(p, L) {
@@ -530,8 +521,6 @@
       else sc += 14 * L.dig * op.open * L.offense;
       if (focusOk && Math.abs(y - ai.focus) < 20) sc += 10 * L.dig;
       // copertura della propria trincea davanti al cannone
-      // il nemico spara dritto e scava proprio dove si trova: meglio stare dietro un tratto di trincea integro
-      if (moveMode !== 'free' || Math.abs(p.x - homeX(p.i)) < 30) sc += (L.cover || 0) * coverFrac(p, y);
       // movimento: meglio non spostarsi troppo
       sc -= Math.abs(y - p.y) * 0.025;
       if (goBonus) sc -= Math.abs(y - bonus.y) * 0.2;
