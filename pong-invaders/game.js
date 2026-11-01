@@ -155,14 +155,17 @@
   let bonus = null, bonusTimer = 0;
   let countdown = 0, goT = 0, overT = 0, winner = -1, shake = 0, time = 0;
   let maxHp = 3, fireMode = 'auto', moveMode = 'rail', demo = true, firstMatch = true;
+  let players1 = false, cpuLevel = 'medium';   // partita contro il computer e livello
   try {
     const saved = JSON.parse(localStorage.getItem('pong-invaders-opts') || '{}');
     if ([3, 5, 7].includes(saved.hp)) maxHp = saved.hp;
     if (saved.fire === 'manual' || saved.fire === 'auto') fireMode = saved.fire;
     if (saved.move === 'free' || saved.move === 'rail') moveMode = saved.move;
     if (saved.theme === 'hist' || saved.theme === 'neon') theme = saved.theme;
+    if (typeof saved.solo === 'boolean') players1 = saved.solo;
+    if (['easy', 'medium', 'hard'].includes(saved.cpu)) cpuLevel = saved.cpu;
   } catch (e) { /* opzioni di default */ }
-  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode, move: moveMode, theme })); } catch (e) { /* niente */ } }
+  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode, move: moveMode, theme, solo: players1, cpu: cpuLevel })); } catch (e) { /* niente */ } }
   const wins = [0, 0];
   const owners = new Map();      // pointerId -> indice giocatore
 
@@ -177,6 +180,7 @@
       btn: { power: 0, repair: 0 }, deny: { power: 0, repair: 0 },
       touches: new Map(), kUp: false, kDown: false, kFwd: false, kBack: false, kFire: false, ai: { t: 0, tgt: W / 2, tgx: homeX(i) },
     }));
+    players[1].cpu = !isDemo && players1;
     balls = []; parts = []; pops = []; flashes = []; winner = -1; owners.clear();
     bonus = null; bonusTimer = 0;
   }
@@ -232,7 +236,7 @@
     const list = L.shots === 1 ? [[base, 0]] : L.shots === 2 ? [[base, -17], [base, 17]] : [[base - 0.14, 0], [base, 0], [base + 0.14, 0]];
     for (const [a, o] of list) {
       balls.push({ x, y: clamp(p.y + o, L.r, W - L.r), vx: p.dir * Math.cos(a) * L.speed, vy: Math.sin(a) * L.speed,
-        r: L.r, str: L.str, rad: L.rad, o: p.i, trail: [] });
+        r: L.r, str: L.str, rad: L.rad, o: p.i, trail: [], born: time });
     }
     burst(x, p.y, PL[p.i].c, 5, 160, p.dir, 4);
     p.recoil = 1;
@@ -310,6 +314,8 @@
     const nx = clamp(b.x, cx - CANNON_T / 2, cx + CANNON_T / 2), ny = clamp(b.y, p.y - CANNON_LEN / 2, p.y + CANNON_LEN / 2);
     if ((b.x - nx) ** 2 + (b.y - ny) ** 2 > b.r * b.r) return false;
     const shooter = players[b.o];
+    if (p.cpu && window.__aiDebug) { const th = (p.ai.lastThreats || []).find(t => t.b === b); const inf = p.ai.seen && p.ai.seen.get(b);
+      window.__aiDebug.push({ i: p.i, seen: !!inf, noticed: inf && inf.noticed, inThreats: !!th, predY: th && Math.round(th.y), ballY: Math.round(b.y), myY: Math.round(p.y), ty: Math.round(p.ty), nThreats: (p.ai.lastThreats || []).length, age: +(time - b.born).toFixed(2), str: b.str, myStr: LEVELS[p.lvl].str, vy: Math.round(b.vy), side: Math.abs(b.y - p.y) > CANNON_LEN / 2 - 4 }); }
     burst(b.x, b.y, PL[p.i].c, 30, 480); burst(b.x, b.y, '#ffffff', 14, 300);
     shake = Math.max(shake, 14); p.hitT = 0.4;
     if (!demo) {
@@ -348,9 +354,210 @@
   }
 
   // ---------- aggiornamento ----------
+  // =====================================================================
+  // ---------- INTELLIGENZA ARTIFICIALE (giocatore 2 controllato dal computer) ----------
+  // =====================================================================
+  // Ogni "pensiero" l'IA:
+  //  1. prevede la traiettoria di ogni colpo nemico (rimbalzi sulle sponde compresi) e capisce se
+  //     verrà fermato dalla propria trincea, se colpirà il cannone o se finirà in fondo al campo;
+  //  2. valuta tante posizioni possibili e sceglie la migliore: schiva i colpi pericolosi, si allinea
+  //     per parare quelli che ha il tempo di intercettare, cerca i varchi nella trincea nemica
+  //     (o scava sempre nello stesso punto per aprirne uno), mira al cannone avversario;
+  //  3. gestisce le monete (potenza o riparazione) e, nel movimento libero, va a prendere il bonus.
+  // I livelli cambiano reazione, precisione, velocità, attenzione e strategia. Solo il difficile (parry >= 0.6) usa
+  // le parate "ragionate" (conta i propri colpi in volo e si allinea per parare): servono riflessi pronti,
+  // altrimenti fidarsi di una parata che poi fallisce costa più di quanto rende (misurato nelle simulazioni).
+  const AI_LEVELS = {
+    easy:   { think: 0.25, react: 0.3,  noise: 35, speed: 0.65, notice: 0.6,  duty: 1, offense: 0.7,  dig: 0.3, parry: 0.3, cover: 8,  econ: 'easy',   bonus: 0.3, wander: 0.15 },
+    medium: { think: 0.12, react: 0.2,  noise: 18, speed: 0.8,  notice: 0.8,  duty: 1, offense: 0.85, dig: 0.6, parry: 0.45, cover: 28, econ: 'medium', bonus: 0.7, wander: 0.05 },
+    hard:   { think: 0.05, react: 0.08, noise: 5,  speed: 1.0,  notice: 1.0,  duty: 1, offense: 1.2,  dig: 1.0, parry: 1.0, cover: 45, econ: 'hard',   bonus: 1.0, wander: 0 },
+  };
+
+  // y dopo t secondi, con i rimbalzi sulle sponde
+  function reflectY(y, vy, t, r) {
+    const L = W - 2 * r;
+    if (L <= 0) return y;
+    let u = (y - r + vy * t) % (2 * L);
+    if (u < 0) u += 2 * L;
+    if (u > L) u = 2 * L - u;
+    return u + r;
+  }
+  function yAtX(b, x) {
+    if (b.vx === 0) return null;
+    const t = (x - b.x) / b.vx;
+    if (t < 0) return null;
+    return { t, y: reflectY(b.y, b.vy, t, b.r) };
+  }
+  const rowAt = y => clamp(Math.floor(y / (W / ROWS)), 0, ROWS - 1);
+
+  // il colpo b verrà fermato dalla trincea di p?
+  function blockedBy(p, b) {
+    const bx0 = barrierX0(p);
+    for (let k = 0; k < DEPTH; k++) {
+      const c = b.vx > 0 ? k : DEPTH - 1 - k;                        // colonne nell'ordine in cui le incontra
+      const at = yAtX(b, bx0 + (c + 0.5) * CELL_X);
+      if (!at) continue;
+      for (const dy of [-b.r * 0.7, 0, b.r * 0.7]) {
+        if (p.bar[rowAt(at.y + dy) * DEPTH + colToD(p, c)] > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  // quanto è libera la riga y nella trincea di p (1 = varco aperto, 0 = muro pieno)
+  function openness(p, y, r) {
+    let hp = 0, max = 0;
+    for (const yy of [y - r * 0.7, y, y + r * 0.7]) {
+      const row = rowAt(yy);
+      for (let d = 0; d < DEPTH; d++) { const idx = row * DEPTH + d; if (MASK[idx]) { max += 2; hp += p.bar[idx]; } }
+    }
+    return { clear: hp === 0, open: max ? 1 - hp / max : 1 };
+  }
+
+  // un mio colpo già in volo incrocerà (e annullerà) il colpo nemico b prima che arrivi?
+  // budget: forza residua di ogni mio colpo, così un colpo non viene "speso" due volte
+  function parriedByMine(p, b, budget) {
+    for (const o of balls) {
+      if (o.o !== p.i) continue;
+      const left = budget.has(o) ? budget.get(o) : o.str;
+      if (left < b.str) continue;
+      const rel = o.vx - b.vx;
+      if (rel === 0) continue;
+      const tm = (b.x - o.x) / rel;                                     // istante in cui hanno la stessa x
+      if (tm < 0 || tm > 3) continue;
+      const yo = reflectY(o.y, o.vy, tm, o.r), yb = reflectY(b.y, b.vy, tm, b.r);
+      if (Math.abs(yo - yb) < PARRY * 0.8) { budget.set(o, left - b.str); return true; }
+    }
+    return false;
+  }
+
+  // quanta parte del cannone (centrato in y) è coperta dalla propria trincea: righe con almeno un mattone vivo
+  function coverFrac(p, y) {
+    const r0 = rowAt(y - CANNON_LEN / 2), r1 = rowAt(y + CANNON_LEN / 2);
+    let cov = 0;
+    for (let r = r0; r <= r1; r++) {
+      for (let d = 0; d < DEPTH; d++) if (p.bar[r * DEPTH + d] > 0) { cov++; break; }
+    }
+    return cov / (r1 - r0 + 1);
+  }
+
+  function cpuEconomy(p, L) {
+    const ratio = barrierRatio(p), info = repairInfo(p);
+    const pc = p.lvl < MAXLVL ? powerCost(p.lvl) : Infinity;
+    if (L.econ === 'hard') {
+      // ripara quando la trincea è messa male e le monete bastano per una riparazione utile;
+      // altrimenti investe in potenza, ma tiene da parte qualcosa se la trincea cede
+      if (ratio < 0.55 && info.spend >= Math.min(info.need, 5)) return buyRepair(p);
+      if (p.coins >= pc && (ratio > 0.45 || p.lvl < 3) && p.coins - pc >= (ratio < 0.7 ? 2 : 0)) return buyPower(p);
+    } else if (L.econ === 'medium') {
+      if (ratio < 0.4 && p.coins >= 5) return buyRepair(p);
+      if (p.lvl < 4 && p.coins >= pc) return buyPower(p);
+    } else {
+      if (ratio < 0.25 && p.coins >= 3 && Math.random() < 0.5) return buyRepair(p);
+      if (p.coins >= pc && Math.random() < 0.15) return buyPower(p);
+    }
+  }
+
+  function cpuControl(p, dt) {
+    const lv = p.cpuLevel || cpuLevel, L = AI_LEVELS[lv] || AI_LEVELS.medium, ai = p.ai;
+    const foe = players[1 - p.i];
+    ai.think -= dt; ai.econT = (ai.econT || 0) - dt; ai.fireT = (ai.fireT || 0) - dt;
+    // fuoco: raffiche più o meno continue a seconda del livello
+    if (ai.fireT <= 0) { ai.fireOn = Math.random() < L.duty; ai.fireT = rnd(0.4, 1.2); }
+    if (ai.econT <= 0 && state === 'play') { ai.econT = rnd(0.8, 1.4); cpuEconomy(p, L); }
+    if (ai.think > 0) return;
+    ai.think = L.think * rnd(0.8, 1.2);
+
+    const half = CANNON_LEN / 2 + 4, speed = 2400 * L.speed * (moveMode === 'free' ? FREE_SPEED : 1);
+    const frontX = p.x + p.dir * (CANNON_T / 2), backX = p.x - p.dir * (CANNON_T / 2);   // lati del cannone (davanti = verso il nemico)
+    const myStr = LEVELS[p.lvl].str;
+
+    // 1) minacce: colpi nemici visti (dopo il tempo di reazione) e notati (attenzione del livello)
+    if (!ai.seen) ai.seen = new WeakMap();
+    const threats = [], budget = new Map();
+    const incoming = balls.filter(b => b.o !== p.i && b.vx * p.dir < 0).sort((u, v) => Math.abs(u.x - p.x) - Math.abs(v.x - p.x));
+    for (const b of incoming) {
+      // prima il conto delle parate su TUTTE le palle in arrivo (anche quelle dirette alla trincea o al fondo),
+      // perché ognuna consuma i miei colpi in volo che incontra
+      const parried = L.parry >= 0.6 && parriedByMine(p, b, budget);
+      if (parried || (time - (b.born || 0)) < L.react) continue;
+      let info = ai.seen.get(b);
+      if (!info) { info = { noticed: Math.random() < L.notice, noise: rnd(-L.noise, L.noise) }; ai.seen.set(b, info); }
+      if (!info.noticed) continue;
+      const hit = yAtX(b, frontX);
+      if (!hit || hit.t > 3) continue;
+      // un colpo inclinato può entrare lungo il fianco: considera la y su tutto lo spessore del cannone
+      const back = yAtX(b, backX) || hit;
+      const ylo = Math.min(hit.y, back.y), yhi = Math.max(hit.y, back.y);
+      // nel movimento libero il cannone può essere davanti alla propria trincea: allora non lo protegge
+      const exposed = moveMode === 'free' && (p.dir > 0
+        ? p.x - CANNON_T / 2 > barrierX0(p) + DEPTH * CELL_X
+        : p.x + CANNON_T / 2 < barrierX0(p));
+      if (!exposed && blockedBy(p, b)) continue;
+      threats.push({ y: hit.y + info.noise, ylo: ylo + info.noise, yhi: yhi + info.noise, t: hit.t, r: b.r, str: b.str, b });
+    }
+
+    // 2) bonus (movimento libero): ci va se conviene ed è sicuro
+    let goBonus = false;
+    if (moveMode === 'free' && bonus && Math.random() < L.bonus + 0.2) {
+      const near = threats.some(th => th.t < 0.8);
+      const foeDist = Math.hypot(foe.x - bonus.x, foe.y - bonus.y), myDist = Math.hypot(p.x - bonus.x, p.y - bonus.y);
+      goBonus = !near && (lv !== 'easy' || bonus.age > 5) && (lv === 'hard' ? myDist < foeDist * 1.6 + 200 : true);
+    }
+
+    ai.lastThreats = threats;
+    // 3) valuta le posizioni candidate
+    let bestY = p.y, best = -Infinity;
+    const focusOk = ai.focus != null && openness(foe, ai.focus, 9).open < 1;
+    for (let y = half; y <= W - half; y += 14) {
+      let sc = 0;
+      // pericolo e parate
+      for (const th of threats) {
+        const reach = Math.abs(y - p.y) / speed;
+        // dove sarà il cannone quando arriva il colpo, andando verso y (conta anche il tragitto)
+        const at = p.y + Math.sign(y - p.y) * Math.min(Math.abs(y - p.y), speed * Math.max(0, th.t - L.think * 0.5));
+        const gapLo = th.ylo - (at + CANNON_LEN / 2), gapHi = (at - CANNON_LEN / 2) - th.yhi;
+        const over = Math.max(gapLo, gapHi) < th.r + 10;
+        // allinearsi per parare conviene solo se c'è il tempo di arrivare e sparare, con un colpo abbastanza forte
+        // (solo se è già quasi allineato: sparando mentre corre il colpo prende effetto e manca la palla)
+        const aligned = Math.abs(y - th.y) < 14 && Math.abs(p.y - th.y) < 30 && th.str <= myStr && L.parry > 0.5 && th.t > Math.max(0, p.cd) + 0.3;
+        if (over) sc -= aligned ? 70 : (260 / (th.t + 0.2)) * (reach > th.t ? 1.6 : 1);
+        else if (Math.abs(y - th.y) < PARRY * 0.7 && th.t > 0.35 + reach) sc += 22 * L.parry;   // paro un colpo diretto al fondo
+      }
+      // attacco: varchi nella trincea nemica, cannone nemico, scavo
+      const op = openness(foe, y, 9);
+      if (op.clear) sc += 32 * L.offense + (Math.abs(y - foe.y) < CANNON_LEN / 2 ? 45 * L.offense : 0);
+      else sc += 14 * L.dig * op.open * L.offense;
+      if (focusOk && Math.abs(y - ai.focus) < 20) sc += 10 * L.dig;
+      // copertura della propria trincea davanti al cannone
+      // il nemico spara dritto e scava proprio dove si trova: meglio stare dietro un tratto di trincea integro
+      if (moveMode !== 'free' || Math.abs(p.x - homeX(p.i)) < 30) sc += (L.cover || 0) * coverFrac(p, y);
+      // movimento: meglio non spostarsi troppo
+      sc -= Math.abs(y - p.y) * 0.025;
+      if (goBonus) sc -= Math.abs(y - bonus.y) * 0.2;
+      if (sc > best) { best = sc; bestY = y; }
+    }
+    // al livello facile ogni tanto vaga senza meta
+    if (Math.random() < L.wander * L.think) bestY = rnd(half, W - half);
+    if (best > 20 && !threats.some(th => Math.abs(bestY - th.y) < CANNON_LEN)) ai.focus = bestY;
+
+    p.ty = clamp(bestY + rnd(-L.noise, L.noise) * 0.3, half, W - half);
+    if (moveMode === 'free') {
+      const [xa, xb] = xRange(p);
+      p.tx = goBonus ? clamp(bonus.x, xa, xb) : homeX(p.i);
+    }
+    // spara se il livello lo prevede; al difficile evita di sparare mentre corre (il colpo andrebbe storto),
+    // a meno che serva a parare
+    const needParry = threats.some(th => th.t > 0.2 && (Math.abs(th.y - p.y) < PARRY || Math.abs(th.y - p.ty) < PARRY));
+    p.cpuFire = ai.fireOn && (lv !== 'hard' || Math.abs(p.vy) < 450 || needParry);
+  }
+
+  const CPU_NAME = { easy: 'FACILE', medium: 'MEDIO', hard: 'DIFFICILE' };
+
   function updatePlayer(p, dt, canFire) {
     const half = CANNON_LEN / 2 + 4;
     const [xa, xb] = xRange(p);
+    if (p.cpu && state === 'play') cpuControl(p, dt);
     if (demo) {
       p.ai.t -= dt;
       if (p.ai.t <= 0) { p.ai.tgt = rnd(half, W - half); p.ai.tgx = rnd(xa, xa + (xb - xa) * 0.6); p.ai.t = rnd(0.5, 1.8); }
@@ -365,7 +572,7 @@
       p.x += kx * 900 * sp * dt; p.tx = p.x;
     } else {
       // segue il bersaglio con velocità massima (vettoriale, così in diagonale non va più veloce)
-      const m = (demo ? 700 : 2400) * sp * dt, dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy);
+      const m = (demo ? 700 : 2400 * (p.cpu ? (AI_LEVELS[p.cpuLevel || cpuLevel] || AI_LEVELS.medium).speed : 1)) * sp * dt, dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy);
       if (d > m) { p.x += dx / d * m; p.y += dy / d * m; } else { p.x = p.tx; p.y = p.ty; }
     }
     p.y = clamp(p.y, half, W - half); p.ty = clamp(p.ty, half, W - half);
@@ -373,8 +580,8 @@
     p.rapid = Math.max(0, p.rapid - dt);
     p.vy = lerp(p.vy, (p.y - prevY) / Math.max(dt, 1e-3), 0.35);
     p.cd -= dt;
-    const manual = !demo && fireMode === 'manual';
-    const firing = demo || (manual ? p.queued > 0 : p.touches.size > 0 || p.kFire);
+    const manual = !demo && fireMode === 'manual' && !p.cpu;
+    const firing = demo || (p.cpu ? p.cpuFire : manual ? p.queued > 0 : p.touches.size > 0 || p.kFire);
     if (canFire && firing && p.cd <= 0) {
       fire(p);
       p.queued = 0;
@@ -909,10 +1116,11 @@
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.font = `900 22px ${FONT}`; ctx.fillStyle = pl.c;
     ctx.shadowColor = pl.c; ctx.shadowBlur = 10 * glowK();
-    ctx.fillText(pl.name, 24, 30);
+    const hudName = p.cpu ? `CPU · ${CPU_NAME[cpuLevel]}` : pl.name;
+    ctx.fillText(hudName, 24, 30);
     ctx.shadowBlur = 0;
     ctx.font = `500 ${Math.round(13 * TS.fs)}px ${FONT}`; ctx.fillStyle = TS.sub;
-    ctx.fillText(`VITTORIE ${wins[p.i]}`, 24 + ctx.measureText(pl.name).width + 70, 31);
+    ctx.fillText(`VITTORIE ${wins[p.i]}`, 24 + ctx.measureText(hudName).width + 70, 31);
     // vite
     for (let k = 0; k < maxHp; k++) {
       rr(ctx, 24 + k * 27, 54, 21, 21, 5);
@@ -1367,9 +1575,9 @@
   }
   function showOver() {
     if (state !== 'over') return;
-    $('over-title').textContent = `VINCE ${PL[winner].name}`;
+    $('over-title').textContent = players[1].cpu ? (winner === 0 ? 'HAI VINTO!' : `VINCE LA CPU (${CPU_NAME[cpuLevel]})`) : `VINCE ${PL[winner].name}`;
     $('over-title').style.color = PL[winner].c;
-    $('over-score').textContent = `${PL[0].name} ${wins[0]} – ${wins[1]} ${PL[1].name}`;
+    $('over-score').textContent = `${PL[0].name} ${wins[0]} – ${wins[1]} ${players[1].cpu ? 'CPU' : PL[1].name}`;
     firstMatch = false;
     show('over', true);
   }
@@ -1387,6 +1595,7 @@
     const f = toField(e.clientX, e.clientY);
     if (Math.hypot(f.x - MID, f.y - PAUSE_Y) < 42) { pause(); return; }
     const p = players[f.x < MID ? 0 : 1];
+    if (p.cpu) return;
     const l = toLocal(p, f);
     if (l.v >= 0 && l.v <= HUD) {
       const lay = hudLayout();
@@ -1430,6 +1639,9 @@
       e.preventDefault(); return;
     }
     if (demo) return;
+    const k0 = KEYS[e.code];
+    if (k0 && players[k0[0]].cpu) return;
+    if (players1 && ['KeyO', 'KeyP'].includes(e.code)) return;
     const k = KEYS[e.code];
     if (k) {
       players[k[0]][k[1]] = true; e.preventDefault();
@@ -1461,7 +1673,17 @@
     $('move-hint').textContent = MOVE_HINT[moveMode];
     document.querySelectorAll('#theme-seg button').forEach(x => x.classList.toggle('on', x.dataset.theme === theme));
     $('theme-hint').textContent = THEME_HINT[theme];
+    document.querySelectorAll('#players-seg button').forEach(x => x.classList.toggle('on', x.dataset.players === (players1 ? '1' : '2')));
+    document.querySelectorAll('#cpu-seg button').forEach(x => x.classList.toggle('on', x.dataset.cpu === cpuLevel));
+    $('cpu-row').style.display = players1 ? '' : 'none';
+    $('cpu-hint').style.display = players1 ? '' : 'none';
+    $('cpu-hint').textContent = CPU_HINT[cpuLevel];
   }
+  const CPU_HINT = {
+    easy: 'Facile: la CPU reagisce lenta, si distrae e mira a caso.',
+    medium: 'Medio: schiva quasi sempre, para i colpi e cerca i varchi nella tua trincea.',
+    hard: 'Difficile: prevede ogni rimbalzo, para tutto quello che può, scava un varco e gestisce le monete al meglio.',
+  };
   const THEME_HINT = {
     neon: 'Neon: grafica moderna con luci e scie luminose.',
     hist: 'Storico 1800: cannoni da campo, trincee di soldati e sacchi di sabbia, marcia militare.',
@@ -1470,6 +1692,8 @@
   document.querySelectorAll('#fire-seg button').forEach(b => b.addEventListener('click', () => { fireMode = b.dataset.fire; saveOpts(); syncOpts(); }));
   document.querySelectorAll('#move-seg button').forEach(b => b.addEventListener('click', () => { moveMode = b.dataset.move; saveOpts(); syncOpts(); newMatch(true); }));
   document.querySelectorAll('#theme-seg button').forEach(b => b.addEventListener('click', () => { applyTheme(b.dataset.theme); saveOpts(); syncOpts(); newMatch(true); }));
+  document.querySelectorAll('#players-seg button').forEach(b => b.addEventListener('click', () => { players1 = b.dataset.players === '1'; saveOpts(); syncOpts(); }));
+  document.querySelectorAll('#cpu-seg button').forEach(b => b.addEventListener('click', () => { cpuLevel = b.dataset.cpu; saveOpts(); syncOpts(); }));
   syncOpts();
   $('btn-start').addEventListener('click', () => { Sound.init(); wins[0] = wins[1] = 0; firstMatch = true; startMatch(); });
   $('btn-again').addEventListener('click', () => { Sound.init(); startMatch(); });
@@ -1526,5 +1750,8 @@
   requestAnimationFrame(frame);
 
   // per i test automatici
-  window.__pi = { get state() { return state; }, get players() { return players; }, get balls() { return balls; }, get bonus() { return bonus; }, nextBonus() { bonusTimer = BONUS_EVERY - 0.3; } };
+  window.__pi = { get state() { return state; }, get players() { return players; }, get balls() { return balls; }, get bonus() { return bonus; }, nextBonus() { bonusTimer = BONUS_EVERY - 0.3; },
+    // test: simula la partita più veloce del tempo reale
+    aiLevels: AI_LEVELS,
+    sim(sec, cb) { const n = Math.round(sec * 60); for (let k = 0; k < n && state === 'play'; k++) { if (cb) cb(k / 60); update(1 / 60); } return state; } };
 })();
