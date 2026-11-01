@@ -29,11 +29,28 @@
         <li>Ogni vita persa <b>danneggia il cannone</b>: crepe, fumo e scintille ti dicono quanto manca.</li>
         <li><b>Movimento libero</b> (opzione): il cannone va ovunque nella tua metà e ogni minuto compare un <b>bonus</b> al centro: monete, vita, barriera, potenza o fuoco rapido. Lo prende chi lo tocca per primo col cannone.</li>
         <li><b>Tema Storico 1800</b> (opzione): cannoni da campo, trincee di soldati e sacchi di sabbia, palle di ferro e marcia militare.</li>
+        <li><b>1 vs CPU</b> (opzione): gioca da solo col BLU contro il computer, in tre livelli: facile, medio e difficile.</li>
         <li>Vince chi distrugge per primo il cannone dell'altro.</li>
       </ul>
 
       <div class="options">
         <h3>OPZIONI</h3>
+        <div class="opt">
+          <span>Giocatori</span>
+          <div class="seg" id="players-seg">
+            <button data-players="2" class="on">2 giocatori</button>
+            <button data-players="1">1 vs CPU</button>
+          </div>
+        </div>
+        <div class="opt" id="cpu-row" style="display:none">
+          <span>Livello CPU</span>
+          <div class="seg" id="cpu-seg">
+            <button data-cpu="easy">Facile</button>
+            <button data-cpu="medium" class="on">Medio</button>
+            <button data-cpu="hard">Difficile</button>
+          </div>
+        </div>
+        <p id="cpu-hint" class="hint" style="display:none"></p>
         <div class="opt">
           <span>Tema</span>
           <div class="seg" id="theme-seg">
