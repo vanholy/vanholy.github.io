@@ -12,6 +12,8 @@
   const ROWS = 54, DEPTH = 5, CELL_X = 15, BARRIER_OFF = 150;
   const CANNON_OFF = 52, CANNON_LEN = 124, CANNON_T = 26;
   const MAXLVL = 5;
+  const GRID = 48;               // lato di un quadratino della griglia di sfondo
+  const PARRY = GRID;            // due colpi si annullano se distano meno di un quadratino in x e in y (area 2x2)
   const LEVELS = [null,
     { cd: 0.55, shots: 1, speed: 760, str: 1, rad: 1.0, r: 9 },
     { cd: 0.44, shots: 1, speed: 820, str: 1, rad: 1.4, r: 10 },
@@ -127,7 +129,7 @@
   // ---------- stato ----------
   let state = 'menu';            // menu | countdown | play | paused | over
   let pausedFrom = 'play';
-  let players = [], balls = [], parts = [], pops = [];
+  let players = [], balls = [], parts = [], pops = [], flashes = [];
   let countdown = 0, goT = 0, overT = 0, winner = -1, shake = 0, time = 0;
   let maxHp = 3, fireMode = 'auto', demo = true, firstMatch = true;
   try {
@@ -150,7 +152,7 @@
       btn: { power: 0, repair: 0 }, deny: { power: 0, repair: 0 },
       touches: new Map(), kUp: false, kDown: false, kFire: false, ai: { t: 0, tgt: W / 2 },
     }));
-    balls = []; parts = []; pops = []; winner = -1; owners.clear();
+    balls = []; parts = []; pops = []; flashes = []; winner = -1; owners.clear();
   }
 
   // segni di danno del cannone: compaiono uno alla volta man mano che perde vite
@@ -376,10 +378,11 @@
       const a = balls[i]; if (a.str <= 0) continue;
       for (let j = i + 1; j < balls.length; j++) {
         const c = balls[j]; if (c.o === a.o || c.str <= 0) continue;
-        const dx = a.x - c.x, dy = a.y - c.y, rr2 = a.r + c.r;
-        if (dx * dx + dy * dy < rr2 * rr2) {
+        // parata facile: basta che i colpi passino entro un quadrato di 2x2 quadratini della griglia
+        if (Math.abs(a.x - c.x) < PARRY && Math.abs(a.y - c.y) < PARRY) {
           const m = Math.min(a.str, c.str); a.str -= m; c.str -= m;
           const mx = (a.x + c.x) / 2, my = (a.y + c.y) / 2;
+          flashes.push({ x1: a.x, y1: a.y, x2: c.x, y2: c.y, t: 0.25 });
           burst(mx, my, '#ffffff', 12, 300, 0, 4); burst(mx, my, PL[0].c, 6, 240); burst(mx, my, PL[1].c, 6, 240);
           Sound.clash(mx);
           if (a.str <= 0) break;
@@ -398,6 +401,8 @@
     parts = parts.filter(q => q.life > 0);
     for (const q of pops) { q.x += (q.i === 0 ? 1 : -1) * 45 * dt; q.life -= dt; }
     pops = pops.filter(q => q.life > 0);
+    for (const f of flashes) f.t -= dt;
+    flashes = flashes.filter(f => f.t > 0);
     shake = Math.max(0, shake - shake * 7 * dt - 2 * dt);
   }
 
@@ -431,8 +436,8 @@
     // griglia
     bgx.strokeStyle = 'rgba(140,160,255,0.06)'; bgx.lineWidth = 1.5;
     bgx.beginPath();
-    for (let x = MID % 48; x < PX1; x += 48) if (x > PX0) { bgx.moveTo(x, 0); bgx.lineTo(x, W); }
-    for (let y = (W / 2) % 48; y < W; y += 48) { bgx.moveTo(PX0, y); bgx.lineTo(PX1, y); }
+    for (let x = MID % GRID; x < PX1; x += GRID) if (x > PX0) { bgx.moveTo(x, 0); bgx.lineTo(x, W); }
+    for (let y = (W / 2) % GRID; y < W; y += GRID) { bgx.moveTo(PX0, y); bgx.lineTo(PX1, y); }
     bgx.stroke();
     // linea centrale tratteggiata e cerchio
     bgx.save();
@@ -585,6 +590,21 @@
       ctx.fillStyle = '#ffffff';
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.55, 0, Math.PI * 2); ctx.fill();
     }
+  }
+
+  // lampo tra due colpi che si sono parati
+  function drawFlashes() {
+    if (!flashes.length) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+    for (const f of flashes) {
+      const k = f.t / 0.25;
+      ctx.strokeStyle = `rgba(255,255,255,${0.9 * k})`; ctx.lineWidth = 3 + 5 * k;
+      ctx.beginPath(); ctx.moveTo(f.x1, f.y1); ctx.lineTo(f.x2, f.y2); ctx.stroke();
+      ctx.fillStyle = `rgba(255,255,255,${0.25 * k})`;
+      ctx.beginPath(); ctx.arc((f.x1 + f.x2) / 2, (f.y1 + f.y2) / 2, 30 + (1 - k) * 40, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
   }
 
   function drawParticles() {
@@ -753,7 +773,7 @@
     const sx = shake ? rnd(-shake, shake) * view.s : 0, sy = shake ? rnd(-shake, shake) * view.s : 0;
     ctx.drawImage(bg, sx * dpr, sy * dpr);
     setField(ctx, sx, sy);
-    drawGoals(); drawBarriers(); drawCannons(); drawBalls(); drawParticles(); drawPops();
+    drawGoals(); drawBarriers(); drawCannons(); drawBalls(); drawFlashes(); drawParticles(); drawPops();
     setField(ctx);
     if (!demo) {
       if (state === 'play' || state === 'countdown') drawPauseBtn();
