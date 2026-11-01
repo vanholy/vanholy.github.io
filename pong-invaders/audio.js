@@ -120,11 +120,12 @@ window.PIAudio = (() => {
     tone({ f: 990, d: 0.05, type: 'square', v: 0.04, lp: 3000, x });
   };
 
-  A.clash = x => {
+  A.clash = x => {         // parata: scarica elettrica che vortica
     if (!okSfx()) return;
-    tone({ f: 1800, f2: 700, d: 0.16, type: 'triangle', v: 0.07, x });
-    tone({ f: 2650, f2: 1200, d: 0.12, type: 'sine', v: 0.04, x });
-    noise({ f: 5000, d: 0.06, v: 0.08, ft: 'highpass', x });
+    for (let k = 0; k < 6; k++) noise({ f: rand(2500, 7000), q: 6, d: 0.04, v: 0.12, at: k * 0.045 + rand(0, 0.02), x });
+    tone({ f: 1600, f2: 120, d: 0.45, type: 'sawtooth', v: 0.06, lp: 5000, lp2: 400, q: 6, x });
+    tone({ f: 60, d: 0.4, type: 'square', v: 0.05, lp: 600, x });                 // ronzio elettrico
+    tone({ f: 2400, f2: 3600, d: 0.12, type: 'sine', v: 0.03, x });
   };
 
   A.score = x => {          // moneta

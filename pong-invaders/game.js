@@ -13,6 +13,7 @@
   const CANNON_OFF = 52, CANNON_LEN = 124, CANNON_T = 26;
   const MAXLVL = 5;
   const GRID = 48;               // lato di un quadratino della griglia di sfondo
+  const VORTEX_T = 0.55;         // durata del vortice elettrico
   const PARRY = GRID;            // due colpi si annullano se distano meno di un quadratino in x e in y (area 2x2)
   const LEVELS = [null,
     { cd: 0.55, shots: 1, speed: 760, str: 1, rad: 1.0, r: 9 },
@@ -382,8 +383,14 @@
         if (Math.abs(a.x - c.x) < PARRY && Math.abs(a.y - c.y) < PARRY) {
           const m = Math.min(a.str, c.str); a.str -= m; c.str -= m;
           const mx = (a.x + c.x) / 2, my = (a.y + c.y) / 2;
-          flashes.push({ x1: a.x, y1: a.y, x2: c.x, y2: c.y, t: 0.25 });
-          burst(mx, my, '#ffffff', 12, 300, 0, 4); burst(mx, my, PL[0].c, 6, 240); burst(mx, my, PL[1].c, 6, 240);
+          flashes.push({ x: mx, y: my, x1: a.x, y1: a.y, x2: c.x, y2: c.y, t: VORTEX_T, rot: Math.random() * 6.28, spin: Math.random() < 0.5 ? -1 : 1 });
+          // scintille che vorticano attorno al punto d'impatto
+          for (let q = 0; q < 26 && parts.length < 900; q++) {
+            const ang = Math.random() * Math.PI * 2, rad = rnd(8, 40), sp = rnd(160, 360);
+            parts.push({ x: mx + Math.cos(ang) * rad, y: my + Math.sin(ang) * rad,
+              vx: -Math.sin(ang) * sp + Math.cos(ang) * 60, vy: Math.cos(ang) * sp + Math.sin(ang) * 60,
+              life: rnd(0.3, 0.6), max: 0.6, c: q % 3 === 0 ? '#ffffff' : PL[q % 2].c, s: rnd(2, 5) });
+          }
           Sound.clash(mx);
           if (a.str <= 0) break;
         }
@@ -592,17 +599,70 @@
     }
   }
 
-  // lampo tra due colpi che si sono parati
+  // vortice elettrico tra due colpi che si sono parati
+  function jagged(x1, y1, x2, y2, amp, segs) {
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    for (let k = 1; k < segs; k++) {
+      const f = k / segs, o = rnd(-amp, amp);
+      ctx.lineTo(x1 + dx * f + nx * o, y1 + dy * f + ny * o);
+    }
+    ctx.lineTo(x2, y2);
+  }
+
   function drawFlashes() {
     if (!flashes.length) return;
     ctx.save();
-    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const f of flashes) {
-      const k = f.t / 0.25;
-      ctx.strokeStyle = `rgba(255,255,255,${0.9 * k})`; ctx.lineWidth = 3 + 5 * k;
-      ctx.beginPath(); ctx.moveTo(f.x1, f.y1); ctx.lineTo(f.x2, f.y2); ctx.stroke();
-      ctx.fillStyle = `rgba(255,255,255,${0.25 * k})`;
-      ctx.beginPath(); ctx.arc((f.x1 + f.x2) / 2, (f.y1 + f.y2) / 2, 30 + (1 - k) * 40, 0, Math.PI * 2); ctx.fill();
+      const k = f.t / VORTEX_T, age = 1 - k;              // k: 1 -> 0
+      const R = 18 + 62 * (1 - Math.pow(1 - age, 3));     // il vortice si allarga
+      const rot = f.rot + f.spin * age * 14;              // e gira veloce
+      // alone
+      ctx.globalAlpha = 0.55 * k;
+      ctx.drawImage(glow[0], f.x - R * 1.6, f.y - R * 1.6, R * 3.2, R * 3.2);
+      ctx.drawImage(glow[1], f.x - R * 1.3, f.y - R * 1.3, R * 2.6, R * 2.6);
+      ctx.globalAlpha = 1;
+      // bracci a spirale di fulmini, ridisegnati con rumore a ogni frame
+      const arms = 5;
+      for (let a = 0; a < arms; a++) {
+        const col = a % 2 ? PL[1].rgb : PL[0].rgb;
+        ctx.beginPath();
+        for (let st = 0; st <= 12; st++) {
+          const r = (st / 12) * R;
+          const ang = rot + a * (Math.PI * 2 / arms) + f.spin * r * 0.055 + rnd(-0.18, 0.18);
+          const jr = r + rnd(-4, 4);
+          const px = f.x + Math.cos(ang) * jr, py = f.y + Math.sin(ang) * jr;
+          st ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+        }
+        ctx.strokeStyle = `rgba(${col},${0.85 * k})`; ctx.lineWidth = 2 + 4 * k; ctx.stroke();
+        ctx.strokeStyle = `rgba(255,255,255,${0.9 * k})`; ctx.lineWidth = 1 + 1.2 * k; ctx.stroke();
+      }
+      // anello elettrico esterno
+      ctx.beginPath();
+      for (let st = 0; st <= 28; st++) {
+        const ang = rot * 0.6 + (st / 28) * Math.PI * 2, r = R + rnd(-6, 6);
+        const px = f.x + Math.cos(ang) * r, py = f.y + Math.sin(ang) * r;
+        st ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      }
+      ctx.strokeStyle = `rgba(190,220,255,${0.5 * k})`; ctx.lineWidth = 1.5; ctx.stroke();
+      // nei primi istanti: arco elettrico tra i due colpi
+      if (age < 0.4) {
+        const ka = 1 - age / 0.4;
+        jagged(f.x1, f.y1, f.x2, f.y2, 14, 9);
+        ctx.strokeStyle = `rgba(255,255,255,${ka})`; ctx.lineWidth = 2.5; ctx.stroke();
+        jagged(f.x1, f.y1, f.x2, f.y2, 22, 7);
+        ctx.strokeStyle = `rgba(160,140,255,${0.7 * ka})`; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      // fulmini che scappano verso l'esterno
+      if (Math.random() < 0.7 * k) {
+        const ang = Math.random() * Math.PI * 2, r2 = R + rnd(10, 45);
+        jagged(f.x, f.y, f.x + Math.cos(ang) * r2, f.y + Math.sin(ang) * r2, 8, 6);
+        ctx.strokeStyle = `rgba(255,255,255,${0.8 * k})`; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      // nucleo
+      ctx.fillStyle = `rgba(255,255,255,${0.9 * k})`;
+      ctx.beginPath(); ctx.arc(f.x, f.y, 4 + 6 * k, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
