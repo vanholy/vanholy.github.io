@@ -75,6 +75,9 @@
     const cw = window.innerWidth, ch = window.innerHeight;
     cv.width = bg.width = Math.round(cw * dpr);
     cv.height = bg.height = Math.round(ch * dpr);
+    // dimensione a schermo fissata in CSS: senza, su schermi Retina (iPad) il canvas appare grande il doppio
+    cv.style.width = cw + 'px';
+    cv.style.height = ch + 'px';
     const portrait = ch > cw;
     const long = portrait ? ch : cw, short = portrait ? cw : ch;
     const nW = clamp(T * short / long, 760, 1400);
