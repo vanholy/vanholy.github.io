@@ -149,6 +149,8 @@ h2 { font-size: 1.8rem; margin-bottom: 14px; }
 }
 .btn.small { font-size: 0.78rem; padding: 10px 8px; margin: 0; }
 
-.row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin-top: 10px; }
+.row.two { grid-template-columns: 1fr 1fr; }
+.btn.off { opacity: 0.5; }
 
 .keys { margin-top: 14px; font-size: 0.74rem; color: rgba(255, 255, 255, 0.45); line-height: 1.5; }

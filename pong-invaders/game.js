@@ -118,51 +118,11 @@
     return g;
   });
 
-  // ---------- audio ----------
-  const Sound = {
-    ac: null, master: null, on: true, nb: null,
-    init() {
-      if (!this.ac) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        this.ac = new AC();
-        this.master = this.ac.createGain(); this.master.gain.value = 0.55;
-        this.master.connect(this.ac.destination);
-        const len = this.ac.sampleRate;
-        this.nb = this.ac.createBuffer(1, len, len);
-        const d = this.nb.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      }
-      if (this.ac.state === 'suspended') this.ac.resume();
-    },
-    ok() { return this.on && this.ac && !demo; },
-    tone(f, d, type = 'square', v = 0.1, f2 = 0, delay = 0) {
-      if (!this.ok()) return;
-      const t = this.ac.currentTime + delay, o = this.ac.createOscillator(), g = this.ac.createGain();
-      o.type = type; o.frequency.setValueAtTime(f, t);
-      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
-      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.connect(g); g.connect(this.master); o.start(t); o.stop(t + d + 0.03);
-    },
-    noise(d, v = 0.2, freq = 1200, delay = 0) {
-      if (!this.ok()) return;
-      const t = this.ac.currentTime + delay, src = this.ac.createBufferSource(), f = this.ac.createBiquadFilter(), g = this.ac.createGain();
-      src.buffer = this.nb; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.8;
-      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      src.connect(f); f.connect(g); g.connect(this.master); src.start(t, Math.random() * 0.5); src.stop(t + d + 0.03);
-    },
-    shoot(i, l) { this.tone(i ? 560 : 470, 0.08, 'square', 0.035 + l * 0.004, i ? 280 : 235); },
-    crack() { this.noise(0.07, 0.12, 2600); },
-    wall() { this.tone(980, 0.035, 'triangle', 0.035); },
-    clash() { this.tone(1500, 0.08, 'sawtooth', 0.04, 500); this.noise(0.05, 0.08, 4200); },
-    score() { this.tone(880, 0.07, 'triangle', 0.08); this.tone(1320, 0.12, 'triangle', 0.08, 0, 0.06); },
-    hit() { this.noise(0.35, 0.4, 500); this.tone(170, 0.35, 'sawtooth', 0.13, 50); },
-    boom() { this.noise(1.2, 0.55, 280); this.tone(130, 1.0, 'sawtooth', 0.2, 28); },
-    buy() { [660, 880, 1100, 1320].forEach((f, k) => this.tone(f, 0.12, 'triangle', 0.07, 0, k * 0.05)); },
-    repair() { [440, 554, 660, 880].forEach((f, k) => this.tone(f, 0.14, 'sine', 0.09, 0, k * 0.06)); },
-    deny() { this.tone(210, 0.16, 'square', 0.05, 140); },
-    tick() { this.tone(620, 0.12, 'sine', 0.14); },
-    go() { this.tone(1240, 0.35, 'sine', 0.15, 620); },
-  };
+  // ---------- audio (vedi audio.js) ----------
+  const Sound = window.PIAudio;
+  // stereo: in orizzontale il BLU suona a sinistra e il ROSA a destra
+  Sound.pan = x => (view.portrait || x === undefined) ? 0 : (x - MID) / (MID - HUD);
+
 
   // ---------- stato ----------
   let state = 'menu';            // menu | countdown | play | paused | over
@@ -181,6 +141,7 @@
 
   function newMatch(isDemo) {
     demo = isDemo;
+    Sound.muted = isDemo;
     players = [0, 1].map(i => ({
       i, dir: i === 0 ? 1 : -1, y: W / 2, ty: W / 2, vy: 0, hp: maxHp, coins: 0, lvl: 1,
       cd: 0.4 + i * 0.2, recoil: 0, hitT: 0, repairFx: 0, coinFx: 0, queued: 0,
@@ -239,15 +200,15 @@
     }
     burst(x, p.y, PL[p.i].c, 5, 160, p.dir, 4);
     p.recoil = 1;
-    Sound.shoot(p.i, p.lvl);
+    Sound.shoot(p.i, p.lvl, x);
   }
 
   function buyPower(p) {
     if (state !== 'play' && state !== 'countdown') return;
-    if (p.lvl >= MAXLVL || p.coins < powerCost(p.lvl)) { p.deny.power = 0.35; Sound.deny(); return; }
+    if (p.lvl >= MAXLVL || p.coins < powerCost(p.lvl)) { p.deny.power = 0.35; Sound.deny(cannonX(p)); return; }
     p.coins -= powerCost(p.lvl); p.lvl++; p.btn.power = 0.4;
     addPop(cannonX(p) + p.dir * 150, p.y, `POTENZA LV ${p.lvl}`, p.i, GOLD, true);
-    burst(cannonX(p), p.y, GOLD, 30, 380); Sound.buy(); vibrate(25);
+    burst(cannonX(p), p.y, GOLD, 30, 380); Sound.buy(cannonX(p)); vibrate(25);
   }
 
   // Riparazione: usa le monete disponibili. REPAIR_FULL monete = barriera completa,
@@ -262,7 +223,7 @@
   function buyRepair(p) {
     if (state !== 'play' && state !== 'countdown') return;
     const { missing, spend } = repairInfo(p);
-    if (missing <= 0 || spend <= 0) { p.deny.repair = 0.35; Sound.deny(); return; }
+    if (missing <= 0 || spend <= 0) { p.deny.repair = 0.35; Sound.deny(cannonX(p)); return; }
     let pts = Math.min(missing, Math.round(spend / REPAIR_FULL * MASK_HP));
     const restored = pts;
     p.coins -= spend; p.btn.repair = 0.4; p.repairFx = 0.8; p.fresh.fill(0);
@@ -274,7 +235,7 @@
     for (const k of shuffle(gone)) { if (pts <= 0) break; const add = Math.min(2, pts); p.bar[k] = add; pts -= add; p.fresh[k] = 1; }
     const label = restored >= missing ? 'BARRIERA COMPLETA' : `+${Math.max(1, Math.round(restored / MASK_HP * 100))}% BARRIERA`;
     addPop(barrierX0(p) + DEPTH * CELL_X / 2 + p.dir * 110, W / 2, label, p.i, PL[p.i].c, true);
-    Sound.repair(); vibrate(25);
+    Sound.repair(cannonX(p)); vibrate(25);
   }
 
   // ---------- collisioni ----------
@@ -304,7 +265,7 @@
     }
     burst(hx, hy, PL[p.i].c, 12, 260, -p.dir, 5);
     burst(hx, hy, PL[b.o].c, 5, 200, -p.dir, 3);
-    Sound.crack();
+    Sound.crack(hx);
     return true;
   }
 
@@ -318,8 +279,9 @@
     if (!demo) {
       p.hp--; shooter.coins += 2; shooter.coinFx = 1;
       addPop(cx - p.dir * -90, p.y, '-1 VITA', p.i, '#ff5a5a', true);
-      Sound.hit(); vibrate(80);
+      Sound.hit(cx); vibrate(80);
       if (p.hp <= 0) kill(p, shooter);
+      else if (p.hp === 1) { Sound.alarm(cx); Sound.setMusicLevel(2); }
     }
     return true;
   }
@@ -333,7 +295,7 @@
     if (!demo) {
       shooter.coins++; shooter.coinFx = 1;
       addPop(wx - shooter.dir * 50, b.y, '+1', shooter.i, GOLD);
-      Sound.score();
+      Sound.score(wx);
     }
   }
 
@@ -344,7 +306,8 @@
     burst(cx, p.y, GOLD, 40, 500);
     for (const b of balls) burst(b.x, b.y, PL[b.o].c, 4, 120);
     balls = [];
-    shake = 34; Sound.boom(); vibrate([120, 60, 200]);
+    shake = 34; Sound.boom(cx); Sound.musicStop(0.3); vibrate([120, 60, 200]);
+    setTimeout(() => { if (state === 'over') Sound.win(); }, 1300);
     setTimeout(showOver, 1500);
   }
 
@@ -400,8 +363,8 @@
       let dead = false;
       for (let s = 0; s < n && !dead; s++) {
         b.x += b.vx * h; b.y += b.vy * h;
-        if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); Sound.wall(); burst(b.x, 0, '#ffffff', 3, 120); }
-        else if (b.y > W - b.r) { b.y = W - b.r; b.vy = -Math.abs(b.vy); Sound.wall(); burst(b.x, W, '#ffffff', 3, 120); }
+        if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); Sound.wall(b.x); burst(b.x, 0, '#ffffff', 3, 120); }
+        else if (b.y > W - b.r) { b.y = W - b.r; b.vy = -Math.abs(b.vy); Sound.wall(b.x); burst(b.x, W, '#ffffff', 3, 120); }
         if (hitBarrier(foe, b) || hitCannon(foe, b)) dead = true;
         else if ((b.o === 0 && b.x > PX1 + b.r) || (b.o === 1 && b.x < PX0 - b.r)) { scoreGoal(b); dead = true; }
         if (state === 'over') return;
@@ -418,7 +381,7 @@
           const m = Math.min(a.str, c.str); a.str -= m; c.str -= m;
           const mx = (a.x + c.x) / 2, my = (a.y + c.y) / 2;
           burst(mx, my, '#ffffff', 12, 300, 0, 4); burst(mx, my, PL[0].c, 6, 240); burst(mx, my, PL[1].c, 6, 240);
-          Sound.clash();
+          Sound.clash(mx);
           if (a.str <= 0) break;
         }
       }
@@ -808,10 +771,12 @@
     state = 'countdown'; countdown = 3; goT = 0;
     show('menu', false); show('pause', false); show('over', false);
     keepAwake();
+    Sound.init(); Sound.setMusicLevel(1); Sound.musicStart();
   }
   function toMenu() {
     newMatch(true); state = 'menu';
     show('pause', false); show('over', false); show('menu', true);
+    Sound.setMusicLevel(0); Sound.musicStart();
   }
   function pause() {
     if (state !== 'play' && state !== 'countdown') return;
@@ -819,8 +784,13 @@
     for (const p of players) p.touches.clear();
     owners.clear();
     show('pause', true);
+    Sound.musicStop(0.2);
   }
-  function resume() { if (state === 'paused') { state = pausedFrom; show('pause', false); } }
+  function resume() {
+    if (state !== 'paused') return;
+    state = pausedFrom; show('pause', false);
+    Sound.init(); Sound.musicStart();
+  }
   function showOver() {
     if (state !== 'over') return;
     $('over-title').textContent = `VINCE ${PL[winner].name}`;
@@ -916,10 +886,25 @@
   $('btn-restart').addEventListener('click', startMatch);
   $('btn-menu').addEventListener('click', toMenu);
   $('btn-menu2').addEventListener('click', toMenu);
-  $('btn-sound').addEventListener('click', () => {
-    Sound.on = !Sound.on; Sound.init();
-    $('btn-sound').textContent = Sound.on ? '🔊 Audio sì' : '🔇 Audio no';
-  });
+  // interruttori audio (nel menu e nella pausa)
+  function syncAudio() {
+    document.querySelectorAll('[data-audio=music]').forEach(b => { b.textContent = Sound.musicOn ? '🎵 Musica sì' : '🎵 Musica no'; b.classList.toggle('off', !Sound.musicOn); });
+    document.querySelectorAll('[data-audio=sfx]').forEach(b => { b.textContent = Sound.sfxOn ? '🔊 Effetti sì' : '🔇 Effetti no'; b.classList.toggle('off', !Sound.sfxOn); });
+  }
+  document.querySelectorAll('[data-audio]').forEach(b => b.addEventListener('click', () => {
+    Sound.init();
+    if (b.dataset.audio === 'music') { Sound.setMusic(!Sound.musicOn); if (state === 'menu') Sound.musicStart(); }
+    else { Sound.setSfx(!Sound.sfxOn); Sound.muted = false; Sound.score(); Sound.muted = demo; }
+    syncAudio();
+  }));
+  syncAudio();
+  // la musica del menu parte al primo tocco (i browser bloccano l'audio prima)
+  const firstTouch = () => {
+    Sound.init();
+    if (state === 'menu') { Sound.setMusicLevel(0); Sound.musicStart(); }
+    window.removeEventListener('pointerdown', firstTouch, true);
+  };
+  window.addEventListener('pointerdown', firstTouch, true);
   $('btn-fs').addEventListener('click', () => {
     const el = document.documentElement;
     try {

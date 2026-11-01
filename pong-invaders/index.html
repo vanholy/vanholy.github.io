@@ -53,7 +53,8 @@
       <button id="btn-start" class="btn primary">GIOCA</button>
 
       <div class="row">
-        <button id="btn-sound" class="btn small">🔊 Audio sì</button>
+        <button data-audio="music" class="btn small">🎵 Musica sì</button>
+        <button data-audio="sfx" class="btn small">🔊 Effetti sì</button>
         <button id="btn-fs" class="btn small">⛶ Schermo intero</button>
         <a href="../" class="btn small">← Hub</a>
       </div>
@@ -69,6 +70,10 @@
       <button id="btn-resume" class="btn primary">Riprendi</button>
       <button id="btn-restart" class="btn">Ricomincia</button>
       <button id="btn-menu" class="btn">Menu</button>
+      <div class="row two">
+        <button data-audio="music" class="btn small">🎵 Musica sì</button>
+        <button data-audio="sfx" class="btn small">🔊 Effetti sì</button>
+      </div>
     </div>
   </div>
 
@@ -82,6 +87,7 @@
     </div>
   </div>
 
+  <script src="audio.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
