@@ -16,6 +16,7 @@
   const VORTEX_T = 0.55;         // durata del vortice elettrico
   const PARRY = GRID;
   const PAUSE_Y = 46;
+  const FREE_SPEED = 0.8;        // modalità libera: velocità del cannone ridotta del 20%
   const FINGER_AHEAD = 70;       // modalità libera: il cannone sta davanti al dito, così il dito non lo copre            // tasto pausa in alto sulla linea centrale (il centro è del bonus)
   const BONUS_EVERY = 60, BONUS_LIFE = 20, BONUS_R = 32, RAPID_T = 10;
   const BONUSES = {
@@ -346,12 +347,13 @@
     const prevY = p.y;
     const k = (p.kDown ? 1 : 0) - (p.kUp ? 1 : 0);
     const kx = ((p.kFwd ? 1 : 0) - (p.kBack ? 1 : 0)) * p.dir;
+    const sp = moveMode === 'free' ? FREE_SPEED : 1;
     if (k || kx) {
-      p.y += k * 1050 * dt; p.ty = p.y;
-      p.x += kx * 900 * dt; p.tx = p.x;
+      p.y += k * 1050 * sp * dt; p.ty = p.y;
+      p.x += kx * 900 * sp * dt; p.tx = p.x;
     } else {
       // segue il bersaglio con velocità massima (vettoriale, così in diagonale non va più veloce)
-      const m = (demo ? 700 : 2400) * dt, dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy);
+      const m = (demo ? 700 : 2400) * sp * dt, dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy);
       if (d > m) { p.x += dx / d * m; p.y += dy / d * m; } else { p.x = p.tx; p.y = p.ty; }
     }
     p.y = clamp(p.y, half, W - half); p.ty = clamp(p.ty, half, W - half);

@@ -77,8 +77,56 @@ const flushPend = async (k) => {
 // Senza login i dati restano solo in questo browser (localStorage, chiavi separate "guest:") e non vanno mai su Supabase.
 const GUEST = '__guest__';
 let guestMode = false;
-const guestLoad = (k) => { try { return JSON.parse(localStorage.getItem('guest:' + k) || '[]'); } catch { return []; } };
 const guestSave = (k, v) => { try { localStorage.setItem('guest:' + k, JSON.stringify(v)); return true; } catch { return false; } };
+const guestLoad = (k) => { ensureGuestDemo(); try { return JSON.parse(localStorage.getItem('guest:' + k) || '[]'); } catch { return []; } };
+
+// Dati di esempio per la versione libera: circa un anno di rifornimenti, AdBlue e manutenzioni,
+// generati una sola volta (e solo se l'ospite non ha già dati suoi). Date relative a oggi.
+const makeDemoData = () => {
+  let seed = 20240917;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const DAYMS = 86400000, TANK = 71;
+  const iso = (t) => new Date(t).toISOString().slice(0, 10);
+  const r2 = (x) => Math.round(x * 100) / 100, r3 = (x) => Math.round(x * 1000) / 1000;
+  const fuel = [], adblue = [], maint = [];
+  let t = Date.now() - 365 * DAYMS, odo = 84210, level = TANK, n = 0, abKm = 0;
+  while (true) {
+    t += (8 + rnd() * 9) * DAYMS;
+    if (t > Date.now() - DAYMS) break;
+    const km = Math.round(520 + rnd() * 330);
+    const cons = 6.0 + rnd() * 1.0 + (n % 9 === 4 ? 0.8 : 0);          // L/100 km, ogni tanto un tratto più pesante
+    odo += km; abKm += km; level -= km * cons / 100;
+    const type = rnd() < 0.14 ? 'HVO' : rnd() < 0.1 ? 'Diesel+' : 'B7';
+    const ppl = r3(1.69 + 0.07 * Math.sin(n / 5) + rnd() * 0.05 + (type === 'HVO' ? 0.13 : type === 'Diesel+' ? 0.09 : 0));
+    const partial = n % 11 === 6;
+    const liters = r2(partial ? Math.min(TANK - level - 5, 25 + rnd() * 8) : TANK - level);
+    level += liters;
+    fuel.push({ id: 'demo-f' + n, date: iso(t), liters, pricePerLiter: ppl, odometer: odo, totalCost: r2(liters * ppl),
+      fuelType: type, fullTank: !partial, notes: partial ? 'Rabbocco in autostrada' : n % 7 === 2 ? 'Viaggio' : '' });
+    if (abKm > 5200) { abKm = 0; const l = 10; adblue.push({ id: 'demo-a' + adblue.length, date: iso(t), liters: l, cost: r2(l * (0.95 + rnd() * 0.3)), odometer: odo, notes: '' }); }
+    n++;
+  }
+  const at = (frac) => fuel[Math.min(fuel.length - 1, Math.floor(fuel.length * frac))];
+  const M = [
+    [0.08, 'Tagliando', 'Tagliando con olio e filtri', 340, 'Officina Ford'],
+    [0.30, 'Pneumatici', 'Cambio gomme invernali', 85, ''],
+    [0.45, 'Revisione', 'Revisione periodica', 79, ''],
+    [0.62, 'Riparazione', 'Pastiglie freni anteriori', 185, ''],
+    [0.78, 'Pneumatici', 'Cambio gomme estive', 85, ''],
+    [0.90, 'Carrozzeria', 'Ritocco paraurti posteriore', 120, ''],
+  ];
+  M.forEach(([f, type, desc, cost, notes], i) => { const e = at(f); if (e) maint.push({ id: 'demo-m' + i, date: e.date, type, desc, cost, odometer: e.odometer, notes }); });
+  return { fuel, adblue, maint };
+};
+
+const ensureGuestDemo = () => {
+  try {
+    if (localStorage.getItem('guest:demo-seeded')) return;
+    const has = ['ft-v3', 'ft-maint-v3', 'ft-adblue-v1'].some(k => { try { return (JSON.parse(localStorage.getItem('guest:' + k) || '[]')).length > 0; } catch { return false; } });
+    if (!has) { const d = makeDemoData(); guestSave('ft-v3', d.fuel); guestSave('ft-maint-v3', d.maint); guestSave('ft-adblue-v1', d.adblue); }
+    localStorage.setItem('guest:demo-seeded', '1');
+  } catch { /* storage non disponibile: si parte vuoti */ }
+};
 
 const loadK = async (k) => {
   if (guestMode) return guestLoad(k);
@@ -1088,7 +1136,7 @@ function App() {
 const USERS = { prova: 'prova', vanholy: 'animal' };
 const AUTH_KEY = 'fuel-auth-v1';
 
-const LoginScreen = ({ onLogin }) => {
+const LoginScreen = ({ onLogin, onCancel }) => {
   const [user, setUser] = React.useState('');
   const [pass, setPass] = React.useState('');
   const [err, setErr] = React.useState('');
@@ -1120,31 +1168,36 @@ const LoginScreen = ({ onLogin }) => {
         </button>
         {err && <div style={{marginTop:14,textAlign:'center',fontSize:11,color:'#ff5555',fontFamily:"'JetBrains Mono',monospace"}}>{err}</div>}
       </div>
-      <button onClick={()=>{localStorage.setItem(AUTH_KEY, GUEST); onLogin(GUEST);}}
+      {onCancel && <button onClick={onCancel}
         style={{marginTop:18,width:'100%',maxWidth:360,padding:'12px',background:'transparent',border:'1px solid rgba(255,255,255,0.12)',borderRadius:9,color:'rgba(255,255,255,0.6)',fontSize:11,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.12em',cursor:'pointer'}}>
-        USA SENZA ACCOUNT
-      </button>
-      <div style={{marginTop:8,maxWidth:360,textAlign:'center',fontSize:9,lineHeight:1.5,color:'rgba(255,255,255,0.25)',fontFamily:"'JetBrains Mono',monospace"}}>
-        I dati restano solo in questo browser: non vengono inviati a nessun server.
-      </div>
+        ← TORNA ALLA VERSIONE LIBERA
+      </button>}
     </div>
   );
 };
 
+// Senza login salvato si entra subito nella versione libera (dati di esempio nel browser);
+// il pulsante "Accesso ufficiale" apre il login vero. Chi ha già fatto login entra come sempre.
 function Root() {
-  const [authUser, setAuthUser] = React.useState(() => localStorage.getItem(AUTH_KEY));
-  if (!authUser) return <LoginScreen onLogin={setAuthUser}/>;
+  const [authUser, setAuthUser] = React.useState(() => localStorage.getItem(AUTH_KEY) || GUEST);
+  const [showLogin, setShowLogin] = React.useState(false);
+  if (showLogin) return <LoginScreen onLogin={(u)=>{setShowLogin(false);setAuthUser(u);}} onCancel={()=>setShowLogin(false)}/>;
   guestMode = authUser === GUEST;
   return (
     <>
       {guestMode && <div style={{position:'fixed',top:18,left:'50%',transform:'translateX(-50%)',zIndex:9990,padding:'5px 12px',background:'rgba(5,10,24,0.9)',border:'1px solid rgba(255,180,0,0.25)',borderRadius:20,color:'rgba(255,190,60,0.75)',fontSize:8,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.08em',whiteSpace:'nowrap',backdropFilter:'blur(8px)',pointerEvents:'none'}}>
-        OSPITE · DATI SALVATI SOLO IN QUESTO BROWSER
+        VERSIONE LIBERA · DATI DI ESEMPIO SALVATI SOLO IN QUESTO BROWSER
       </div>}
-      <App/>
-      <button onClick={()=>{localStorage.removeItem(AUTH_KEY);setAuthUser(null);}}
-        style={{position:'fixed',top:16,right:20,zIndex:9990,padding:'6px 14px',background:'rgba(5,10,24,0.9)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:20,color:'rgba(255,255,255,0.22)',fontSize:9,fontFamily:"'JetBrains Mono',monospace",cursor:'pointer',backdropFilter:'blur(10px)',letterSpacing:'0.1em'}}>
-        {guestMode ? 'ACCEDI' : 'LOGOUT'}
-      </button>
+      <App key={authUser}/>
+      {guestMode
+        ? <button onClick={()=>setShowLogin(true)}
+            style={{position:'fixed',top:12,right:20,zIndex:9990,padding:'9px 18px',background:'linear-gradient(135deg,#003a88,#0060d0)',border:'none',borderRadius:20,color:'#fff',fontSize:10,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",cursor:'pointer',letterSpacing:'0.12em',boxShadow:'0 4px 20px rgba(0,80,200,0.35)'}}>
+            🔐 ACCESSO UFFICIALE
+          </button>
+        : <button onClick={()=>{localStorage.removeItem(AUTH_KEY);setAuthUser(GUEST);}}
+            style={{position:'fixed',top:16,right:20,zIndex:9990,padding:'6px 14px',background:'rgba(5,10,24,0.9)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:20,color:'rgba(255,255,255,0.22)',fontSize:9,fontFamily:"'JetBrains Mono',monospace",cursor:'pointer',backdropFilter:'blur(10px)',letterSpacing:'0.1em'}}>
+            LOGOUT
+          </button>}
     </>
   );
 }

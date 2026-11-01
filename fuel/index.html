@@ -98,15 +98,7 @@ const flushPend = async (k) => {
   } catch(e) { console.warn('Supabase sync in sospeso:', e.message); return false; }
 };
 
-// ═══ MODALITÀ OSPITE ═══
-// Senza login i dati restano solo in questo browser (localStorage, chiavi separate "guest:") e non vanno mai su Supabase.
-const GUEST = '__guest__';
-let guestMode = false;
-const guestLoad = (k) => { try { return JSON.parse(localStorage.getItem('guest:' + k) || '[]'); } catch { return []; } };
-const guestSave = (k, v) => { try { localStorage.setItem('guest:' + k, JSON.stringify(v)); return true; } catch { return false; } };
-
 const loadK = async (k) => {
-  if (guestMode) return guestLoad(k);
   try {
     // AdBlue: fino alla v7 era salvato solo in locale → al primo avvio mette in coda per Supabase tutto ciò che c'è sul dispositivo
     if (k === 'ft-adblue-v1' && !localStorage.getItem(k + ':migrated')) {
@@ -128,7 +120,6 @@ const loadK = async (k) => {
 
 // ch = { up: [righe nuove/modificate], del: [id eliminati] }
 const saveK = async (k, v, ch = {}) => {
-  if (guestMode) return guestSave(k, v);
   try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
   const p = getPend(k);
   (ch.up || []).forEach(e => { p.up[e.id] = e; p.del = p.del.filter(id => id !== e.id); });
@@ -1059,13 +1050,6 @@ const LoginScreen = ({ onLogin }) => {
         </button>
         {err && <div style={{marginTop:12,textAlign:'center',fontSize:10,color:'#ff5555',fontFamily:"'JetBrains Mono',monospace"}}>{err}</div>}
       </div>
-      <button onClick={()=>{localStorage.setItem(AUTH_KEY, GUEST); onLogin(GUEST);}}
-        style={{marginTop:18,width:'100%',maxWidth:300,padding:'12px',background:'transparent',border:'1px solid rgba(255,255,255,0.12)',borderRadius:9,color:'rgba(255,255,255,0.6)',fontSize:11,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.12em',cursor:'pointer'}}>
-        USA SENZA ACCOUNT
-      </button>
-      <div style={{marginTop:8,maxWidth:300,textAlign:'center',fontSize:9,lineHeight:1.5,color:'rgba(255,255,255,0.25)',fontFamily:"'JetBrains Mono',monospace"}}>
-        I dati restano solo in questo browser: non vengono inviati a nessun server.
-      </div>
     </div>
   );
 };
@@ -1073,16 +1057,12 @@ const LoginScreen = ({ onLogin }) => {
 function Root() {
   const [authUser, setAuthUser] = React.useState(() => localStorage.getItem(AUTH_KEY));
   if (!authUser) return <LoginScreen onLogin={setAuthUser}/>;
-  guestMode = authUser === GUEST;
   return (
     <>
-      {guestMode && <div style={{position:'fixed',bottom:'calc(env(safe-area-inset-bottom) + 104px)',left:'50%',transform:'translateX(-50%)',zIndex:9990,padding:'5px 12px',background:'rgba(5,10,24,0.9)',border:'1px solid rgba(255,180,0,0.25)',borderRadius:20,color:'rgba(255,190,60,0.75)',fontSize:8,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.08em',whiteSpace:'nowrap',backdropFilter:'blur(8px)',pointerEvents:'none'}}>
-        OSPITE · DATI SALVATI SOLO IN QUESTO BROWSER
-      </div>}
       <App/>
       <button onClick={()=>{localStorage.removeItem(AUTH_KEY);setAuthUser(null);}}
         style={{position:'fixed',bottom:'calc(env(safe-area-inset-bottom) + 72px)',right:12,zIndex:9990,padding:'5px 11px',background:'rgba(5,10,24,0.85)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:20,color:'rgba(255,255,255,0.2)',fontSize:8,fontFamily:"'JetBrains Mono',monospace",cursor:'pointer',backdropFilter:'blur(8px)',letterSpacing:'0.1em'}}>
-        {guestMode ? 'ACCEDI' : 'LOGOUT'}
+        LOGOUT
       </button>
     </>
   );
