@@ -275,22 +275,17 @@
             box-shadow: 0 5px 20px rgba(255, 176, 32, 0.3);
         }
 
-        .fuel-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+        .fuel-app-link {
+            display: block;
+            margin-top: 14px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.45);
+            text-decoration: none;
         }
 
-        .fuel-links .section-btn {
-            flex: 1 1 240px;
-            width: auto;
-        }
-
-        .section-card.fuel .section-btn.alt {
-            background: transparent;
+        .fuel-app-link:hover {
             color: #ffb020;
-            border: 1px solid rgba(255, 176, 32, 0.6);
-            box-shadow: none;
         }
 
         /* Sezione giochi: occupa tutta la riga, con un riquadro per ogni gioco */
@@ -465,7 +460,7 @@
             </div>
 
             <!-- Fuel Section -->
-            <div class="section-card fuel" onclick="location.href='fuel/'">
+            <div class="section-card fuel" onclick="location.href='fuel/web/web.html'">
                 <span class="section-icon">⛽</span>
                 <h2 class="section-title">FUEL TRACKER</h2>
                 <p class="section-description">
@@ -475,18 +470,13 @@
                     <li>Consumi, costi al km e grafici per tratto</li>
                     <li>Manutenzioni e AdBlue in un unico posto</li>
                     <li>Import da Fuelio ed export dei dati</li>
-                    <li>Usabile anche senza account: i dati restano nel tuo browser</li>
+                    <li>Provalo subito senza account, con dati di esempio già caricati: i dati restano nel tuo browser</li>
                 </ul>
-                <div class="fuel-links">
-                    <a href="fuel/" class="section-btn" onclick="event.stopPropagation()">
-                        <span>Apri l'app</span>
-                        <span>→</span>
-                    </a>
-                    <a href="fuel/web/web.html" class="section-btn alt" onclick="event.stopPropagation()">
-                        <span>Dashboard web</span>
-                        <span>→</span>
-                    </a>
-                </div>
+                <a href="fuel/web/web.html" class="section-btn" onclick="event.stopPropagation()">
+                    <span>Apri Fuel Tracker</span>
+                    <span>→</span>
+                </a>
+                <a href="fuel/" class="fuel-app-link" onclick="event.stopPropagation()">App mobile · accesso riservato</a>
             </div>
 
             <!-- Games Section -->
