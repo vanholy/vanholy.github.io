@@ -248,6 +248,51 @@
             transform: translateY(-3px);
         }
 
+        /* Sezione Fuel: occupa tutta la riga */
+        .section-card.fuel {
+            grid-column: 1 / -1;
+            border-color: rgba(255, 176, 32, 0.35);
+        }
+
+        .section-card.fuel:hover {
+            border-color: #ffb020;
+            box-shadow: 0 0 40px rgba(255, 176, 32, 0.25);
+            background: rgba(255, 176, 32, 0.04);
+        }
+
+        .section-card.fuel .section-title {
+            color: #ffb020;
+            text-shadow: 0 0 20px rgba(255, 176, 32, 0.5);
+        }
+
+        .section-card.fuel .section-features li::before {
+            color: #ffb020;
+        }
+
+        .section-card.fuel .section-btn {
+            background: linear-gradient(135deg, #ffb020, #ff6a00);
+            color: #1a0d00;
+            box-shadow: 0 5px 20px rgba(255, 176, 32, 0.3);
+        }
+
+        .fuel-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .fuel-links .section-btn {
+            flex: 1 1 240px;
+            width: auto;
+        }
+
+        .section-card.fuel .section-btn.alt {
+            background: transparent;
+            color: #ffb020;
+            border: 1px solid rgba(255, 176, 32, 0.6);
+            box-shadow: none;
+        }
+
         /* Sezione giochi: occupa tutta la riga, con un riquadro per ogni gioco */
         .section-card.games {
             grid-column: 1 / -1;
@@ -417,6 +462,31 @@
                     <span>Esplora Finance</span>
                     <span>→</span>
                 </a>
+            </div>
+
+            <!-- Fuel Section -->
+            <div class="section-card fuel" onclick="location.href='fuel/'">
+                <span class="section-icon">⛽</span>
+                <h2 class="section-title">FUEL TRACKER</h2>
+                <p class="section-description">
+                    Registra rifornimenti, AdBlue e manutenzioni dell'auto e tieni d'occhio consumi e costi
+                </p>
+                <ul class="section-features">
+                    <li>Consumi, costi al km e grafici per tratto</li>
+                    <li>Manutenzioni e AdBlue in un unico posto</li>
+                    <li>Import da Fuelio ed export dei dati</li>
+                    <li>Usabile anche senza account: i dati restano nel tuo browser</li>
+                </ul>
+                <div class="fuel-links">
+                    <a href="fuel/" class="section-btn" onclick="event.stopPropagation()">
+                        <span>Apri l'app</span>
+                        <span>→</span>
+                    </a>
+                    <a href="fuel/web/web.html" class="section-btn alt" onclick="event.stopPropagation()">
+                        <span>Dashboard web</span>
+                        <span>→</span>
+                    </a>
+                </div>
             </div>
 
             <!-- Games Section -->
