@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playground - VanHoly Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.03) 4px);
+            animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50%); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .back:hover {
+            color: #fff;
+            border-color: #ff2d95;
+            box-shadow: 0 0 20px rgba(255, 45, 149, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin: 30px 0 60px;
+            padding: 40px 20px 0;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff2d95, #8a2dff, #00d4ff, #ff2d95);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 6s ease infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .game-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 32px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 45, 149, 0.35);
+            background: rgba(255, 255, 255, 0.02);
+            color: #fff;
+            text-decoration: none;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .game-card:hover::before {
+            left: 100%;
+        }
+
+        .game-card:hover {
+            border-color: #ff2d95;
+            transform: translateY(-10px);
+            box-shadow: 0 0 40px rgba(255, 45, 149, 0.3);
+            background: rgba(255, 45, 149, 0.05);
+        }
+
+        .game-icon {
+            font-size: 4.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        }
+
+        .game-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 14px;
+            color: #ff2d95;
+            text-shadow: 0 0 20px rgba(255, 45, 149, 0.5);
+        }
+
+        .game-desc {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex: 1;
+            align-content: flex-start;
+        }
+
+        .tag {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .play-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 18px 35px;
+            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ff2d95, #8a2dff);
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(255, 45, 149, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .game-card:hover .play-btn {
+            box-shadow: 0 8px 30px rgba(255, 45, 149, 0.6);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 40px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #00d4ff;
+            text-decoration: none;
+        }
+
+        @media (max-width: 968px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <div class="container">
+        <a href="../" class="back">← Hub</a>
+
+        <header>
+            <h1>🎮 PLAYGROUND</h1>
+            <p class="subtitle">Giochi nel browser, da fare anche su telefono e tablet</p>
+        </header>
+
+        <div class="games-grid">
+            <a href="../pong-invaders/" class="game-card">
+                <span class="game-icon">👾</span>
+                <span class="game-name">Pong Invaders</span>
+                <span class="game-desc">Pong incontra gli invasori spaziali: spara, sfonda la barriera e distruggi il cannone avversario. Monete per potenziarti e riparare.</span>
+                <span class="tags">
+                    <span class="tag">2 giocatori sullo stesso tablet</span>
+                    <span class="tag">1 vs CPU · 3 livelli</span>
+                    <span class="tag">Tema Neon o Storico 1800</span>
+                </span>
+                <span class="play-btn"><span>Gioca</span><span>→</span></span>
+            </a>
+
+            <a href="../reflection-game/" class="game-card">
+                <span class="game-icon">⚡</span>
+                <span class="game-name">Reflection Game</span>
+                <span class="game-desc">Tocca il bersaglio appena si illumina e misura i tuoi tempi di reazione.</span>
+                <span class="tags">
+                    <span class="tag">Survival a tempo</span>
+                    <span class="tag">Sfida in due</span>
+                    <span class="tag">Modalità gatto</span>
+                </span>
+                <span class="play-btn"><span>Gioca</span><span>→</span></span>
+            </a>
+
+            <a href="../finance/cicciopalla-trader.html" class="game-card">
+                <span class="game-icon">📈</span>
+                <span class="game-name">Cicciopalla Trader</span>
+                <span class="game-desc">Trading game interattivo: compra, vendi e cerca di non far finire Cicciopalla sul lastrico.</span>
+                <span class="tags">
+                    <span class="tag">Trading simulato</span>
+                    <span class="tag">1 giocatore</span>
+                </span>
+                <span class="play-btn"><span>Gioca</span><span>→</span></span>
+            </a>
+        </div>
+
+        <footer>
+            <p><a href="../">← Torna a VanHoly Hub</a></p>
+        </footer>
+    </div>
+</body>
+</html>
