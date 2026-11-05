@@ -65,7 +65,7 @@
   function center(el) { const b = el.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height }; }
 
   function launch(src) {
-    if (running) return;
+    if (running || (window.__vhGameActive && window.__vhGameActive())) return;   // non durante il gioco dell'omino
     const anims = [];
     const A = (el, kf, opt) => { const a = el.animate(kf, { fill: 'forwards', ...opt }); anims.push(a); return a; };
 
