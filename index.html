@@ -380,30 +380,6 @@
                 grid-template-columns: 1fr;
             }
 
-            /* su schermi stretti i due logo vanno affiancati sopra il titolo, così la scritta sta su una riga */
-            header h1 {
-                display: grid;
-                grid-template-columns: auto auto;
-                grid-template-areas: "l1 l2" "txt txt";
-                justify-content: center;
-                column-gap: 28px;
-            }
-
-            h1 .hub-logo {
-                grid-area: l1;
-                display: block;
-                height: 120px;
-                margin: 0 0 14px;
-            }
-
-            h1 .hub-logo--alt {
-                grid-area: l2;
-                margin: 0 0 14px;
-            }
-
-            h1 span {
-                grid-area: txt;
-            }
 
             h1 {
                 font-size: 2.5rem;
@@ -411,6 +387,19 @@
 
             .section-card {
                 padding: 40px 30px;
+            }
+        }
+
+        /* telefoni: un solo logo, centrato sopra il titolo, così la scritta sta su una riga */
+        @media (max-width: 600px) {
+            h1 .hub-logo {
+                display: block;
+                height: 130px;
+                margin: 0 auto 14px;
+            }
+
+            h1 .hub-logo--alt {
+                display: none;
             }
         }
 
