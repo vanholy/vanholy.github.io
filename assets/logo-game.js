@@ -4,6 +4,8 @@
  * ← → per muoversi, ↑ o spazio per saltare (sul telefono pulsanti sullo schermo). Se cammina oltre il bordo
  * di un riquadro (al centro, tra i due riquadri, o ai lati sul telefono) precipita; se cade fuori dalla
  * pagina precipita nel vuoto e si disintegra, poi ricompare al suo posto nel logo.
+ * ↓ (o il pulsante ⤓) scende attraverso il bordo verso il piano successivo: se scendendo tocca l'icona di un
+ * riquadro (🍺 💹 🎮 ⛽) entra in quella sezione, cioè apre la sua pagina.
  * Esc o ✕ per uscire: l'omino torna al suo posto. */
 (() => {
   'use strict';
@@ -38,6 +40,9 @@
     .vh-ui .vh-close { top: 14px; right: 14px; width: 46px; height: 46px; font-size: 20px; }
     .vh-ui .vh-left { left: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); }
     .vh-ui .vh-right { left: 96px; bottom: calc(18px + env(safe-area-inset-bottom)); }
+    .vh-ui .vh-down { left: 176px; bottom: calc(18px + env(safe-area-inset-bottom)); }
+    .vh-flash { position: fixed; inset: 0; z-index: 9900; pointer-events: none; opacity: 0;
+      background: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), #ffffff 0%, rgba(0, 255, 200, 0.9) 25%, rgba(5, 10, 24, 1) 70%); }
     .vh-ui .vh-jump { right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); width: 76px; height: 76px; }
     .vh-ui .vh-hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); padding: 10px 18px; border-radius: 12px;
       background: rgba(5, 10, 24, 0.75); color: rgba(255, 255, 255, 0.85); font: 14px 'Roboto', sans-serif; white-space: nowrap;
@@ -60,6 +65,20 @@
     hit.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); start(svg); });
     hit.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(svg); } });
   });
+
+  // icone dei riquadri (🍺 💹 🎮 ⛽): riquadro del solo disegno dell'emoji, in pixel della pagina, e pagina della sezione
+  function icons() {
+    return [...document.querySelectorAll('.section-card')].map(card => {
+      const icon = card.querySelector('.section-icon'), link = card.querySelector('a.section-btn');
+      if (!icon || !link) return null;
+      const range = document.createRange(); range.selectNodeContents(icon);
+      const r = range.getBoundingClientRect(), shrink = r.width * 0.15;
+      return { icon, href: link.href, box: { x1: r.left + scrollX + shrink, x2: r.right + scrollX - shrink, y1: r.top + scrollY + shrink, y2: r.bottom + scrollY - shrink } };
+    }).filter(Boolean);
+  }
+  function touchedIcon(x1, y1, x2, y2) {
+    return icons().find(c => x1 < c.box.x2 && x2 > c.box.x1 && y1 < c.box.y2 && y2 > c.box.y1) || null;
+  }
 
   // posizione nella pagina ignorando le trasformazioni (i riquadri si sollevano al passaggio del mouse)
   function pageBox(el) {
@@ -109,20 +128,23 @@
     const ui = document.createElement('div');
     ui.className = 'vh-ui';
     ui.innerHTML = `<button class="vh-close" aria-label="Esci dal gioco">✕</button>` +
-      (coarse ? `<button class="vh-left" aria-label="Sinistra">◀</button><button class="vh-right" aria-label="Destra">▶</button><button class="vh-jump" aria-label="Salta">⤒</button>`
-              : `<div class="vh-hint">← → per muoverti · ↑ o spazio per saltare · Esc per uscire</div>`);
+      (coarse ? `<button class="vh-left" aria-label="Sinistra">◀</button><button class="vh-right" aria-label="Destra">▶</button><button class="vh-down" aria-label="Scendi">⤓</button><button class="vh-jump" aria-label="Salta">⤒</button>`
+              : `<div class="vh-hint">← → per muoverti · ↑ o spazio per saltare · ↓ per scendere · Esc per uscire</div>`);
     document.body.appendChild(ui);
     const hint = ui.querySelector('.vh-hint');
     if (hint) hint.animate([{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], { duration: 5000, fill: 'forwards' });
 
-    const keys = { left: false, right: false, jump: false };
+    const keys = { left: false, right: false, jump: false, down: false };
+    // ogni pressione di salto o discesa viene ricordata per un attimo: anche un tocco velocissimo non va perso
+    const buf = { jump: 0, down: 0 };
+    const tap = k => { if (k in buf) buf[k] = 0.12; };
     const hold = (sel, k) => {
       const b = ui.querySelector(sel); if (!b) return;
-      const on = e => { e.preventDefault(); keys[k] = true; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (_) { /* niente */ } };
+      const on = e => { e.preventDefault(); keys[k] = true; tap(k); b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (_) { /* niente */ } };
       const off = () => { keys[k] = false; b.classList.remove('on'); };
       b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
     };
-    hold('.vh-left', 'left'); hold('.vh-right', 'right'); hold('.vh-jump', 'jump');
+    hold('.vh-left', 'left'); hold('.vh-right', 'right'); hold('.vh-jump', 'jump'); hold('.vh-down', 'down');
     ui.querySelector('.vh-close').addEventListener('click', () => quit());
 
     const onKey = (e, down) => {
@@ -131,8 +153,8 @@
       let used = true;
       if (k === 'ArrowLeft' || k === 'a' || k === 'A') keys.left = down;
       else if (k === 'ArrowRight' || k === 'd' || k === 'D') keys.right = down;
-      else if (k === 'ArrowUp' || k === ' ' || k === 'w' || k === 'W') keys.jump = down;
-      else if (k === 'ArrowDown') { /* niente, ma non far scorrere la pagina */ }
+      else if (k === 'ArrowUp' || k === ' ' || k === 'w' || k === 'W') { keys.jump = down; if (down && !e.repeat) tap('jump'); }
+      else if (k === 'ArrowDown' || k === 's' || k === 'S') { keys.down = down; if (down && !e.repeat) tap('down'); }
       else used = false;
       if (used) e.preventDefault();
     };
@@ -141,7 +163,7 @@
 
     // fisica (in pixel della pagina), proporzionata alla grandezza dell'omino
     const G = 2300, SPEED = coarse ? 260 : 320, JUMP = Math.sqrt(2 * G * Math.max(170, h * 2));
-    const p = { x: x0, y: y0, vx: 0, vy: -420, ground: null, face: mirrored ? -1 : 1, squash: 0, walk: 0, jumpHeld: false, coyote: 0 };
+    const p = { x: x0, y: y0, vx: 0, vy: -420, ground: null, face: mirrored ? -1 : 1, squash: 0, walk: 0, coyote: 0, drop: null, jumpAt: 0 };
     let last = performance.now(), raf = 0, ended = false;
 
     const frame = now => {
@@ -153,9 +175,12 @@
       if (dir) p.face = dir;
       // salto (anche un attimo dopo aver lasciato il bordo)
       p.coyote = p.ground ? 0.09 : Math.max(0, p.coyote - dt);
-      if (keys.jump && !p.jumpHeld && (p.ground || p.coyote > 0)) { p.vy = -JUMP; p.ground = null; p.coyote = 0; p.squash = -0.15; }
-      p.jumpHeld = keys.jump;
-      if (!keys.jump && p.vy < -JUMP * 0.45) p.vy = -JUMP * 0.45;     // salto più basso se si lascia presto
+      if (buf.jump > 0 && (p.ground || p.coyote > 0)) { p.vy = -JUMP; p.ground = null; p.coyote = 0; p.squash = -0.15; buf.jump = 0; p.jumpAt = now; }
+      // salto più basso se si lascia presto (un tocco rapido dà comunque un saltello)
+      if (!keys.jump && now - p.jumpAt > 90 && p.vy < -JUMP * 0.45) p.vy = -JUMP * 0.45;
+      // ↓: scende attraverso il bordo su cui si trova, verso il piano successivo
+      if (buf.down > 0 && p.ground) { p.drop = p.ground.y; p.ground = null; p.vy = 160; p.squash = -0.12; buf.down = 0; }
+      buf.jump = Math.max(0, buf.jump - dt); buf.down = Math.max(0, buf.down - dt);
       // gravità
       const prevBottom = p.y + h;
       p.vy = Math.min(p.vy + G * dt, 1500);
@@ -171,6 +196,7 @@
       }
       if (!p.ground && p.vy >= 0) {
         for (const q of plats) {
+          if (p.drop !== null && Math.abs(q.y - p.drop) < 2) continue;      // il bordo da cui sta scendendo
           if (foot >= q.x1 && foot <= q.x2 && prevBottom <= q.y + 1 && p.y + h >= q.y) {
             p.y = q.y - h; p.ground = q; p.squash = Math.min(0.28, p.vy / 3000); p.vy = 0;
             break;
@@ -178,7 +204,11 @@
         }
       }
       // caduto fuori dalla pagina: nel vuoto
+      if (p.drop !== null && p.y + h > p.drop + 24) p.drop = null;
       if (p.y + h * 0.5 > docH()) { fallIntoVoid(); return; }
+      // ha toccato l'icona di un riquadro: entra nella sezione
+      const hitIcon = touchedIcon(p.x + w * 0.25, p.y + h * 0.2, p.x + w * 0.75, p.y + h * 0.95);
+      if (hitIcon) { enterSection(hitIcon); return; }
 
       // la pagina segue l'omino
       const sy = p.y - scrollY;
@@ -199,6 +229,31 @@
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
+
+    // ingresso nella sezione: l'icona si accende, l'omino ci viene risucchiato, lampo di luce, si apre la pagina
+    function enterSection(target) {
+      if (ended) return;
+      cleanup();
+      const { icon, href, box } = target;
+      const cx = (box.x1 + box.x2) / 2, cy = (box.y1 + box.y2) / 2;            // in pixel della pagina
+      const go = () => { location.href = href; };
+      if (reduce) { go(); return; }
+      icon.animate([
+        { transform: 'scale(1) rotate(0deg)', filter: 'brightness(1)' },
+        { transform: 'scale(1.35) rotate(-10deg)', filter: 'brightness(1.6) drop-shadow(0 0 30px #ffffff)', offset: 0.4 },
+        { transform: 'scale(1.6) rotate(6deg)', filter: 'brightness(2.2) drop-shadow(0 0 50px #00ffc8)' },
+      ], { duration: 750, fill: 'forwards', easing: 'ease-out' });
+      el.animate([
+        { transform: el.style.transform, opacity: 1 },
+        { transform: `translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) scale(0.15) rotate(540deg)`, opacity: 0.2 },
+      ], { duration: 600, fill: 'forwards', easing: 'cubic-bezier(.5,0,.8,.4)' });
+      const flash = document.createElement('div');
+      flash.className = 'vh-flash';
+      flash.style.setProperty('--fx', (cx - scrollX) + 'px'); flash.style.setProperty('--fy', (cy - scrollY) + 'px');
+      document.body.appendChild(flash);
+      flash.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 560, fill: 'forwards' });
+      setTimeout(go, 830);
+    }
 
     function cleanup() {
       ended = true;
@@ -323,4 +378,13 @@
 
   // l'animazione della sfera non parte mentre si gioca
   window.__vhGameActive = () => !!game;
+
+  // tornando indietro dalla sezione (pagina ripristinata dalla cache del browser) si riparte puliti
+  addEventListener('pageshow', e => {
+    if (!e.persisted) return;
+    document.querySelectorAll('.vh-player, .vh-ui, .vh-flash, .vh-void, .vh-beam').forEach(n => n.remove());
+    document.querySelectorAll('.section-icon').forEach(n => n.getAnimations().forEach(a => a.cancel()));
+    document.body.classList.remove('vh-playing');
+    game = null;
+  });
 })();
