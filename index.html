@@ -93,17 +93,39 @@
             vertical-align: middle;
         }
 
+        /* secondo logo, alla fine della scritta: speculare e con animazione sfalsata */
+        h1 .hub-logo--alt {
+            margin-right: 0;
+            margin-left: 0.25em;
+            transform: scaleX(-1);
+            filter: drop-shadow(0 0 18px rgba(0, 255, 136, 0.45));
+        }
+
+        .hub-logo--alt .vh-character {
+            animation-duration: 4.4s;
+            animation-delay: -2.2s;            /* in controfase rispetto al primo */
+        }
+
+        .hub-logo--alt .vh-antenna-star {
+            animation-duration: 3.2s;
+            animation-direction: reverse;
+        }
+
+        .hub-logo--alt .vh-energy-lines {
+            animation-duration: 14s;
+            animation-direction: reverse;      /* la sfera gira al contrario */
+        }
+
+        .hub-logo--alt .vh-energy-core {
+            animation-duration: 2.8s;
+            animation-delay: -1.1s;
+        }
+
         @keyframes gradientShift {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
         }
 
-        .subtitle {
-            font-size: 1.3rem;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 300;
-            letter-spacing: 2px;
-        }
 
         .sections-grid {
             display: grid;
@@ -358,11 +380,29 @@
                 grid-template-columns: 1fr;
             }
 
-            /* su schermi stretti il logo va sopra il titolo, così la scritta sta su una riga */
+            /* su schermi stretti i due logo vanno affiancati sopra il titolo, così la scritta sta su una riga */
+            header h1 {
+                display: grid;
+                grid-template-columns: auto auto;
+                grid-template-areas: "l1 l2" "txt txt";
+                justify-content: center;
+                column-gap: 28px;
+            }
+
             h1 .hub-logo {
+                grid-area: l1;
                 display: block;
-                height: 130px;
-                margin: 0 auto 14px;
+                height: 120px;
+                margin: 0 0 14px;
+            }
+
+            h1 .hub-logo--alt {
+                grid-area: l2;
+                margin: 0 0 14px;
+            }
+
+            h1 span {
+                grid-area: txt;
             }
 
             h1 {
@@ -512,8 +552,97 @@
                     <path d="M506 1045 L565 1158 L665 1235"/>
                     <path d="M536 1052 L586 1146 L684 1202"/>
                   </g>
-                </svg><span>VANHOLY HUB</span></h1>
-            <p class="subtitle">Esplora il mondo della birra artigianale, della finanza intelligente e dei giochi</p>
+                </svg><span>VANHOLY HUB</span><svg class="hub-logo hub-logo--alt" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1536" aria-hidden="true">
+                
+                  <!-- Antenna -->
+                  <path class="vh-antenna-mast" fill="url(#vhLogoGrad)" d="M451 231 L486 68 Q493 40 510 68 L574 231 L544 236 L501 119 L476 235 Z"/>
+                  <path class="vh-antenna-star" fill="url(#vhLogoGrad)" d="M500 72 L439 47 Q431 44 440 44 L496 56 L485 20 Q483 13 490 19 L515 57 L568 20 Q577 14 573 24 L530 63 L618 48 Q629 46 619 53 L540 77 L608 78 Q620 80 608 84 L535 88 L571 108 Q580 115 568 111 L517 91 L469 112 Q459 116 467 106 L493 84 L448 84 Q436 83 449 78 Z"/>
+                
+                  <!-- Corpo principale -->
+                  <g class="vh-character">
+                  <path fill="url(#vhLogoGrad)" fill-rule="evenodd" d="
+                    M511 218
+                    C424 218 358 270 331 352
+                    L259 581
+                    C239 645 249 719 271 765
+                    C285 793 313 803 341 794
+                    C370 784 386 756 382 725
+                    C377 696 354 677 321 675
+                    L314 675
+                    L350 554
+                    C362 516 381 493 399 500
+                    C437 531 458 574 458 620
+                    C458 651 446 684 432 724
+                    L340 1038
+                    Q336 1053 352 1048
+                    L432 1027
+                    Q440 1025 440 1015
+                    L442 895
+                    Q442 885 453 885
+                    L600 885
+                    Q610 885 610 896
+                    L612 1017
+                    Q612 1027 621 1030
+                    L699 1048
+                    Q715 1052 710 1037
+                    L615 724
+                    C603 685 590 650 591 620
+                    C592 574 611 531 650 500
+                    C668 493 686 516 698 554
+                    L737 675
+                    C703 675 680 694 675 725
+                    C670 756 688 785 716 794
+                    C744 803 772 791 786 764
+                    C809 717 815 647 795 581
+                    L691 352
+                    C657 270 598 218 511 218 Z
+                
+                    M511 345
+                    A53 53 0 1 0 511 451
+                    A53 53 0 1 0 511 345 Z
+                
+                    M318 704
+                    A31 31 0 1 0 318 766
+                    A31 31 0 1 0 318 704 Z
+                
+                    M729 704
+                    A31 31 0 1 0 729 766
+                    A31 31 0 1 0 729 704 Z
+                  "/>
+                
+                  <!-- Piccoli archi decorativi intorno all'oblò -->
+                  <g fill="none" stroke="#121226" stroke-width="8" stroke-linecap="round">
+                    <path d="M440 298 Q500 245 570 287"/>
+                    <path d="M460 485 Q532 528 603 481"/>
+                  </g>
+                  </g>
+                
+                  <!-- Sfera / energia sottostante -->
+                  <circle class="vh-energy-core" cx="516" cy="1210" r="92" fill="url(#vhLogoGrad)"/>
+                  <g class="vh-energy-lines" fill="none" stroke="url(#vhLogoGrad2)" stroke-width="7" stroke-linecap="round">
+                    <path d="M352 1195 L425 1092 L478 1050"/>
+                    <path d="M343 1220 L430 1100 L493 1040"/>
+                    <path d="M354 1250 L446 1112 L510 1032"/>
+                    <path d="M372 1280 L462 1130 L526 1035"/>
+                    <path d="M393 1308 L478 1150 L542 1044"/>
+                    <path d="M420 1330 L496 1170 L558 1055"/>
+                    <path d="M448 1346 L516 1187 L577 1070"/>
+                    <path d="M478 1355 L536 1205 L598 1090"/>
+                    <path d="M511 1360 L557 1222 L620 1112"/>
+                    <path d="M546 1355 L578 1236 L642 1137"/>
+                    <path d="M579 1340 L600 1246 L663 1165"/>
+                    <path d="M611 1317 L622 1252 L681 1193"/>
+                    <path d="M649 1284 L650 1244 L696 1220"/>
+                    <path d="M365 1160 L445 1268 L511 1352"/>
+                    <path d="M379 1130 L461 1248 L536 1347"/>
+                    <path d="M399 1105 L480 1228 L562 1336"/>
+                    <path d="M422 1080 L500 1207 L590 1318"/>
+                    <path d="M448 1060 L520 1187 L617 1295"/>
+                    <path d="M475 1050 L543 1172 L642 1268"/>
+                    <path d="M506 1045 L565 1158 L665 1235"/>
+                    <path d="M536 1052 L586 1146 L684 1202"/>
+                  </g>
+                </svg></h1>
         </header>
 
         <div class="sections-grid">
