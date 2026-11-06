@@ -103,7 +103,7 @@ Il numero di interazioni non cambia col livello. Toccare una qualsiasi altra opz
 
 - **Tocco in anticipo** (prima che si accenda qualcosa): conta come errore.
 - **Tocco sul bersaglio sbagliato** o fuori dal bersaglio: conta come errore. Il bersaglio acceso resta acceso.
-- **Tocco su un elemento di disturbo:** conta come errore.
+- **Tocco su un elemento di disturbo:** conta come errore. Il bersaglio acceso però ha sempre la precedenza: sta sopra i disturbi e un tocco su di lui, o entro 12 px dal suo bordo, vale come preso anche se lì passa un disturbo.
 - **Bersaglio mancato** (scaduto il tempo di scomparsa): si conta tra i "mancati", non tra gli errori.
 - **Tocco subito dopo un mancato** (entro 1 s): compare "Troppo tardi!" e non conta come errore, perché è già contato tra i mancati.
 - Errori e mancati si contano a parte e non influiscono sul calcolo dei tempi.

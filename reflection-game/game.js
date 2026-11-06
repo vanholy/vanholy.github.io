@@ -6,6 +6,7 @@ const SIZES = { piccola: 48, media: 72, grande: 100 }; // diametro in px
 const FREQ = { lenta: [2000, 5000], media: [1000, 3000], veloce: [500, 1500] }; // attesa casuale [min, max] ms
 const BAR_FULL_MS = 1000; // tempo a cui la barra è piena (senza scomparsa)
 const LATE_MS = 1000; // dopo un mancato, per quanto un tocco è "troppo tardi"
+const TOUCH_SLOP = 12; // px oltre il bordo del bersaglio acceso in cui il tocco vale ancora
 const HISTORY_MAX = 500;
 const LS_SETTINGS = 'reflection-game:settings';
 const LS_HISTORY = 'reflection-game:history';
@@ -1009,7 +1010,9 @@ function flashError(p, text) {
 function onPointer(p, e) {
   e.preventDefault();
   if (session.phase !== 'running' || (p.phase !== 'wait' && p.phase !== 'lit')) return;
-  const hitEl = e.target.closest('.target');
+  // il bersaglio acceso ha la precedenza su tutto: un tocco su di lui (o appena fuori dal bordo)
+  // vale anche se sopra o accanto passa un elemento di disturbo
+  const hitEl = onLitTarget(p, e) ? p.lit : e.target.closest('.target');
 
   if (!hitEl && e.target.closest('.distractor')) {
     flashError(p, 'Elemento di disturbo');
@@ -1053,6 +1056,14 @@ function onPointer(p, e) {
   }
 
   nextOrEnd(p);
+}
+
+function onLitTarget(p, e) {
+  if (p.phase !== 'lit' || !p.lit) return false;
+  const r = p.lit.getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width / 2);
+  const dy = e.clientY - (r.top + r.height / 2);
+  return Math.hypot(dx, dy) <= r.width / 2 + TOUCH_SLOP;
 }
 
 function stopPlayerTimers(p) {
