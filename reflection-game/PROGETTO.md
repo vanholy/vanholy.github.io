@@ -53,9 +53,20 @@ Si avvia dal pulsante **Reflection**, sotto la modalità gatto. È una modalità
 - Dopo un'attesa **casuale tra 1 e 7 secondi** il colore cambia: va toccato lo schermo, in qualunque punto, il più in fretta possibile.
 - I colori sono **casuali** e si susseguono **10 colori diversi**: ogni nuovo colore è ben distinto da quello attuale e da tutti quelli già usati.
 - Durante il gioco non si vede nessun dato. **Solo alla fine** compaiono media, migliore, peggiore, errori e il grafico dell'andamento delle reazioni.
+- Ogni tocco riuscito dà un **lampo bianco** su tutto lo schermo e un **suono**. In questa modalità i suoni (tocco, errore, fine) ci sono sempre, anche se l'opzione Suoni è spenta.
 - Un tocco prima del cambio conta come errore ("Troppo presto!") e l'attesa ricomincia.
 - La partita viene salvata nello storico come "Reflection · 10". "Rigioca" riparte in modalità Reflection.
 - Il pulsante ✕ in alto a destra esce dalla partita. Se l'app va in background si mette in pausa e riparte con un tocco.
+
+### Reflection suono 🔊
+
+Si avvia dal pulsante **Reflection suono**, sotto Reflection. Funziona come Reflection, ma il segnale è un suono.
+
+- Lo schermo è di un solo colore. Dopo un'attesa **casuale tra 1 e 7 secondi** si sente un **suono**: va toccato lo schermo il più in fretta possibile.
+- **Al tocco il colore cambia** (sempre un colore nuovo e diverso) e c'è il lampo bianco. Al tocco non c'è il suono di conferma, per non confonderlo col segnale.
+- 10 suoni per partita; solo alla fine compaiono media, migliore, peggiore, errori e il grafico.
+- Il tempo parte quando il suono esce dagli altoparlanti (si tiene conto del ritardo audio del dispositivo, quando il browser lo comunica). Con le cuffie Bluetooth il ritardo può essere più grande: meglio l'altoparlante o le cuffie con il filo.
+- Un tocco prima del suono è un errore ("Troppo presto!"). Nello storico compare come "Reflection suono · 10".
 
 ### Animazione di apertura
 

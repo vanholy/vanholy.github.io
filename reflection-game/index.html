@@ -26,6 +26,7 @@
       <p id="menu-record" class="hint"></p>
       <button class="btn cat" data-action="cat">Modalità gatto 🐱👶</button>
       <button class="btn reflection" data-action="reflection">Reflection 🎨</button>
+      <button class="btn reflection" data-action="reflection-sound">Reflection suono 🔊</button>
       <button class="btn" data-goto="options">Opzioni</button>
       <button class="btn" data-action="history">Storico</button>
       <p id="menu-summary" class="hint"></p>
@@ -196,6 +197,7 @@
   <!-- REFLECTION: schermo di un solo colore, tocca appena cambia -->
   <section id="reflection" class="screen">
     <div id="refl-arena">
+      <div id="refl-flash" class="refl-flash"></div>
       <div id="refl-msg" class="refl-msg"></div>
       <button class="btn icon refl-exit" data-action="quit-reflection" aria-label="Esci">✕</button>
     </div>
