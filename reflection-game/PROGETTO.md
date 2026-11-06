@@ -53,6 +53,7 @@ Si avvia dal pulsante **Reflection**, sotto la modalità gatto. È una modalità
 - Dopo un'attesa **casuale tra 1 e 7 secondi** il colore cambia: va toccato lo schermo, in qualunque punto, il più in fretta possibile.
 - I colori sono **casuali** e si susseguono **10 colori diversi**: ogni nuovo colore è ben distinto da quello attuale e da tutti quelli già usati.
 - Durante il gioco non si vede nessun dato. **Solo alla fine** compaiono media, migliore, peggiore, errori e il grafico dell'andamento delle reazioni.
+- Ogni tocco riuscito dà un **lampo bianco** su tutto lo schermo e un **suono**. In questa modalità i suoni (tocco, errore, fine) ci sono sempre, anche se l'opzione Suoni è spenta.
 - Un tocco prima del cambio conta come errore ("Troppo presto!") e l'attesa ricomincia.
 - La partita viene salvata nello storico come "Reflection · 10". "Rigioca" riparte in modalità Reflection.
 - Il pulsante ✕ in alto a destra esce dalla partita. Se l'app va in background si mette in pausa e riparte con un tocco.

@@ -309,6 +309,10 @@ h3 { margin: 20px 0 8px; font-size: 1rem; color: var(--muted); font-weight: 600;
   transition: opacity 0.15s;
 }
 #refl-arena.error::after { opacity: 1; }
+/* tocco riuscito: lampo bianco su tutto lo schermo che si dissolve */
+.refl-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.refl-flash.on { animation: refl-flash 0.35s ease-out; }
+@keyframes refl-flash { from { opacity: 0.85; } to { opacity: 0; } }
 .refl-msg {
   position: absolute;
   inset: 0;

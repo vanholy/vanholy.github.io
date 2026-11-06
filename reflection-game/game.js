@@ -1568,6 +1568,7 @@ const REFL_SETTINGS = { level: 'reflection', mode: 'reflection', rounds: REFL_RO
 
 const reflArena = $('#refl-arena');
 const reflMsg = $('#refl-msg');
+const reflFlash = $('#refl-flash');
 const refl = { phase: 'idle', hues: [], times: [], errors: 0, changedAt: 0, timer: null, errTimer: null };
 
 const hueDist = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
@@ -1596,7 +1597,8 @@ function startReflection() {
   Object.assign(refl, { phase: 'wait', hues: [], times: [], errors: 0 });
   reflArena.style.background = rgbStr(reflColor());
   setReflMsg('Tocca lo schermo appena cambia colore');
-  sound.init(settings);
+  // in Reflection il suono del tocco c'è sempre, anche con "Suoni" spento nelle opzioni
+  sound.init({ ...settings, sounds: 'si' });
   show('reflection');
   reflSchedule();
 }
@@ -1648,6 +1650,10 @@ reflArena.addEventListener('pointerdown', (e) => {
   if (refl.phase !== 'lit') return;
   refl.times.push(Math.max(0, eventTime(e) - refl.changedAt));
   sound.play('hit');
+  // riavvia il lampo anche se il precedente non era finito
+  reflFlash.classList.remove('on');
+  void reflFlash.offsetWidth;
+  reflFlash.classList.add('on');
   if (refl.times.length < REFL_ROUNDS) reflSchedule();
   else endReflection();
 });
@@ -1671,6 +1677,7 @@ function endReflection() {
 
 function stopReflection() {
   clearTimeout(refl.timer);
+  reflFlash.classList.remove('on');
   clearTimeout(refl.errTimer);
   reflArena.classList.remove('error');
   refl.phase = 'idle';
