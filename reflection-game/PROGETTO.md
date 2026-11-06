@@ -22,7 +22,7 @@ Di norma **il bersaglio non si spegne mai da solo** e resta acceso finché non v
 
 ### Survival
 
-Si avvia dal pulsante **Survive!** del menu, non dalle opzioni.
+Si avvia dal pulsante **Survive! 🦁** del menu, non dalle opzioni.
 
 - **Difficoltà massima con tutto attivato:** bersagli visibili (8, piccoli), frequenza veloce, scomparsa del bersaglio, colori difficili, sfondo psichedelico, 20 disturbi, bersagli in leggero movimento. Suoni e musica seguono le opzioni.
 - **Sempre più veloce:** a ogni bersaglio preso il tempo di scomparsa, l'attesa e la velocità dei disturbi cambiano del 4%. Si parte da 1,5 s per toccare e non si scende sotto il 30% dei tempi iniziali (minimo 0,4 s).
