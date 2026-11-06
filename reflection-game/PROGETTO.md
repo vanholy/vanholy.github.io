@@ -45,6 +45,18 @@ Si avvia dal pulsante **Modalità gatto** del menu. È pensata per far giocare u
 - **Nessun timer:** solo un contatore grande degli insetti presi.
 - **Per uscire bisogna tenere premuto** il pulsante in alto a destra per 1,2 s, così il gatto non esce per sbaglio.
 
+### Reflection 🎨
+
+Si avvia dal pulsante **Reflection**, sotto la modalità gatto. È una modalità extra, senza bersagli.
+
+- Tutto lo schermo è di **un solo colore uniforme**.
+- Dopo un'attesa **casuale tra 1 e 7 secondi** il colore cambia: va toccato lo schermo, in qualunque punto, il più in fretta possibile.
+- I colori sono **casuali** e si susseguono **10 colori diversi**: ogni nuovo colore è ben distinto da quello attuale e da tutti quelli già usati.
+- Durante il gioco non si vede nessun dato. **Solo alla fine** compaiono media, migliore, peggiore, errori e il grafico dell'andamento delle reazioni.
+- Un tocco prima del cambio conta come errore ("Troppo presto!") e l'attesa ricomincia.
+- La partita viene salvata nello storico come "Reflection · 10". "Rigioca" riparte in modalità Reflection.
+- Il pulsante ✕ in alto a destra esce dalla partita. Se l'app va in background si mette in pausa e riparte con un tocco.
+
 ### Animazione di apertura
 
 All'avvio, per 3 secondi, prima della home: sfondo psichedelico, bersagli che si accendono a raffica con l'anello del tocco, forme di disturbo e insetti che attraversano lo schermo, la barra del tempo di reazione che corre e si ferma su un tempo, e infine il titolo che arriva in primo piano. Poi si dissolve nella home. Un tocco la salta. Con "riduci movimento" attivo sul dispositivo compare solo il titolo.
@@ -103,7 +115,7 @@ Il numero di interazioni non cambia col livello. Toccare una qualsiasi altra opz
 
 - **Tocco in anticipo** (prima che si accenda qualcosa): conta come errore.
 - **Tocco sul bersaglio sbagliato** o fuori dal bersaglio: conta come errore. Il bersaglio acceso resta acceso.
-- **Tocco su un elemento di disturbo:** conta come errore.
+- **Tocco su un elemento di disturbo:** conta come errore. Il bersaglio acceso però ha sempre la precedenza: sta sopra i disturbi e un tocco su di lui, o entro 12 px dal suo bordo, vale come preso anche se lì passa un disturbo.
 - **Bersaglio mancato** (scaduto il tempo di scomparsa): si conta tra i "mancati", non tra gli errori.
 - **Tocco subito dopo un mancato** (entro 1 s): compare "Troppo tardi!" e non conta come errore, perché è già contato tra i mancati.
 - Errori e mancati si contano a parte e non influiscono sul calcolo dei tempi.
