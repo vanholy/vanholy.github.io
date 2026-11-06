@@ -35,11 +35,13 @@ const SURVIVAL_LIVES = 3;
 const SPEEDUP = 0.96; // a ogni bersaglio preso tempi e attese si accorciano del 4%
 const MIN_SPEED = 0.3; // non scende sotto il 30% dei tempi iniziali
 const LS_RECORD = 'reflection-game:survival-record';
+// Reflection: record = media più bassa di una partita, per ognuna delle due varianti
+const LS_REFL_RECORD = { colore: 'reflection-game:reflection-record', suono: 'reflection-game:reflection-suono-record' };
 const LS_PHOTO = 'reflection-game:bg-photo'; // { src: dataURL JPEG, avg: [r, g, b] }
 const PHOTO_SIZES = [[1600, 0.8], [1024, 0.7], [720, 0.6]]; // lato massimo e qualità: si riduce finché entra nello storage
 
 const MODE_LABEL = { visibili: 'Visibili', compaiono: 'Compaiono' };
-const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival', reflection: 'Reflection', 'reflection-suono': 'Reflection suono' };
+const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival', reflection: 'Video-Reflection', 'reflection-suono': 'Audio-Reflection' };
 
 // Colori [r, g, b]
 const LIT_FIXED = [255, 210, 63];
@@ -557,8 +559,8 @@ $$('.seg').forEach((seg) => {
 });
 
 function settingsLabel(s) {
-  if (s.level === 'reflection') return `Reflection · ${s.rounds} cambi di colore`;
-  if (s.level === 'reflection-suono') return `Reflection suono · ${s.rounds} suoni`;
+  if (s.level === 'reflection') return `Video-Reflection · ${s.rounds} cambi di colore`;
+  if (s.level === 'reflection-suono') return `Audio-Reflection · ${s.rounds} suoni`;
   if (s.level === 'survival') return 'Survival · difficoltà massima, sempre più veloce, 3 vite';
   const parts = [];
   if (s.level && s.level !== 'personalizzato') parts.push(`Livello ${LEVEL_LABEL[s.level]}`);
@@ -582,6 +584,10 @@ function renderMenuSummary() {
     : '';
   const rec = load(LS_RECORD, null);
   $('#menu-record').textContent = rec ? `Record survival: ${fmtDuration(rec)}` : '';
+  for (const kind of ['colore', 'suono']) {
+    const r = reflRecord(kind);
+    $(`#menu-record-${kind}`).textContent = r != null ? `Record: ${fmt(r)} di media` : '';
+  }
 }
 
 // ---------- Gioco ----------
@@ -1520,10 +1526,11 @@ function showResults(record) {
       ['Migliore', fmt(best(t)), 'good'],
     ];
   } else if (record.reflection) {
-    $('#res-title').textContent = record.reflection === 'suono' ? 'Reflection suono' : 'Reflection';
-    $('#res-record').textContent = '';
+    $('#res-title').textContent = record.reflection === 'suono' ? 'Audio-Reflection' : 'Video-Reflection';
+    $('#res-record').textContent = record.newRecord ? '🏆 Nuovo record!' : '';
     cards = [
       ['Media', fmt(mean(t)), ''],
+      ['Record', fmt(reflRecord(reflKind(record))), 'good'],
       ['Migliore', fmt(best(t)), 'good'],
       ['Peggiore', fmt(worst(t)), 'bad'],
       ['Errori', record.errors, ''],
@@ -1682,6 +1689,19 @@ reflArena.addEventListener('pointerdown', (e) => {
   else endReflection();
 });
 
+// le prime partite Reflection salvate avevano reflection: true
+function reflKind(r) {
+  return r.reflection === 'suono' ? 'suono' : 'colore';
+}
+
+// Record della variante; se non è mai stato salvato si ricava dalle partite nello storico
+function reflRecord(kind) {
+  const saved = load(LS_REFL_RECORD[kind], undefined);
+  if (saved !== undefined) return saved;
+  const avgs = load(LS_HISTORY, []).filter((r) => r.reflection && reflKind(r) === kind).map((r) => mean(r.times));
+  return avgs.length ? Math.min(...avgs) : null;
+}
+
 function endReflection() {
   refl.phase = 'done';
   sound.play('end');
@@ -1689,6 +1709,10 @@ function endReflection() {
     date: Date.now(), settings: REFL_SETTINGS[refl.kind], reflection: refl.kind,
     times: refl.times.map((t) => Math.round(t)), errors: refl.errors, missed: 0,
   };
+  const prev = reflRecord(refl.kind);
+  const avg = mean(record.times);
+  record.newRecord = prev == null || avg < prev;
+  if (record.newRecord) save(LS_REFL_RECORD[refl.kind], avg);
   const history = load(LS_HISTORY, []);
   history.push(record);
   save(LS_HISTORY, history.slice(-HISTORY_MAX));
@@ -1766,9 +1790,10 @@ function showHistory() {
 }
 
 function clearHistory() {
-  if (!confirm('Cancellare tutto lo storico delle partite e il record survival?')) return;
+  if (!confirm('Cancellare tutto lo storico delle partite e i record?')) return;
   save(LS_HISTORY, []);
   save(LS_RECORD, null);
+  Object.values(LS_REFL_RECORD).forEach((k) => save(k, null));
   showHistory();
 }
 
