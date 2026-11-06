@@ -163,3 +163,4 @@ Nella home si sceglie **👤 Un giocatore / 👥 Due giocatori**; poi "Gioco nor
 - Pubblicazione su GitHub Pages, nella cartella `reflection-game/` del repository `vanholy.github.io`: https://vanholy.com/reflection-game/
 - Tempi misurati con `performance.now()` ed eventi `pointerdown`, per la massima precisione al tocco.
 - Suoni e musica generati con Web Audio, senza file audio da scaricare.
+- In `index.html` `style.css` e `game.js` hanno un numero di versione (`?v=AAAA-MM-GG`): **va cambiato a ogni rilascio**, altrimenti i telefoni possono tenere in cache il vecchio `game.js` con la pagina nuova (pulsanti che non fanno nulla).
