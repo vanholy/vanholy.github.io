@@ -22,7 +22,7 @@ Di norma **il bersaglio non si spegne mai da solo** e resta acceso finché non v
 
 ### Survival
 
-Si avvia dal pulsante **Survival** del menu, non dalle opzioni.
+Si avvia dal pulsante **Survive!** del menu, non dalle opzioni.
 
 - **Difficoltà massima con tutto attivato:** bersagli visibili (8, piccoli), frequenza veloce, scomparsa del bersaglio, colori difficili, sfondo psichedelico, 20 disturbi, bersagli in leggero movimento. Suoni e musica seguono le opzioni.
 - **Sempre più veloce:** a ogni bersaglio preso il tempo di scomparsa, l'attesa e la velocità dei disturbi cambiano del 4%. Si parte da 1,5 s per toccare e non si scende sotto il 30% dei tempi iniziali (minimo 0,4 s).
@@ -47,7 +47,7 @@ Si avvia dal pulsante **Modalità gatto** del menu. È pensata per far giocare u
 
 ### Video-Reflection 🎨
 
-Si avvia dal pulsante **Video-Reflection**, sotto Survival a tempo. È una modalità extra, senza bersagli.
+Si avvia dal pulsante **Video-Reflection**, sotto Survive!. È una modalità extra, senza bersagli.
 
 - Tutto lo schermo è di **un solo colore uniforme**.
 - Dopo un'attesa **casuale tra 1 e 7 secondi** il colore cambia: va toccato lo schermo, in qualunque punto, il più in fretta possibile.
@@ -145,11 +145,11 @@ A fine partita si vede un riepilogo:
 - Una schermata "Storico" mostra le partite passate e l'andamento della media nel tempo. Le partite survival mostrano il tempo resistito.
 - La foto di sfondo è ridotta (lato massimo 1600 px, JPEG) e salvata anche lei sul dispositivo; non viene mai caricata in rete.
 - I record (survival, Video-Reflection, Audio-Reflection) sono salvati a parte. "Cancella storico" cancella anche i record.
-- **Ordine del menu:** Gioco normale, Survival a tempo (con record), Video-Reflection (con record), Audio-Reflection (con record), Modalità gatto, Opzioni, Storico.
+- **Ordine del menu:** Play!, Survive! (con record), Video-Reflection (con record), Audio-Reflection (con record), Modalità gatto, Opzioni, Storico.
 
 ## 8. Giocatori
 
-Nella home si sceglie **👤 Un giocatore / 👥 Due giocatori**; poi "Gioco normale" e "Survival a tempo" partono nella modalità scelta. In due vale per le partite normali (tutti i livelli) e per la Survival, non per la modalità gatto.
+Nella home si sceglie **👤 Un giocatore / 👥 Due giocatori**; poi "Play!" e "Survive!" partono nella modalità scelta. In due vale per le partite normali (tutti i livelli) e per la Survival, non per la modalità gatto.
 
 - **Schermo diviso lungo il lato corto:** in orizzontale metà sinistra e destra, in verticale metà sopra e sotto. Ogni giocatore siede sul lato corto della sua metà e il suo campo è girato verso di lui: la barra del tempo è dal suo lato, i punteggi verso il centro.
 - Ogni giocatore ha **bersagli, attese, disturbi, barra e statistiche indipendenti**, con le stesse impostazioni. Si gioca in contemporanea.
