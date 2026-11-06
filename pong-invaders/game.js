@@ -35,6 +35,8 @@
   ];
   const powerCost = lvl => 2 + lvl * 2;        // 4, 6, 8, 10
   const REPAIR_FULL = 10;                      // monete per una riparazione completa
+  const GOAL_LOCK = 1.0;                       // dopo un colpo arrivato in fondo, chi l'ha sparato aspetta 1 s per sparare ancora
+  const SLOW_FIRE = 1.6;                       // cadenza "lenta": attesa tra i colpi più lunga del 60%
   // Temi: "neon" (moderno) e "hist" (guerra dell'800, cartoon). Le regole sono identiche, cambia la grafica.
   const THEMES = {
     neon: { pl: [{ name: 'BLU', c: '#2de2ff', rgb: '45,226,255' }, { name: 'ROSA', c: '#ff2d95', rgb: '255,45,149' }],
@@ -156,6 +158,7 @@
   let countdown = 0, goT = 0, overT = 0, winner = -1, shake = 0, time = 0;
   let maxHp = 3, fireMode = 'auto', moveMode = 'rail', demo = true, firstMatch = true;
   let players1 = false, cpuLevel = 'medium';   // partita contro il computer e livello
+  let aimMode = 'spin', rateMode = 'normal';   // tiro con effetto o sempre dritto; cadenza normale o lenta
   try {
     const saved = JSON.parse(localStorage.getItem('pong-invaders-opts') || '{}');
     if ([3, 5, 7].includes(saved.hp)) maxHp = saved.hp;
@@ -164,8 +167,10 @@
     if (saved.theme === 'hist' || saved.theme === 'neon') theme = saved.theme;
     if (typeof saved.solo === 'boolean') players1 = saved.solo;
     if (['easy', 'medium', 'hard'].includes(saved.cpu)) cpuLevel = saved.cpu;
+    if (saved.aim === 'spin' || saved.aim === 'straight') aimMode = saved.aim;
+    if (saved.rate === 'normal' || saved.rate === 'slow') rateMode = saved.rate;
   } catch (e) { /* opzioni di default */ }
-  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode, move: moveMode, theme, solo: players1, cpu: cpuLevel })); } catch (e) { /* niente */ } }
+  function saveOpts() { try { localStorage.setItem('pong-invaders-opts', JSON.stringify({ hp: maxHp, fire: fireMode, move: moveMode, theme, solo: players1, cpu: cpuLevel, aim: aimMode, rate: rateMode })); } catch (e) { /* niente */ } }
   const wins = [0, 0];
   const owners = new Map();      // pointerId -> indice giocatore
 
@@ -231,9 +236,12 @@
   function fire(p) {
     const L = LEVELS[p.lvl];
     const x = cannonX(p) + p.dir * (CANNON_T / 2 + L.r + 6);
-    const spin = clamp(p.vy * 0.42, -L.speed * 0.55, L.speed * 0.55);
+    // tiro dritto: nessun effetto dal movimento e colpi multipli paralleli invece che a ventaglio
+    const straight = aimMode === 'straight';
+    const spin = straight ? 0 : clamp(p.vy * 0.42, -L.speed * 0.55, L.speed * 0.55);
     const base = Math.asin(spin / L.speed);
-    const list = L.shots === 1 ? [[base, 0]] : L.shots === 2 ? [[base, -17], [base, 17]] : [[base - 0.14, 0], [base, 0], [base + 0.14, 0]];
+    const list = L.shots === 1 ? [[base, 0]] : L.shots === 2 ? [[base, -17], [base, 17]]
+      : straight ? [[0, -28], [0, 0], [0, 28]] : [[base - 0.14, 0], [base, 0], [base + 0.14, 0]];
     for (const [a, o] of list) {
       balls.push({ x, y: clamp(p.y + o, L.r, W - L.r), vx: p.dir * Math.cos(a) * L.speed, vy: Math.sin(a) * L.speed,
         r: L.r, str: L.str, rad: L.rad, o: p.i, trail: [], born: time });
@@ -333,6 +341,8 @@
     burst(wx, b.y, PL[b.o].c, 20, 320, -shooter.dir);
     burst(wx, b.y, GOLD, 8, 220, -shooter.dir, 4);
     if (!demo) {
+      // niente raffiche di punti: chi ha segnato può sparare di nuovo solo dopo GOAL_LOCK secondi
+      shooter.cd = Math.max(shooter.cd, GOAL_LOCK);
       shooter.coins++; shooter.coinFx = 1;
       addPop(wx - shooter.dir * 50, b.y, '+1', shooter.i, GOLD);
       Sound.score(wx);
@@ -571,7 +581,7 @@
     if (canFire && firing && p.cd <= 0) {
       fire(p);
       p.queued = 0;
-      p.cd = LEVELS[p.lvl].cd * (manual ? 0.75 : 1) * (p.rapid > 0 ? 0.45 : 1) + (demo ? rnd(0.1, 0.6) : 0);
+      p.cd = LEVELS[p.lvl].cd * (manual ? 0.75 : 1) * (p.rapid > 0 ? 0.45 : 1) * (!demo && rateMode === 'slow' ? SLOW_FIRE : 1) + (demo ? rnd(0.1, 0.6) : 0);
     }
     p.queued = Math.max(0, p.queued - dt);
     // fumo e scintille in base ai danni
@@ -1648,6 +1658,14 @@
     auto: 'Automatico: tieni il dito nella tua metà, il cannone ti segue e spara da solo.',
     manual: 'Manuale: tocca nella tua metà, il cannone va lì e spara un colpo per ogni tocco.',
   };
+  const AIM_HINT = {
+    spin: 'Con effetto: se ti muovi mentre spari il colpo parte inclinato e rimbalza sulle sponde.',
+    straight: 'Dritto: il colpo parte sempre dritto, anche se ti stai spostando.',
+  };
+  const RATE_HINT = {
+    normal: 'Normale: cadenza di fuoco standard.',
+    slow: 'Lenta: tra un colpo e l\'altro si aspetta di più (circa il 60% in più).',
+  };
   const MOVE_HINT = {
     rail: 'Su binario: il cannone scorre solo lungo il tuo fondo campo.',
     free: 'Libero: il cannone va ovunque nella tua metà. Ogni minuto compare un bonus al centro: prendilo col cannone!',
@@ -1658,6 +1676,10 @@
     document.querySelectorAll('#move-seg button').forEach(x => x.classList.toggle('on', x.dataset.move === moveMode));
     $('fire-hint').textContent = FIRE_HINT[fireMode];
     $('move-hint').textContent = MOVE_HINT[moveMode];
+    document.querySelectorAll('#aim-seg button').forEach(x => x.classList.toggle('on', x.dataset.aim === aimMode));
+    document.querySelectorAll('#rate-seg button').forEach(x => x.classList.toggle('on', x.dataset.rate === rateMode));
+    $('aim-hint').textContent = AIM_HINT[aimMode];
+    $('rate-hint').textContent = RATE_HINT[rateMode];
     document.querySelectorAll('#theme-seg button').forEach(x => x.classList.toggle('on', x.dataset.theme === theme));
     $('theme-hint').textContent = THEME_HINT[theme];
     document.querySelectorAll('#players-seg button').forEach(x => x.classList.toggle('on', x.dataset.players === (players1 ? '1' : '2')));
@@ -1677,6 +1699,8 @@
   };
   document.querySelectorAll('#hp-seg button').forEach(b => b.addEventListener('click', () => { maxHp = +b.dataset.hp; saveOpts(); syncOpts(); }));
   document.querySelectorAll('#fire-seg button').forEach(b => b.addEventListener('click', () => { fireMode = b.dataset.fire; saveOpts(); syncOpts(); }));
+  document.querySelectorAll('#aim-seg button').forEach(b => b.addEventListener('click', () => { aimMode = b.dataset.aim; saveOpts(); syncOpts(); }));
+  document.querySelectorAll('#rate-seg button').forEach(b => b.addEventListener('click', () => { rateMode = b.dataset.rate; saveOpts(); syncOpts(); }));
   document.querySelectorAll('#move-seg button').forEach(b => b.addEventListener('click', () => { moveMode = b.dataset.move; saveOpts(); syncOpts(); newMatch(true); }));
   document.querySelectorAll('#theme-seg button').forEach(b => b.addEventListener('click', () => { applyTheme(b.dataset.theme); saveOpts(); syncOpts(); newMatch(true); }));
   document.querySelectorAll('#players-seg button').forEach(b => b.addEventListener('click', () => { players1 = b.dataset.players === '1'; saveOpts(); syncOpts(); }));
