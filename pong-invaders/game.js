@@ -179,7 +179,7 @@
     Sound.muted = isDemo;
     players = [0, 1].map(i => ({
       i, dir: i === 0 ? 1 : -1, x: homeX(i), tx: homeX(i), y: W / 2, ty: W / 2, vy: 0, hp: maxHp, coins: 0, lvl: 1, rapid: 0,
-      cd: 0.4 + i * 0.2, recoil: 0, hitT: 0, repairFx: 0, coinFx: 0, queued: 0,
+      cd: 0.4 + i * 0.2, recoil: 0, hitT: 0, repairFx: 0, coinFx: 0, queued: 0, goalLock: 0,
       bar: Int8Array.from(MASK, m => m * 2), fresh: new Uint8Array(MASK.length), goals: [],
       marks: makeMarks(i === 0 ? 1 : -1),
       btn: { power: 0, repair: 0 }, deny: { power: 0, repair: 0 },
@@ -343,6 +343,9 @@
     if (!demo) {
       // niente raffiche di punti: chi ha segnato può sparare di nuovo solo dopo GOAL_LOCK secondi
       shooter.cd = Math.max(shooter.cd, GOAL_LOCK);
+      // una raffica vale una sola moneta: dopo un punto, per GOAL_LOCK secondi gli altri colpi in fondo non danno monete
+      if (shooter.goalLock > 0) return;
+      shooter.goalLock = GOAL_LOCK;
       shooter.coins++; shooter.coinFx = 1;
       addPop(wx - shooter.dir * 50, b.y, '+1', shooter.i, GOLD);
       Sound.score(wx);
@@ -574,6 +577,7 @@
     p.y = clamp(p.y, half, W - half); p.ty = clamp(p.ty, half, W - half);
     p.x = clamp(p.x, xa, xb); p.tx = clamp(p.tx, xa, xb);
     p.rapid = Math.max(0, p.rapid - dt);
+    p.goalLock = Math.max(0, p.goalLock - dt);
     p.vy = lerp(p.vy, (p.y - prevY) / Math.max(dt, 1e-3), 0.35);
     p.cd -= dt;
     const manual = !demo && fireMode === 'manual' && !p.cpu;
