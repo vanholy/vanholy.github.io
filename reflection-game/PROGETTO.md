@@ -45,6 +45,18 @@ Si avvia dal pulsante **Modalità gatto** del menu. È pensata per far giocare u
 - **Nessun timer:** solo un contatore grande degli insetti presi.
 - **Per uscire bisogna tenere premuto** il pulsante in alto a destra per 1,2 s, così il gatto non esce per sbaglio.
 
+### Reflection 🎨
+
+Si avvia dal pulsante **Reflection**, sotto la modalità gatto. È una modalità extra, senza bersagli.
+
+- Tutto lo schermo è di **un solo colore uniforme**.
+- Dopo un'attesa **casuale tra 1 e 7 secondi** il colore cambia: va toccato lo schermo, in qualunque punto, il più in fretta possibile.
+- I colori sono **casuali** e si susseguono **10 colori diversi**: ogni nuovo colore è ben distinto da quello attuale e da tutti quelli già usati.
+- Durante il gioco non si vede nessun dato. **Solo alla fine** compaiono media, migliore, peggiore, errori e il grafico dell'andamento delle reazioni.
+- Un tocco prima del cambio conta come errore ("Troppo presto!") e l'attesa ricomincia.
+- La partita viene salvata nello storico come "Reflection · 10". "Rigioca" riparte in modalità Reflection.
+- Il pulsante ✕ in alto a destra esce dalla partita. Se l'app va in background si mette in pausa e riparte con un tocco.
+
 ### Animazione di apertura
 
 All'avvio, per 3 secondi, prima della home: sfondo psichedelico, bersagli che si accendono a raffica con l'anello del tocco, forme di disturbo e insetti che attraversano lo schermo, la barra del tempo di reazione che corre e si ferma su un tempo, e infine il titolo che arriva in primo piano. Poi si dissolve nella home. Un tocco la salta. Con "riduci movimento" attivo sul dispositivo compare solo il titolo.

@@ -39,7 +39,7 @@ const LS_PHOTO = 'reflection-game:bg-photo'; // { src: dataURL JPEG, avg: [r, g,
 const PHOTO_SIZES = [[1600, 0.8], [1024, 0.7], [720, 0.6]]; // lato massimo e qualità: si riduce finché entra nello storage
 
 const MODE_LABEL = { visibili: 'Visibili', compaiono: 'Compaiono' };
-const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival' };
+const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival', reflection: 'Reflection' };
 
 // Colori [r, g, b]
 const LIT_FIXED = [255, 210, 63];
@@ -423,6 +423,8 @@ document.addEventListener('click', (e) => {
     case 'survival': startGame(true); break;
     case 'replay': startGame(session.survival); break;
     case 'cat': startCat(); break;
+    case 'reflection': startReflection(); break;
+    case 'quit-reflection': quitReflection(); break;
     case 'history': showHistory(); break;
     case 'quit': quitGame(); break;
     case 'resume': resumeGame(); break;
@@ -545,6 +547,7 @@ $$('.seg').forEach((seg) => {
 });
 
 function settingsLabel(s) {
+  if (s.level === 'reflection') return `Reflection · ${s.rounds} cambi di colore`;
   if (s.level === 'survival') return 'Survival · difficoltà massima, sempre più veloce, 3 vite';
   const parts = [];
   if (s.level && s.level !== 'personalizzato') parts.push(`Livello ${LEVEL_LABEL[s.level]}`);
@@ -1505,6 +1508,15 @@ function showResults(record) {
       ['Media', fmt(mean(t)), ''],
       ['Migliore', fmt(best(t)), 'good'],
     ];
+  } else if (record.reflection) {
+    $('#res-title').textContent = 'Reflection';
+    $('#res-record').textContent = '';
+    cards = [
+      ['Media', fmt(mean(t)), ''],
+      ['Migliore', fmt(best(t)), 'good'],
+      ['Peggiore', fmt(worst(t)), 'bad'],
+      ['Errori', record.errors, ''],
+    ];
   } else {
     $('#res-title').textContent = 'Risultati';
     $('#res-record').textContent = '';
@@ -1517,6 +1529,8 @@ function showResults(record) {
     ];
   }
   renderCards(cards);
+  // "Rigioca" riparte nella stessa modalità della partita mostrata
+  $('#res-replay').dataset.action = record.reflection ? 'reflection' : 'replay';
   $('#res-meta').textContent = `${formatDate(record.date)} · ${settingsLabel(record.settings)}`;
   show('results');
   drawChart($('#res-chart'), t, { avg: mean(t), xLabel: 'tocco' });
@@ -1544,6 +1558,138 @@ function showDuoResults(record) {
   show('results');
   drawChart($('#res-chart'), record.players[0].times, { second: record.players[1].times, xLabel: 'tocco · G1 verde, G2 rosa' });
 }
+
+// ---------- Reflection ----------
+
+// Lo schermo è di un solo colore: quando cambia si tocca. 10 cambi, attesa casuale tra 1 e 7 s.
+const REFL_ROUNDS = 10;
+const REFL_WAIT = [1000, 7000];
+const REFL_SETTINGS = { level: 'reflection', mode: 'reflection', rounds: REFL_ROUNDS };
+
+const reflArena = $('#refl-arena');
+const reflMsg = $('#refl-msg');
+const refl = { phase: 'idle', hues: [], times: [], errors: 0, changedAt: 0, timer: null, errTimer: null };
+
+const hueDist = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+
+// Colore nuovo: tinta lontana da quella attuale e diversa da tutte quelle già usate
+function reflColor() {
+  const used = refl.hues;
+  const cur = used[used.length - 1];
+  let h;
+  for (let i = 0; i < 200; i++) {
+    h = rand(0, 360);
+    if ((cur == null || hueDist(h, cur) >= 60) && used.every((u) => hueDist(h, u) >= 20)) break;
+  }
+  used.push(h);
+  return hslToRgb(h, rand(65, 100), rand(38, 62));
+}
+
+function setReflMsg(text) {
+  reflMsg.textContent = text;
+}
+
+function startReflection() {
+  stopGame();
+  stopCat();
+  stopReflection();
+  Object.assign(refl, { phase: 'wait', hues: [], times: [], errors: 0 });
+  reflArena.style.background = rgbStr(reflColor());
+  setReflMsg('Tocca lo schermo appena cambia colore');
+  sound.init(settings);
+  show('reflection');
+  reflSchedule();
+}
+
+function reflSchedule() {
+  clearTimeout(refl.timer);
+  refl.phase = 'wait';
+  refl.timer = setTimeout(reflChange, rand(...REFL_WAIT));
+}
+
+function reflChange() {
+  if (refl.phase !== 'wait') return;
+  const color = reflColor();
+  // 1° frame: cambia il colore; 2° frame: il colore è a schermo, parte il cronometro
+  requestAnimationFrame(() => {
+    if (refl.phase !== 'wait') return;
+    reflArena.style.background = rgbStr(color);
+    setReflMsg('');
+    requestAnimationFrame(() => {
+      if (refl.phase !== 'wait') return;
+      refl.changedAt = performance.now();
+      refl.phase = 'lit';
+    });
+  });
+}
+
+reflArena.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.refl-exit')) return;
+  e.preventDefault();
+  if (refl.phase === 'paused') {
+    setReflMsg('');
+    reflSchedule();
+    return;
+  }
+  if (refl.phase === 'wait') {
+    // tocco prima del cambio: errore e l'attesa ricomincia
+    refl.errors++;
+    sound.play('error');
+    setReflMsg('Troppo presto!');
+    reflArena.classList.add('error');
+    clearTimeout(refl.errTimer);
+    refl.errTimer = setTimeout(() => {
+      reflArena.classList.remove('error');
+      if (refl.phase === 'wait') setReflMsg('');
+    }, 500);
+    reflSchedule();
+    return;
+  }
+  if (refl.phase !== 'lit') return;
+  refl.times.push(Math.max(0, eventTime(e) - refl.changedAt));
+  sound.play('hit');
+  if (refl.times.length < REFL_ROUNDS) reflSchedule();
+  else endReflection();
+});
+
+function endReflection() {
+  refl.phase = 'done';
+  sound.play('end');
+  const record = {
+    date: Date.now(), settings: REFL_SETTINGS, reflection: true,
+    times: refl.times.map((t) => Math.round(t)), errors: refl.errors, missed: 0,
+  };
+  const history = load(LS_HISTORY, []);
+  history.push(record);
+  save(LS_HISTORY, history.slice(-HISTORY_MAX));
+  setTimeout(() => {
+    if (refl.phase !== 'done') return;
+    stopReflection();
+    showResults(record);
+  }, 400);
+}
+
+function stopReflection() {
+  clearTimeout(refl.timer);
+  clearTimeout(refl.errTimer);
+  reflArena.classList.remove('error');
+  refl.phase = 'idle';
+}
+
+function quitReflection() {
+  if (refl.phase === 'done' || confirm('Uscire dalla partita? I risultati non verranno salvati.')) {
+    stopReflection();
+    show('menu');
+  }
+}
+
+// Se l'app va in background il tempo non sarebbe valido: si riparte con un tocco
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden || (refl.phase !== 'wait' && refl.phase !== 'lit')) return;
+  clearTimeout(refl.timer);
+  refl.phase = 'paused';
+  setReflMsg('In pausa · tocca per riprendere');
+});
 
 // ---------- Storico ----------
 

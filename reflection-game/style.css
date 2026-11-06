@@ -294,6 +294,36 @@ h3 { margin: 20px 0 8px; font-size: 1rem; color: var(--muted); font-weight: 600;
 
 /* Modalità gatto */
 .btn.cat { background: #2b2f3a; border-color: #4a5060; }
+.btn.reflection { background: linear-gradient(90deg, #ff8a00, #ffe600, #2dff8a, #00c8ff); border-color: transparent; color: #11131a; font-weight: 700; }
+
+/* Reflection: tutto lo schermo è un colore uniforme, il cambio è istantaneo */
+#reflection { flex-direction: column; }
+#refl-arena { position: relative; flex: 1; overflow: hidden; touch-action: none; }
+#refl-arena::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 8px var(--bad);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+#refl-arena.error::after { opacity: 1; }
+.refl-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  text-align: center;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.refl-exit { position: absolute; top: 12px; right: 12px; background: rgba(0, 0, 0, 0.35); border-color: transparent; color: #fff; }
 #cat { flex-direction: column; }
 #cat-arena {
   position: relative;
