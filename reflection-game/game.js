@@ -39,7 +39,7 @@ const LS_PHOTO = 'reflection-game:bg-photo'; // { src: dataURL JPEG, avg: [r, g,
 const PHOTO_SIZES = [[1600, 0.8], [1024, 0.7], [720, 0.6]]; // lato massimo e qualità: si riduce finché entra nello storage
 
 const MODE_LABEL = { visibili: 'Visibili', compaiono: 'Compaiono' };
-const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival', reflection: 'Reflection' };
+const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival', reflection: 'Reflection', 'reflection-suono': 'Reflection suono' };
 
 // Colori [r, g, b]
 const LIT_FIXED = [255, 210, 63];
@@ -375,6 +375,15 @@ const sound = (() => {
     play(name) {
       if (sfxOn && ctx) SFX[theme][name](ctx.currentTime);
     },
+    // Reflection suono: il segnale da ascoltare, sempre attivo.
+    // Restituisce il ritardo stimato (ms) prima che esca davvero dagli altoparlanti.
+    beep() {
+      if (!ensure()) return 0;
+      const t = ctx.currentTime;
+      tone(1046, t, 0.22, { type: 'triangle', vol: 0.5, attack: 0.003 });
+      tone(2092, t, 0.12, { type: 'sine', vol: 0.15, attack: 0.003 });
+      return ((ctx.outputLatency || 0) + (ctx.baseLatency || 0)) * 1000;
+    },
     // rumori della modalità gatto: sempre attivi, pan = posizione da sinistra (-1) a destra (1)
     fx(name, pan = 0) {
       if (!ensure()) return;
@@ -423,7 +432,8 @@ document.addEventListener('click', (e) => {
     case 'survival': startGame(true); break;
     case 'replay': startGame(session.survival); break;
     case 'cat': startCat(); break;
-    case 'reflection': startReflection(); break;
+    case 'reflection': startReflection('colore'); break;
+    case 'reflection-sound': startReflection('suono'); break;
     case 'quit-reflection': quitReflection(); break;
     case 'history': showHistory(); break;
     case 'quit': quitGame(); break;
@@ -548,6 +558,7 @@ $$('.seg').forEach((seg) => {
 
 function settingsLabel(s) {
   if (s.level === 'reflection') return `Reflection · ${s.rounds} cambi di colore`;
+  if (s.level === 'reflection-suono') return `Reflection suono · ${s.rounds} suoni`;
   if (s.level === 'survival') return 'Survival · difficoltà massima, sempre più veloce, 3 vite';
   const parts = [];
   if (s.level && s.level !== 'personalizzato') parts.push(`Livello ${LEVEL_LABEL[s.level]}`);
@@ -1509,7 +1520,7 @@ function showResults(record) {
       ['Migliore', fmt(best(t)), 'good'],
     ];
   } else if (record.reflection) {
-    $('#res-title').textContent = 'Reflection';
+    $('#res-title').textContent = record.reflection === 'suono' ? 'Reflection suono' : 'Reflection';
     $('#res-record').textContent = '';
     cards = [
       ['Media', fmt(mean(t)), ''],
@@ -1530,7 +1541,7 @@ function showResults(record) {
   }
   renderCards(cards);
   // "Rigioca" riparte nella stessa modalità della partita mostrata
-  $('#res-replay').dataset.action = record.reflection ? 'reflection' : 'replay';
+  $('#res-replay').dataset.action = record.reflection === 'suono' ? 'reflection-sound' : record.reflection ? 'reflection' : 'replay';
   $('#res-meta').textContent = `${formatDate(record.date)} · ${settingsLabel(record.settings)}`;
   show('results');
   drawChart($('#res-chart'), t, { avg: mean(t), xLabel: 'tocco' });
@@ -1561,15 +1572,19 @@ function showDuoResults(record) {
 
 // ---------- Reflection ----------
 
-// Lo schermo è di un solo colore: quando cambia si tocca. 10 cambi, attesa casuale tra 1 e 7 s.
+// Lo schermo è di un solo colore. Due varianti, 10 turni, attesa casuale tra 1 e 7 s:
+// colore: quando il colore cambia si tocca; suono: quando si sente il suono si tocca, e al tocco il colore cambia.
 const REFL_ROUNDS = 10;
 const REFL_WAIT = [1000, 7000];
-const REFL_SETTINGS = { level: 'reflection', mode: 'reflection', rounds: REFL_ROUNDS };
+const REFL_SETTINGS = {
+  colore: { level: 'reflection', mode: 'reflection', rounds: REFL_ROUNDS },
+  suono: { level: 'reflection-suono', mode: 'reflection', rounds: REFL_ROUNDS },
+};
 
 const reflArena = $('#refl-arena');
 const reflMsg = $('#refl-msg');
 const reflFlash = $('#refl-flash');
-const refl = { phase: 'idle', hues: [], times: [], errors: 0, changedAt: 0, timer: null, errTimer: null };
+const refl = { kind: 'colore', phase: 'idle', hues: [], times: [], errors: 0, changedAt: 0, timer: null, errTimer: null };
 
 const hueDist = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
 
@@ -1590,13 +1605,13 @@ function setReflMsg(text) {
   reflMsg.textContent = text;
 }
 
-function startReflection() {
+function startReflection(kind) {
   stopGame();
   stopCat();
   stopReflection();
-  Object.assign(refl, { phase: 'wait', hues: [], times: [], errors: 0 });
+  Object.assign(refl, { kind, phase: 'wait', hues: [], times: [], errors: 0 });
   reflArena.style.background = rgbStr(reflColor());
-  setReflMsg('Tocca lo schermo appena cambia colore');
+  setReflMsg(kind === 'suono' ? 'Tocca lo schermo appena senti il suono 🔊' : 'Tocca lo schermo appena cambia colore');
   // in Reflection il suono del tocco c'è sempre, anche con "Suoni" spento nelle opzioni
   sound.init({ ...settings, sounds: 'si' });
   show('reflection');
@@ -1611,6 +1626,13 @@ function reflSchedule() {
 
 function reflChange() {
   if (refl.phase !== 'wait') return;
+  if (refl.kind === 'suono') {
+    // il cronometro parte quando il suono esce dagli altoparlanti
+    refl.changedAt = performance.now() + sound.beep();
+    refl.phase = 'lit';
+    setReflMsg('');
+    return;
+  }
   const color = reflColor();
   // 1° frame: cambia il colore; 2° frame: il colore è a schermo, parte il cronometro
   requestAnimationFrame(() => {
@@ -1649,7 +1671,9 @@ reflArena.addEventListener('pointerdown', (e) => {
   }
   if (refl.phase !== 'lit') return;
   refl.times.push(Math.max(0, eventTime(e) - refl.changedAt));
-  sound.play('hit');
+  // nella variante suono il tocco cambia il colore (e niente suono, per non confonderlo col segnale)
+  if (refl.kind === 'suono') reflArena.style.background = rgbStr(reflColor());
+  else sound.play('hit');
   // riavvia il lampo anche se il precedente non era finito
   reflFlash.classList.remove('on');
   void reflFlash.offsetWidth;
@@ -1662,7 +1686,7 @@ function endReflection() {
   refl.phase = 'done';
   sound.play('end');
   const record = {
-    date: Date.now(), settings: REFL_SETTINGS, reflection: true,
+    date: Date.now(), settings: REFL_SETTINGS[refl.kind], reflection: refl.kind,
     times: refl.times.map((t) => Math.round(t)), errors: refl.errors, missed: 0,
   };
   const history = load(LS_HISTORY, []);
