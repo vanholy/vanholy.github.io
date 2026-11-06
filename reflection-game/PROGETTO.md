@@ -47,7 +47,7 @@ Si avvia dal pulsante **Modalità gatto** del menu. È pensata per far giocare u
 
 ### Reflection 🎨
 
-Si avvia dal pulsante **Reflection**, sotto la modalità gatto. È una modalità extra, senza bersagli.
+Si avvia dal pulsante **Reflection**, sotto Survival a tempo. È una modalità extra, senza bersagli.
 
 - Tutto lo schermo è di **un solo colore uniforme**.
 - Dopo un'attesa **casuale tra 1 e 7 secondi** il colore cambia: va toccato lo schermo, in qualunque punto, il più in fretta possibile.
@@ -55,6 +55,7 @@ Si avvia dal pulsante **Reflection**, sotto la modalità gatto. È una modalità
 - Durante il gioco non si vede nessun dato. **Solo alla fine** compaiono media, migliore, peggiore, errori e il grafico dell'andamento delle reazioni.
 - Ogni tocco riuscito dà un **lampo bianco** su tutto lo schermo e un **suono**. In questa modalità i suoni (tocco, errore, fine) ci sono sempre, anche se l'opzione Suoni è spenta.
 - Un tocco prima del cambio conta come errore ("Troppo presto!") e l'attesa ricomincia.
+- **Record:** la media più bassa di una partita. Si vede nel menu sotto il pulsante e tra i risultati; se lo batti compare "Nuovo record!". Reflection e Reflection suono hanno record separati.
 - La partita viene salvata nello storico come "Reflection · 10". "Rigioca" riparte in modalità Reflection.
 - Il pulsante ✕ in alto a destra esce dalla partita. Se l'app va in background si mette in pausa e riparte con un tocco.
 
@@ -143,7 +144,8 @@ A fine partita si vede un riepilogo:
 - Ogni partita viene salvata in **localStorage** sul dispositivo, con data, impostazioni, tutti i tempi ed errori.
 - Una schermata "Storico" mostra le partite passate e l'andamento della media nel tempo. Le partite survival mostrano il tempo resistito.
 - La foto di sfondo è ridotta (lato massimo 1600 px, JPEG) e salvata anche lei sul dispositivo; non viene mai caricata in rete.
-- Il record survival è salvato a parte. "Cancella storico" cancella anche il record.
+- I record (survival, Reflection, Reflection suono) sono salvati a parte. "Cancella storico" cancella anche i record.
+- **Ordine del menu:** Gioco normale, Survival a tempo (con record), Reflection (con record), Reflection suono (con record), Modalità gatto, Opzioni, Storico.
 
 ## 8. Giocatori
 
