@@ -45,9 +45,9 @@ Si avvia dal pulsante **Modalità gatto** del menu. È pensata per far giocare u
 - **Nessun timer:** solo un contatore grande degli insetti presi.
 - **Per uscire bisogna tenere premuto** il pulsante in alto a destra per 1,2 s, così il gatto non esce per sbaglio.
 
-### Reflection 🎨
+### Video-Reflection 🎨
 
-Si avvia dal pulsante **Reflection**, sotto Survival a tempo. È una modalità extra, senza bersagli.
+Si avvia dal pulsante **Video-Reflection**, sotto Survival a tempo. È una modalità extra, senza bersagli.
 
 - Tutto lo schermo è di **un solo colore uniforme**.
 - Dopo un'attesa **casuale tra 1 e 7 secondi** il colore cambia: va toccato lo schermo, in qualunque punto, il più in fretta possibile.
@@ -55,19 +55,19 @@ Si avvia dal pulsante **Reflection**, sotto Survival a tempo. È una modalità e
 - Durante il gioco non si vede nessun dato. **Solo alla fine** compaiono media, migliore, peggiore, errori e il grafico dell'andamento delle reazioni.
 - Ogni tocco riuscito dà un **lampo bianco** su tutto lo schermo e un **suono**. In questa modalità i suoni (tocco, errore, fine) ci sono sempre, anche se l'opzione Suoni è spenta.
 - Un tocco prima del cambio conta come errore ("Troppo presto!") e l'attesa ricomincia.
-- **Record:** la media più bassa di una partita. Si vede nel menu sotto il pulsante e tra i risultati; se lo batti compare "Nuovo record!". Reflection e Reflection suono hanno record separati.
-- La partita viene salvata nello storico come "Reflection · 10". "Rigioca" riparte in modalità Reflection.
+- **Record:** la media più bassa di una partita. Si vede nel menu sotto il pulsante e tra i risultati; se lo batti compare "Nuovo record!". Video-Reflection e Audio-Reflection hanno record separati.
+- La partita viene salvata nello storico come "Video-Reflection · 10". "Rigioca" riparte in modalità Video-Reflection.
 - Il pulsante ✕ in alto a destra esce dalla partita. Se l'app va in background si mette in pausa e riparte con un tocco.
 
-### Reflection suono 🔊
+### Audio-Reflection 🔊
 
-Si avvia dal pulsante **Reflection suono**, sotto Reflection. Funziona come Reflection, ma il segnale è un suono.
+Si avvia dal pulsante **Audio-Reflection**, sotto Video-Reflection. Funziona come Video-Reflection, ma il segnale è un suono.
 
 - Lo schermo è di un solo colore. Dopo un'attesa **casuale tra 1 e 7 secondi** si sente un **suono**: va toccato lo schermo il più in fretta possibile.
 - **Al tocco il colore cambia** (sempre un colore nuovo e diverso) e c'è il lampo bianco. Al tocco non c'è il suono di conferma, per non confonderlo col segnale.
 - 10 suoni per partita; solo alla fine compaiono media, migliore, peggiore, errori e il grafico.
 - Il tempo parte quando il suono esce dagli altoparlanti (si tiene conto del ritardo audio del dispositivo, quando il browser lo comunica). Con le cuffie Bluetooth il ritardo può essere più grande: meglio l'altoparlante o le cuffie con il filo.
-- Un tocco prima del suono è un errore ("Troppo presto!"). Nello storico compare come "Reflection suono · 10".
+- Un tocco prima del suono è un errore ("Troppo presto!"). Nello storico compare come "Audio-Reflection · 10".
 
 ### Animazione di apertura
 
@@ -144,8 +144,8 @@ A fine partita si vede un riepilogo:
 - Ogni partita viene salvata in **localStorage** sul dispositivo, con data, impostazioni, tutti i tempi ed errori.
 - Una schermata "Storico" mostra le partite passate e l'andamento della media nel tempo. Le partite survival mostrano il tempo resistito.
 - La foto di sfondo è ridotta (lato massimo 1600 px, JPEG) e salvata anche lei sul dispositivo; non viene mai caricata in rete.
-- I record (survival, Reflection, Reflection suono) sono salvati a parte. "Cancella storico" cancella anche i record.
-- **Ordine del menu:** Gioco normale, Survival a tempo (con record), Reflection (con record), Reflection suono (con record), Modalità gatto, Opzioni, Storico.
+- I record (survival, Video-Reflection, Audio-Reflection) sono salvati a parte. "Cancella storico" cancella anche i record.
+- **Ordine del menu:** Gioco normale, Survival a tempo (con record), Video-Reflection (con record), Audio-Reflection (con record), Modalità gatto, Opzioni, Storico.
 
 ## 8. Giocatori
 

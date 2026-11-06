@@ -41,7 +41,7 @@ const LS_PHOTO = 'reflection-game:bg-photo'; // { src: dataURL JPEG, avg: [r, g,
 const PHOTO_SIZES = [[1600, 0.8], [1024, 0.7], [720, 0.6]]; // lato massimo e qualità: si riduce finché entra nello storage
 
 const MODE_LABEL = { visibili: 'Visibili', compaiono: 'Compaiono' };
-const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival', reflection: 'Reflection', 'reflection-suono': 'Reflection suono' };
+const LEVEL_LABEL = { base: 'Base', medio: 'Medio', avanzato: 'Avanzato', personalizzato: 'Personalizzato', survival: 'Survival', reflection: 'Video-Reflection', 'reflection-suono': 'Audio-Reflection' };
 
 // Colori [r, g, b]
 const LIT_FIXED = [255, 210, 63];
@@ -559,8 +559,8 @@ $$('.seg').forEach((seg) => {
 });
 
 function settingsLabel(s) {
-  if (s.level === 'reflection') return `Reflection · ${s.rounds} cambi di colore`;
-  if (s.level === 'reflection-suono') return `Reflection suono · ${s.rounds} suoni`;
+  if (s.level === 'reflection') return `Video-Reflection · ${s.rounds} cambi di colore`;
+  if (s.level === 'reflection-suono') return `Audio-Reflection · ${s.rounds} suoni`;
   if (s.level === 'survival') return 'Survival · difficoltà massima, sempre più veloce, 3 vite';
   const parts = [];
   if (s.level && s.level !== 'personalizzato') parts.push(`Livello ${LEVEL_LABEL[s.level]}`);
@@ -1526,7 +1526,7 @@ function showResults(record) {
       ['Migliore', fmt(best(t)), 'good'],
     ];
   } else if (record.reflection) {
-    $('#res-title').textContent = record.reflection === 'suono' ? 'Reflection suono' : 'Reflection';
+    $('#res-title').textContent = record.reflection === 'suono' ? 'Audio-Reflection' : 'Video-Reflection';
     $('#res-record').textContent = record.newRecord ? '🏆 Nuovo record!' : '';
     cards = [
       ['Media', fmt(mean(t)), ''],
